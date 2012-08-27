@@ -1,7 +1,7 @@
 A Command Line Interface for poking at Mozilla's Inventory project.
 
 
-Some exploritory commands.
+Some exploratory commands.
 
 ```
 python invdns.py --help
