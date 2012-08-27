@@ -178,5 +178,26 @@ map(lambda apply_arg: apply_arg(txt_update_parser, required=False), args)
 # Delete TXT Record options
 add_delete_id_argument(txt_delete_parser, 'TXT')
 
+# SSHFP Record
+(sshfp_action_parser, sshfp_create_parser, sshfp_update_parser,
+        sshfp_delete_parser) = dns_command_template('SSHFP')
+
+# Create SSHFP Record options
+args = [add_label_argument,
+        add_domain_argument,
+        add_ttl_argument,
+        add_algorithm_argument,
+        add_fingerprint_argument,
+        add_key_argument,
+        add_comment_argument]
+map(lambda apply_arg: apply_arg(sshfp_create_parser), args)
+
+# Update SSHFP Record options
+add_update_id_argument(sshfp_update_parser, 'SSHFP')
+map(lambda apply_arg: apply_arg(sshfp_update_parser, required=False), args)
+
+# Delete SSHFP Record options
+add_delete_id_argument(sshfp_delete_parser, 'SSHFP')
+
 if __name__ == "__main__":
     print inv_parser.parse_args(sys.argv[1:])

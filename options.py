@@ -39,6 +39,25 @@ def add_ttl_argument(parser, required=True):
     write_num_argument(parser, 'ttl', 'ttl', "The ttl "
                         "of a record.", required=False)
 
+def add_key_argument(parser, required=True):
+    parser.add_argument('--key', default=None, type=str, dest='sshfp_key',
+            help="The key data.", required=False)
+
+def add_algorithm_argument(parser, required=True):
+    parser.add_argument('--algo', metavar="algorithm type",
+            type=str, dest='algorith_type',
+            choices = ['RSA', 'DSS'],
+            help="The Algorithm type. See RFC 4255.", required=required)
+    return parser
+
+def add_fingerprint_argument(parser, required=False):
+    parser.add_argument('--finger-type', metavar="fingerprint number",
+            type=str, dest='fingerprint_type',
+            choices = ['SHA1'], default='SHA1',
+            help="The fingerprint type. See RFC 4255",
+            required=required)
+    return parser
+
 def add_priority_argument(parser, required=True):
     write_num_argument(parser, 'priority', 'priority',
                         "The priority number of a record", required=required)
