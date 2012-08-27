@@ -41,7 +41,7 @@ def add_ttl_argument(parser, required=True):
 
 def add_key_argument(parser, required=True):
     parser.add_argument('--key', default=None, type=str, dest='sshfp_key',
-            help="The key data.", required=False)
+            help="The key data.", required=True)
 
 def add_algorithm_argument(parser, required=True):
     parser.add_argument('--algo', metavar="algorithm type",

@@ -103,7 +103,7 @@ args = [
         'TXT update --pk 1 --text "foo.bar_is_cool" --label foo --domain baz.com',
         'TXT delete --pk 3',
         'TXT delete --pk 5',
-        'SSHFP create --label foo --domain baz.com --algo RSA --finger-type SHA1',
+        'SSHFP create --label foo --domain baz.com --algo RSA --finger-type SHA1 --key foo',
     ]
 
 for arg in args:
