@@ -3,6 +3,13 @@ import argparse
 ###############
 # DNS OPTIONS #
 ###############
+def add_view_arguments(parser, required=False):
+    parser.add_argument('--no-private', default=False, action='store_true',
+            dest='private', help="Disable private view. Defaults to "
+            "Enabled.", required=required)
+    parser.add_argument('--no-public', default=False, action='store_true',
+            dest='public', help="Disabled private view. Defaults to Enabled.",
+            required=required)
 
 def add_label_argument(parser, required=True):
     parser.add_argument('--label', default="", type=str, dest='label',

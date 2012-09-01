@@ -1,6 +1,7 @@
 import sys
 import argparse
 from options import *
+from intr_options import *
 
 inv_parser = argparse.ArgumentParser(prog='invdns')
 inv_parser.add_argument('--format', default='text', type=str,
@@ -31,6 +32,7 @@ args = [add_label_argument,
         add_domain_argument,
         add_ttl_argument,
         add_ip_argument,
+        add_view_arguments,
         add_comment_argument]
 map(lambda apply_arg: apply_arg(a_create_parser), args)
 
@@ -50,6 +52,7 @@ args = [add_label_argument,
         add_domain_argument,
         add_ttl_argument,
         add_ip_argument,
+        add_view_arguments,
         add_comment_argument]
 map(lambda apply_arg: apply_arg(aaaa_create_parser), args)
 
@@ -68,6 +71,7 @@ add_delete_id_argument(aaaa_delete_parser, 'AAAA')
 args = [add_ip_argument,
         add_ttl_argument,
         add_target_argument,
+        add_view_arguments,
         add_comment_argument]
 map(lambda apply_arg: apply_arg(ptr_create_parser), args)
 
@@ -87,6 +91,7 @@ args = [add_label_argument,
         add_domain_argument,
         add_ttl_argument,
         add_target_argument,
+        add_view_arguments,
         add_comment_argument]
 map(lambda apply_arg: apply_arg(cname_create_parser), args)
 
@@ -106,6 +111,7 @@ args = [add_label_argument,
         add_domain_argument,
         add_ttl_argument,
         add_target_argument,
+        add_view_arguments,
         add_comment_argument]
 map(lambda apply_arg: apply_arg(ns_create_parser), args)
 
@@ -126,6 +132,7 @@ args = [add_label_argument,
         add_ttl_argument,
         add_priority_argument,
         add_target_argument,
+        add_view_arguments,
         add_comment_argument]
 map(lambda apply_arg: apply_arg(mx_create_parser), args)
 
@@ -148,6 +155,7 @@ args = [add_label_argument,
         add_port_argument,
         add_weight_argument,
         add_target_argument,
+        add_view_arguments,
         add_comment_argument]
 
 map(lambda apply_arg: apply_arg(srv_create_parser), args)
@@ -168,6 +176,7 @@ args = [add_label_argument,
         add_domain_argument,
         add_ttl_argument,
         add_text_argument,
+        add_view_arguments,
         add_comment_argument]
 map(lambda apply_arg: apply_arg(txt_create_parser), args)
 
@@ -189,6 +198,7 @@ args = [add_label_argument,
         add_algorithm_argument,
         add_fingerprint_argument,
         add_key_argument,
+        add_view_arguments,
         add_comment_argument]
 map(lambda apply_arg: apply_arg(sshfp_create_parser), args)
 
@@ -198,6 +208,29 @@ map(lambda apply_arg: apply_arg(sshfp_update_parser, required=False), args)
 
 # Delete SSHFP Record options
 add_delete_id_argument(sshfp_delete_parser, 'SSHFP')
+
+# INTR Record
+(intr_action_parser, intr_create_parser, intr_update_parser,
+        intr_delete_parser) = dns_command_template('INTR')
+
+# Create INTR Record options
+args = [add_label_argument,
+        add_domain_argument,
+        add_ttl_argument,
+        add_ip_argument,
+        add_itype_argument,
+        add_view_arguments,
+        add_dns_enable,
+        add_dhcp_enable,
+        add_comment_argument]
+map(lambda apply_arg: apply_arg(intr_create_parser), args)
+
+# Update INTR Record options
+add_update_id_argument(intr_update_parser, 'INTR')
+map(lambda apply_arg: apply_arg(intr_update_parser, required=False), args)
+
+# Delete INTR Record options
+add_delete_id_argument(intr_delete_parser, 'INTR')
 
 if __name__ == "__main__":
     print inv_parser.parse_args(sys.argv[1:])
