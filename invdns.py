@@ -222,6 +222,7 @@ args = [add_label_argument,
         add_view_arguments,
         add_dns_enable,
         add_dhcp_enable,
+        add_system_argument,
         add_comment_argument]
 map(lambda apply_arg: apply_arg(intr_create_parser), args)
 
