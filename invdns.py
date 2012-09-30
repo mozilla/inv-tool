@@ -2,6 +2,7 @@ import sys
 import argparse
 from options import *
 from intr_options import *
+from dispatch import dispatch_dns
 
 inv_parser = argparse.ArgumentParser(prog='invdns')
 inv_parser.add_argument('--format', default='text', type=str,
@@ -30,6 +31,7 @@ def dns_command_template(rtype):
 # Create A Record options
 args = [add_label_argument,
         add_domain_argument,
+        add_fqdn_argument,
         add_ttl_argument,
         add_ip_argument,
         add_view_arguments,
@@ -50,6 +52,7 @@ add_delete_id_argument(a_delete_parser, 'A')
 # Create AAAA Record options
 args = [add_label_argument,
         add_domain_argument,
+        add_fqdn_argument,
         add_ttl_argument,
         add_ip_argument,
         add_view_arguments,
@@ -89,6 +92,7 @@ add_delete_id_argument(ptr_delete_parser, 'PTR')
 # Create CNAME Record options
 args = [add_label_argument,
         add_domain_argument,
+        add_fqdn_argument,
         add_ttl_argument,
         add_target_argument,
         add_view_arguments,
@@ -107,8 +111,7 @@ add_delete_id_argument(cname_delete_parser, 'CNAME')
         ns_delete_parser) = dns_command_template('NS')
 
 # Create NS Record options
-args = [add_label_argument,
-        add_domain_argument,
+args = [add_domain_argument,
         add_ttl_argument,
         add_target_argument,
         add_view_arguments,
@@ -129,6 +132,7 @@ add_delete_id_argument(ns_delete_parser, 'NS')
 # Create MX Record options
 args = [add_label_argument,
         add_domain_argument,
+        add_fqdn_argument,
         add_ttl_argument,
         add_priority_argument,
         add_target_argument,
@@ -150,6 +154,7 @@ add_delete_id_argument(mx_delete_parser, 'MX')
 # Create SRV Record options
 args = [add_label_argument,
         add_domain_argument,
+        add_fqdn_argument,
         add_ttl_argument,
         add_priority_argument,
         add_port_argument,
@@ -174,6 +179,7 @@ add_delete_id_argument(srv_delete_parser, 'SRV')
 # Create TXT Record options
 args = [add_label_argument,
         add_domain_argument,
+        add_fqdn_argument,
         add_ttl_argument,
         add_text_argument,
         add_view_arguments,
@@ -194,6 +200,7 @@ add_delete_id_argument(txt_delete_parser, 'TXT')
 # Create SSHFP Record options
 args = [add_label_argument,
         add_domain_argument,
+        add_fqdn_argument,
         add_ttl_argument,
         add_algorithm_argument,
         add_fingerprint_argument,
@@ -216,6 +223,7 @@ add_delete_id_argument(sshfp_delete_parser, 'SSHFP')
 # Create INTR Record options
 args = [add_label_argument,
         add_domain_argument,
+        add_fqdn_argument,
         add_ttl_argument,
         add_ip_argument,
         add_itype_argument,
@@ -234,4 +242,4 @@ map(lambda apply_arg: apply_arg(intr_update_parser, required=False), args)
 add_delete_id_argument(intr_delete_parser, 'INTR')
 
 if __name__ == "__main__":
-    print inv_parser.parse_args(sys.argv[1:])
+    dispatch_dns(inv_parser.parse_args(sys.argv[1:]))
