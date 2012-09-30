@@ -4,22 +4,32 @@ import argparse
 # DNS OPTIONS #
 ###############
 def add_view_arguments(parser, required=False):
-    parser.add_argument('--no-private', default=False, action='store_true',
-            dest='private', help="Disable private view. Defaults to "
-            "Enabled.", required=required)
-    parser.add_argument('--no-public', default=False, action='store_true',
-            dest='public', help="Disabled private view. Defaults to Enabled.",
-            required=required)
+    pri_group = parser.add_mutually_exclusive_group()
+    pri_group.add_argument('--no-private', default=False, action='store_true',
+            dest='no_private', help="Disable private view.", required=required)
+    pri_group.add_argument('--private', default=False, action='store_true',
+            dest='private', help="Enabled private view.", required=False)
+
+    pub_group = parser.add_mutually_exclusive_group()
+    pub_group.add_argument('--no-public', default=False, action='store_true',
+            dest='no_public', help="Disable public view.", required=required)
+    pub_group.add_argument('--public', default=False, action='store_true',
+            dest='public', help="Enabled public view.", required=False)
 
 def add_label_argument(parser, required=True):
     parser.add_argument('--label', default="", type=str, dest='label',
             help="The first label in the fqdn. If label is ommited then '' is "
             "used and is analigouse to using '@' in a zone file (the record "
-            "will get it's domain's name as it's fqdn).", required=required)
+            "will get it's domain's name as it's fqdn).", required=False)
 
 def add_domain_argument(parser, required=True):
     parser.add_argument('--domain', default=None, type=str, dest='domain',
-            help="The domain a record is in.", required=required)
+            help="The domain a record is in.", required=False)
+
+def add_fqdn_argument(parser, required=True):
+    parser.add_argument('--fqdn', default="", type=str, dest='fqdn',
+            help="The FQDN of the record being created. If you use this "
+            "option you cannot use label or domain", required=False)
 
 def add_ip_argument(parser, required=True):
     parser.add_argument('--ip', default=None, type=str, dest='ip', help="A "
