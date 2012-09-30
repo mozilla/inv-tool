@@ -1,0 +1,3 @@
+[remote]
+host    = <webserver>
+port    = <webserver port>
