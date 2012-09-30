@@ -113,8 +113,12 @@ def print_resp(resp):
 class InvalidCommand(Exception):
     pass
 
-def dispatch_dns(nas):
-    print nas
+def dispatch_search(nas):
+    print "Query is {0}".format(nas.query)
+
+def dispatch(nas):
+    if nas.rtype == 'search':
+        return dispatch_search(nas)
     if nas.rtype == 'NS':
         return dispatch_NS(nas)
     if nas.rtype == 'A':

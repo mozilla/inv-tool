@@ -2,18 +2,18 @@ import sys
 import argparse
 from options import *
 from intr_options import *
-from dispatch import dispatch_dns
+from dispatch import dispatch
 
 inv_parser = argparse.ArgumentParser(prog='invdns')
 inv_parser.add_argument('--format', default='text', type=str,
             choices=['json', 'text', 'bind'],
             help="The format the output")
-record_base_parser = inv_parser.add_subparsers(dest='rtype')
+base_parser = inv_parser.add_subparsers(dest='rtype')
 
 def dns_command_template(rtype):
-    base_parser = record_base_parser.add_parser(rtype, help="The interface for {0} "
-                "records".format(rtype), add_help=True)
-    action_parser = base_parser.add_subparsers(help="{0} record "
+    recrod_base_parser = base_parser.add_parser(rtype, help="The interface "
+            "for {0} records".format(rtype), add_help=True)
+    action_parser = recrod_base_parser.add_subparsers(help="{0} record "
                 "actions".format(rtype), dest='action')
     create_parser = action_parser.add_parser('create', help="Create "
                         "an {0} record".format(rtype))
@@ -23,6 +23,15 @@ def dns_command_template(rtype):
                         "an {0} record".format(rtype))
     return action_parser, create_parser, update_parser, delete_parser
 
+# Search #
+# Search is a top level command. It does more than records ;)
+search = base_parser.add_parser('search', help="Search for stuff.",
+                                add_help=True)
+search.add_argument('-q', dest='query', type=str, help="A query string "
+                    "surrounded by quotes. I.E `search -q "
+                    "'foo.bar.mozilla.com'`", required=True)
+
+# Records #
 # A, AAAA, PTR, CNAME, MX, NS, SRV, TXT, SSHFP and SOA
 
 # A Record
@@ -242,4 +251,4 @@ map(lambda apply_arg: apply_arg(intr_update_parser, required=False), args)
 add_delete_id_argument(intr_delete_parser, 'INTR')
 
 if __name__ == "__main__":
-    dispatch_dns(inv_parser.parse_args(sys.argv[1:]))
+    dispatch(inv_parser.parse_args(sys.argv[1:]))
