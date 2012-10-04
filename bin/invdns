@@ -1,8 +1,10 @@
+#!/usr/bin/env python2.7
 import sys
 import argparse
-from options import *
-from intr_options import *
-from dispatch import dispatch
+sys.path.insert(0, "./")
+from invdns.options import *
+from invdns.intr_options import *
+from invdns.dispatch import dispatch
 
 inv_parser = argparse.ArgumentParser(prog='invdns')
 inv_parser.add_argument('--format', default='text', type=str,

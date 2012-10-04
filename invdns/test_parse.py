@@ -51,16 +51,16 @@ args = [
         'CNAME delete --pk 3',
         'CNAME delete --pk 5',
 
-        '--format json NS create --target foo.bar.com --label foo --domain baz.com',
-        '--format text NS create --target foo.bar.com --label foo --domain baz.com --ttl 3434',
-        '--format json NS update --pk 1 --target foo.bar.com --label foo --domain baz.com --ttl 3434',
-        '--format text NS update --target foo.bar.com --label foo --domain baz.com --pk 3',
+        '--format json NS create --target foo.bar.com --domain baz.com',
+        '--format text NS create --target foo.bar.com --domain baz.com --ttl 3434',
+        '--format json NS update --pk 1 --target foo.bar.com  --domain baz.com --ttl 3434',
+        '--format text NS update --target foo.bar.com  --domain baz.com --pk 3',
         '--format json NS delete --pk 345',
         '--format text NS delete --pk 345',
-        'NS create --target foo.bar.com --label foo --domain baz.com',
-        'NS create --target foo.bar.com --label foo --domain baz.com',
-        'NS update --pk 1 --target foo.bar.com --label foo --domain baz.com',
-        'NS update --pk 1 --target foo.bar.com --label foo --domain baz.com',
+        'NS create --target foo.bar.com  --domain baz.com',
+        'NS create --target foo.bar.com  --domain baz.com',
+        'NS update --pk 1 --target foo.bar.com  --domain baz.com',
+        'NS update --pk 1 --target foo.bar.com  --domain baz.com',
         'NS delete --pk 3',
         'NS delete --pk 5',
 
@@ -120,4 +120,4 @@ args = [
 for arg in args:
     print '-' * 20
     print arg
-    print inv_parser.parse_args(arg.split())
+    print dispatch_dns(inv_parser.parse_args(arg.split()))

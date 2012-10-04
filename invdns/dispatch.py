@@ -114,7 +114,20 @@ class InvalidCommand(Exception):
     pass
 
 def dispatch_search(nas):
-    print "Query is {0}".format(nas.query)
+    tmp_url = "/core/search/search_json/?search={0}".format(nas.query)
+    url = "{0}{1}".format(remote, tmp_url)
+    headers = {'content-type': 'application/json'}
+    resp = requests.get(url, headers=headers, auth=auth)
+    resp_json = json.loads(resp.text)
+    if nas.format == 'json':
+        for obj_type, objs in resp_json['objects'].iteritems():
+            if not objs:
+                continue
+            for obj in objs:
+                print obj
+    elif nas.format == 'text':
+        pass
+        # Print objects like they would be printed in BIND
 
 def dispatch(nas):
     if nas.rtype == 'search':
