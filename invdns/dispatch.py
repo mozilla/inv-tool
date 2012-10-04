@@ -4,6 +4,7 @@ import ConfigParser
 import pdb
 import requests
 import simplejson as json
+from invdns.lib import printer
 
 pp = pprint.PrettyPrinter(indent=4)
 auth=None
@@ -126,7 +127,36 @@ def dispatch_search(nas):
             for obj in objs:
                 print obj
     elif nas.format == 'text':
-        pass
+        for obj_type, objs in resp_json['objects'].iteritems():
+            if not objs:
+                continue
+            if obj_type == 'addrs':
+                renderfunction = printer.render_address_record
+            elif obj_type == 'cnames':
+                renderfunction = printer.render_cname
+            elif obj_type == 'domains':
+                renderfunction = printer.render_domain
+            elif obj_type == 'mxs':
+                renderfunction = printer.render_mx
+            elif obj_type == 'nss':
+                renderfunction = printer.render_ns
+            elif obj_type == 'ptrs':
+                renderfunction = printer.render_ptr
+            elif obj_type == 'srvs':
+                renderfunction = printer.render_srv
+            elif obj_type == 'sshfps':
+                renderfunction = printer.render_sshfp
+            elif obj_type == 'intrs':
+                renderfunction = printer.render_intr
+            elif obj_type == 'txts':
+                renderfunction = printer.render_txt
+            else:
+                print
+                for obj in objs:
+                    for k, v in obj.iteritems():
+                        print "{0}: {1}".format(k, v)
+                continue
+            print renderfunction(objs)
         # Print objects like they would be printed in BIND
 
 def dispatch(nas):
