@@ -14,3 +14,10 @@ python invdns.py AAAA --help
 ```
 python invdns.py AAAA update --help
 ```
+
+Notes on installing (eventually this will be done within setup.py)
+
+Libraries needed:
+```
+    requests
+```
