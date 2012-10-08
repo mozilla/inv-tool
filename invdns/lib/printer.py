@@ -67,7 +67,7 @@ def render_mx(mx_set):
         #name = mx.fqdn + '.' if mx.label != '' else '@'
         name = mx['meta']['fqdn'] + '.'
         BUILD_STR += template.format(name=name, ttl=ttl, rclass='IN',
-                rtype='MX', prio=str(mx.priority), server=mx.server)
+                rtype='MX', prio=str(mx['priority']), server=mx['server'])
     return BUILD_STR
 
 def render_ns(nameserver_set):
@@ -83,7 +83,7 @@ def render_ns(nameserver_set):
             ttl = ''
         else:
             ttl = str(ns['ttl'])
-        BUILD_STR += template.format(name=ns.domain.name + ".", ttl=ttl, rclass='IN', rtype='NS', server=ns.server)
+        BUILD_STR += template.format(name=ns['domain'] + ".", ttl=ttl, rclass='IN', rtype='NS', server=ns['server'])
     return BUILD_STR
 
 def render_address_record(addressrecord_set):
@@ -147,8 +147,8 @@ def render_srv(srv_set):
         else:
             target = srv['target']
         BUILD_STR += template.format(name=name, ttl=ttl, rclass='IN', rtype='SRV',
-                prio=str(srv.priority), weight=str(srv.weight),
-                port=str(srv.port), target=target)
+                prio=str(srv['priority']), weight=str(srv['weight']),
+                port=str(srv['port']), target=target)
     return BUILD_STR
 
 def render_txt(txt_set):
