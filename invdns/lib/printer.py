@@ -3,7 +3,7 @@ import pdb
 
 
 # Knobs
-ip_just = 30
+ip_just = 40
 name_just = 40
 type_just = 15
 class_just = 10
