@@ -115,11 +115,19 @@ class InvalidCommand(Exception):
     pass
 
 def dispatch_search(nas):
-    tmp_url = "/core/search/search_json/?search={0}".format(nas.query)
+    tmp_url = "/core/search/search_json/"
     url = "{0}{1}".format(remote, tmp_url)
     headers = {'content-type': 'application/json'}
-    resp = requests.get(url, headers=headers, auth=auth)
+    search = {'search': nas.query}
+    resp = requests.get(url, params=search, headers=headers, auth=auth)
+    if resp.status_code == 500:
+        print "CLIENT ERROR! (Please email this output to a code monkey)"
+        error_out(nas, search, resp)
+        return
     resp_json = json.loads(resp.text)
+    if 'error_messages' in resp_json:
+        print resp_json['error_messages']
+        return
     if nas.format == 'json':
         for obj_type, objs in resp_json['objects'].iteritems():
             if not objs:
