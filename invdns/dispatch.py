@@ -134,7 +134,7 @@ def dispatch_search(nas):
                 continue
             for obj in objs:
                 print obj
-    elif nas.format == 'text':
+    elif nas.format in ('text', 'bind'):
         for obj_type, objs in resp_json['objects'].iteritems():
             if not objs:
                 continue
@@ -164,7 +164,19 @@ def dispatch_search(nas):
                     for k, v in obj.iteritems():
                         print "{0}: {1}".format(k, v)
                 continue
-            print renderfunction(objs)
+            if nas.format == 'bind':
+                print renderfunction(objs, show_pk=False)
+            else:
+                print renderfunction(objs, show_pk=True)
+    elif nas.format == 'detail':
+        for obj_type, objs in resp_json['objects'].iteritems():
+            if not objs:
+                continue
+            for obj in objs:
+                for k, v in obj.iteritems():
+                    print "{0}: {1}".format(k, v)
+                print
+
         # Print objects like they would be printed in BIND
 
 def dispatch(nas):
@@ -209,15 +221,19 @@ def _dispatch_addr_record(nas, data):
 
 def extract_views(nas):
     views = []
-    if not (nas.no_private or nas.private or nas.no_public or nas.public):
-        return {}
-    if nas.private:
+    if nas.no_private:
+        views.append('no-private')
+    elif nas.private:
         views.append('private')
-    if nas.public:
+
+    if nas.no_public:
+        views.append('no-public')
+    elif nas.public:
         views.append('public')
+
     data = {
-            'views': views
-            }
+        'views': views
+        }
     return data
 
 def extract_ip_str(nas):
@@ -225,8 +241,8 @@ def extract_ip_str(nas):
         if not nas.ip:
             return {}
     data = {
-            'ip_str': nas.ip
-            }
+        'ip_str': nas.ip
+        }
     return data
 
 def extract_label_domain_or_fqdn(nas):

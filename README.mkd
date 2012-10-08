@@ -20,4 +20,5 @@ Notes on installing (eventually this will be done within setup.py)
 Libraries needed:
 ```
     requests
+    simplejson
 ```

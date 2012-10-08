@@ -8,7 +8,7 @@ from invdns.dispatch import dispatch
 
 inv_parser = argparse.ArgumentParser(prog='invdns')
 inv_parser.add_argument('--format', default='text', type=str,
-            choices=['json', 'text', 'bind'],
+            choices=['json', 'text', 'bind', 'detail'],
             help="The format the output")
 base_parser = inv_parser.add_subparsers(dest='rtype')
 
