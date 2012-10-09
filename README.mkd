@@ -4,15 +4,19 @@ A Command Line Interface for poking at Mozilla's Inventory project.
 Some exploratory commands.
 
 ```
-python invdns.py --help
+./bin/invdns --help
 ```
 
 ```
-python invdns.py AAAA --help
+./bin/invdns search -q
 ```
 
 ```
-python invdns.py AAAA update --help
+./bin/invdns AAAA --help
+```
+
+```
+./bin/invdns AAAA update --help
 ```
 
 Notes on installing (eventually this will be done within setup.py)
