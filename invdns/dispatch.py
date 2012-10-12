@@ -165,9 +165,11 @@ def dispatch_search(nas):
                         print "{0}: {1}".format(k, v)
                 continue
             if nas.format == 'bind':
-                print renderfunction(objs, show_pk=False)
+                print renderfunction(objs[1], show_pk=False)
             else:
-                print renderfunction(objs, show_pk=True)
+                print renderfunction([obj_data for
+                                        obj_fields, obj_data in
+                                        objs], show_pk=True)
     elif nas.format == 'detail':
         for obj_type, objs in resp_json['objects'].iteritems():
             if not objs:
@@ -190,6 +192,9 @@ def dispatch(nas):
         return dispatch_AAAA(nas)
 
 def dispatch_NS(nas):
+    pass
+
+def dispatch_MX(nas):
     pass
 
 def dispatch_AAAA(nas):
