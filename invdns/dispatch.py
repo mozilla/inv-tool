@@ -4,7 +4,6 @@ import ConfigParser
 import pdb
 import requests
 import simplejson as json
-from invdns.lib import printer
 
 pp = pprint.PrettyPrinter(indent=4)
 auth=None
@@ -115,7 +114,7 @@ class InvalidCommand(Exception):
     pass
 
 def dispatch_search(nas):
-    tmp_url = "/core/search/search_json/"
+    tmp_url = "/core/search/search_dns_text/"
     url = "{0}{1}".format(remote, tmp_url)
     headers = {'content-type': 'application/json'}
     search = {'search': nas.query}
@@ -124,62 +123,7 @@ def dispatch_search(nas):
         print "CLIENT ERROR! (Please email this output to a code monkey)"
         error_out(nas, search, resp)
         return
-    resp_json = json.loads(resp.text)
-    if 'error_messages' in resp_json:
-        print resp_json['error_messages']
-        return
-    if nas.format == 'json':
-        for obj_type, objs in resp_json['objects'].iteritems():
-            if not objs:
-                continue
-            for obj in objs:
-                print obj
-    elif nas.format in ('text', 'bind'):
-        for obj_type, objs in resp_json['objects'].iteritems():
-            if not objs:
-                continue
-            if obj_type == 'addrs':
-                renderfunction = printer.render_address_record
-            elif obj_type == 'cnames':
-                renderfunction = printer.render_cname
-            elif obj_type == 'domains':
-                renderfunction = printer.render_domain
-            elif obj_type == 'mxs':
-                renderfunction = printer.render_mx
-            elif obj_type == 'nss':
-                renderfunction = printer.render_ns
-            elif obj_type == 'ptrs':
-                renderfunction = printer.render_ptr
-            elif obj_type == 'srvs':
-                renderfunction = printer.render_srv
-            elif obj_type == 'sshfps':
-                renderfunction = printer.render_sshfp
-            elif obj_type == 'intrs':
-                renderfunction = printer.render_intr
-            elif obj_type == 'txts':
-                renderfunction = printer.render_txt
-            else:
-                print
-                for obj in objs:
-                    for k, v in obj.iteritems():
-                        print "{0}: {1}".format(k, v)
-                continue
-            if nas.format == 'bind':
-                print renderfunction(objs[1], show_pk=False)
-            else:
-                print renderfunction([obj_data for
-                                        obj_fields, obj_data in
-                                        objs], show_pk=True)
-    elif nas.format == 'detail':
-        for obj_type, objs in resp_json['objects'].iteritems():
-            if not objs:
-                continue
-            for obj in objs:
-                for k, v in obj.iteritems():
-                    print "{0}: {1}".format(k, v)
-                print
-
-        # Print objects like they would be printed in BIND
+    print resp.text
 
 def dispatch(nas):
     if nas.rtype == 'search':
