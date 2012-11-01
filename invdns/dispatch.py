@@ -15,37 +15,43 @@ config.read(CONFIG_FILE)
 
 host = config.get('remote','host')
 port = config.get('remote','port')
-remote = "http://{0}:{1}".format(host, port)
+REMOTE = "http://{0}:{1}".format(host, port)
+
+rdtype_to_resource = {
+    'A':'addressrecord',
+    'CNAME':'cname',
+    'AAAA':'addressrecord',
+    'MX':'mx',
+}
 
 def do_action(nas, data):
-    print "Using remote: {0}".format(remote)
+    print "Using remote: {0}".format(REMOTE)
 
     object_url = "/mozdns/api/v{0}_dns/{1}/{2}/"
     object_list_url = "/mozdns/api/v{0}_dns/{1}/"
-    if nas.rtype == 'NS':
+    if nas.rdtype == 'NS':
         resource_name = 'nameserver'
-    elif nas.rtype == 'INTR':
+    elif nas.rdtype == 'INTR':
         resource_name = 'staticinterface'
-    elif nas.rtype == 'A' or nas.rtype == 'AAAA':
+    elif nas.rdtype == 'A' or nas.rdtype == 'AAAA':
         resource_name = 'addressrecord'
     else:
-        resource_name = nas.rtype.lower()
+        resource_name = nas.rdtype.lower()
     if nas.action == 'create':
         tmp_url = object_list_url.format(API_MAJOR_VERSION, resource_name)
-        url = "{0}{1}".format(remote, tmp_url)
+        url = "{0}{1}".format(REMOTE, tmp_url)
         method = requests.post
     elif nas.action == 'update':
         tmp_url = object_url.format(API_MAJOR_VERSION, resource_name, nas.pk)
-        url = "{0}{1}".format(remote, tmp_url)
+        url = "{0}{1}".format(REMOTE, tmp_url)
         method = requests.patch
     headers = {'content-type': 'application/json'}
     data = json.dumps(data)
     resp = method(url, headers=headers, data=data, auth=auth)
     handle_resp(nas, data, resp)
-    return
+    return data
 
 def handle_resp(nas, data, resp):
-    # This function *will* call sys.exit!
     resp_msg = get_resp_text(resp)
     if resp.status_code == 500:
         print "SERVER ERROR! (Please email this output to a code monkey)"
@@ -58,35 +64,45 @@ def handle_resp(nas, data, resp):
         elif nas.format in ('text', 'bind'):
             if 'error_messages' in resp_msg:
                 print get_errors(resp_msg['error_messages'])
-        sys.exit(1)
+        return 1
     if resp.status_code == 201:
         # Created
         if nas.format == 'text':
-            print "Created!"
+            print "http_status: 201 (Created)"
             for k, v in resp_msg.iteritems():
                 print "{0}: {1}".format(k, v)
         if nas.format == 'json':
             print resp_msg
-        sys.exit(0)
+        return 0
     if resp.status_code == 202:
         # Accepted
         if nas.format == 'text':
-            print "Accepted!"
+            print "http_status: 202 (Accepted)"
             for k, v in resp_msg.iteritems():
                 print "{0}: {1}".format(k, v)
         if nas.format == 'json':
             print resp_msg
-        sys.exit(0)
+        return 0
+    if resp.status_code == 200:
+        # Success
+        if nas.format == 'text':
+            print "http_status: 200 (Success)"
+            for k, v in resp_msg.iteritems():
+                print "{0}: {1}".format(k, v)
+        if nas.format == 'json':
+            print resp_msg
+        return 0
     else:
         print "Client didn't understand the response."
         print "CLIENT ERROR! (Please email this output to a code monkey)"
         error_out(nas, data, resp)
+        return 1
 
 def error_out(nas, data, resp):
         print nas
         print data
         pprint.pprint(vars(resp))
-        sys.exit(1)
+        return 1
 
 def get_errors(resp_msg):
     messages = json.loads(resp_msg)
@@ -114,8 +130,11 @@ class InvalidCommand(Exception):
     pass
 
 def dispatch_search(nas):
+    """This is the fast display minimal information search. Use the
+    object_search to get a more detailed view of a specific type of object.
+    """
     tmp_url = "/core/search/search_dns_text/"
-    url = "{0}{1}".format(remote, tmp_url)
+    url = "{0}{1}".format(REMOTE, tmp_url)
     headers = {'content-type': 'application/json'}
     search = {'search': nas.query}
     resp = requests.get(url, params=search, headers=headers, auth=auth)
@@ -125,14 +144,24 @@ def dispatch_search(nas):
         return
     print resp.text
 
+def object_search(nas):
+    object_list_url = "/mozdns/api/v{0}_dns/{1}/{2}/?format=json"
+    url = object_list_url.format(API_MAJOR_VERSION,
+            rdtype_to_resource[nas.rdtype], nas.pk)
+    url = "{0}{1}".format(REMOTE, url)
+    headers = {'content-type': 'application/json'}
+    resp = requests.get(url, headers=headers, auth=auth)
+    data = json.dumps(resp.text)
+    handle_resp(nas, {}, resp)
+
 def dispatch(nas):
-    if nas.rtype == 'search':
+    if nas.rdtype == 'search':
         return dispatch_search(nas)
-    if nas.rtype == 'NS':
+    if nas.rdtype == 'NS':
         return dispatch_NS(nas)
-    if nas.rtype == 'A':
+    if nas.rdtype == 'A':
         return dispatch_A(nas)
-    if nas.rtype == 'AAAA':
+    if nas.rdtype == 'AAAA':
         return dispatch_AAAA(nas)
 
 def dispatch_NS(nas):
@@ -153,20 +182,22 @@ def dispatch_A(nas):
         data['ip_type'] = '4'
     return _dispatch_addr_record(nas, data)
 
+
 def _dispatch_addr_record(nas, data):
     if nas.action == 'delete':
         return
-    try:
-        data.update(extract_label_domain_or_fqdn(nas))
-        data.update(extract_ip_str(nas))
-        data.update(extract_comment_ttl(nas))
-        data.update(extract_views(nas))
-    except InvalidCommand, e:
-        print e.message
-        return None
-    do_action(nas, data)
-    #pprint.pprint(data)
-    return data
+    elif nas.action == 'detail':
+        return object_search(nas)
+    elif nas.action == 'update' or nas.action == 'create':
+        try:
+            data.update(extract_label_domain_or_fqdn(nas))
+            data.update(extract_ip_str(nas))
+            data.update(extract_comment_ttl(nas))
+            data.update(extract_views(nas))
+        except InvalidCommand, e:
+            print e.message
+            return None
+        return do_action(nas, data)
 
 def extract_views(nas):
     views = []

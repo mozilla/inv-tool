@@ -87,14 +87,20 @@ def add_weight_argument(parser, required=True):
     write_num_argument(parser, 'weight', 'weight', "The "
                         "weight number of an SRV record", required=required)
 
-def add_update_id_argument(parser, rtype):
+def add_update_pk_argument(parser, rdtype):
     parser.add_argument('--{0}'.format("pk"), required=True, default=None,
             type=int, dest='pk', help="The database integer primary key (id) "
-            "of the {0} you are updating.".format(rtype))
+            "of the {0} you are updating.".format(rdtype))
     return parser
 
-def add_delete_id_argument(parser, rtype):
+def add_detail_pk_argument(parser, rdtype):
+    parser.add_argument('--{0}'.format("pk"), required=True, default=None,
+            type=int, dest='pk', help="The database integer primary key (id) "
+            "of the {0} you are updating.".format(rdtype))
+    return parser
+
+def add_delete_pk_argument(parser, rdtype):
     parser.add_argument('--{0}'.format("pk"), default=None, type=int,
             dest='pk', help="Delete the {0} record with the database primary "
-            "key of 'pk'".format(rtype), required=True)
+            "key of 'pk'".format(rdtype), required=True)
     return parser
