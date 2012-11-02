@@ -18,26 +18,49 @@ host = config.get('remote','host')
 port = config.get('remote','port')
 REMOTE = "http://{0}:{1}".format(host, port)
 
-
 class InvalidCommand(Exception):
     pass
+
+
+def dispatch(nas):
+    if nas.rdtype == 'search':
+        return dispatch_search(nas)
+    if nas.rdtype == 'NS':
+        return dispatch_NS(nas)
+    if nas.rdtype == 'A':
+        return dispatch_A(nas)
+    if nas.rdtype == 'AAAA':
+        return dispatch_AAAA(nas)
+
+def dispatch_NS(nas):
+    pass
+
+def dispatch_MX(nas):
+    pass
+
+def dispatch_AAAA(nas):
+    data = {}
+    if nas.action == 'create':
+        data['ip_type'] = '6'
+    return _dispatch_addr_record(nas, data)
+
+def dispatch_A(nas):
+    data = {}
+    if nas.action == 'create':
+        data['ip_type'] = '4'
+    return _dispatch_addr_record(nas, data)
 
 class Dispatch(object):
     object_url = "/mozdns/api/v{0}_dns/{1}/{2}/"
     object_list_url = "/mozdns/api/v{0}_dns/{1}/"
 
-
     def handle_resp(self, nas, data, resp):
         resp_msg = self.get_resp_text(resp)
         if resp.status_code == 404:
             if nas.format == 'text':
-                for k, v in resp_msg.iteritems():
-                    print "{0}: {1}".format(k, v)
+                print "http_status: 404"
             else:
                 self.error_out(nas, data, resp)
-        elif resp.status_code == 204:
-            if nas.format == 'text':
-                print "http_status: 204 (request fulfilled)"
         elif resp.status_code == 500:
             print "SERVER ERROR! (Please email this output to a code monkey)"
             self.error_out(data, resp)
@@ -95,10 +118,8 @@ class Dispatch(object):
         if resp.text:
             # Tasty pie returns json that is unicode. Thats ok.
             msg = json.loads(resp.text, 'unicode')
-        else:
-            msg = {'message': 'No message from server'}
-        msg['http_status'] = resp.status_code
-        return msg
+            return msg
+        return 'No message from server'
 
     def error_out(self, nas, data, resp):
         print nas
@@ -107,14 +128,10 @@ class Dispatch(object):
         return 1
 
 
+
 class ActionDispatch(Dispatch):
-    def delete(self, nas):
-        url = self.object_url.format(API_MAJOR_VERSION,
-                                          self.resource_name, nas.pk)
-        url = "{0}{1}?format=json".format(REMOTE, url)
-        headers = {'content-type': 'application/json'}
-        resp = requests.delete(url, headers=headers, auth=auth)
-        return self.handle_resp(nas, {}, resp)
+    def delete(self):
+        pass
 
     def detail(self, nas):
         url = self.object_url.format(API_MAJOR_VERSION,
@@ -125,70 +142,41 @@ class ActionDispatch(Dispatch):
         return self.handle_resp(nas, {}, resp)
 
     def update(self, nas):
-        data = self.get_update_data(nas)  # Dispatch defined Hook
+        data = self.get_update_data()  # Dispatch defined Hook
         tmp_url = object_url.format(API_MAJOR_VERSION, self.resource_name,
                                     nas.pk)
         url = "{0}{1}".format(REMOTE, tmp_url)
-        return self.action(nas, url, requests.patch, data)
+        return self.action(url, requests.patch, data)
 
     def create(self, nas):
-        data = self.get_create_data(nas)  # Dispatch defined Hook
-        tmp_url = self.object_list_url.format(API_MAJOR_VERSION,
-                                              self.resource_name)
+        data = self.get_create_data()  # Dispatch defined Hook
+        tmp_url = object_list_url.format(API_MAJOR_VERSION, self.resource_name)
         url = "{0}{1}".format(REMOTE, tmp_url)
-        return self.action(nas, url, requests.post, data)
+        return self.action(url, requests.post, data)
 
-    def action(self,nas, url, method, data):
+    def action(self, url, method, data):
         headers = {'content-type': 'application/json'}
         data = json.dumps(data)
         resp = method(url, headers=headers, data=data, auth=auth)
-        return self.handle_resp(nas, data, resp)
+        self.handle_resp(nas, data, resp)
+        return data
 
-    def get_create_data(self, nas):
+    def get_create_data():
         data = {}
         for add_arg, extract_arg in self.create_args:
-            data.update(extract_arg(nas))
+            data.update(extract_arg())
         return data
 
 
-    def get_update_data(self, nas):
+    def get_update_data():
         data = {}
         for add_arg, extract_arg in self.update_args:
-            data.update(extract_arg(nas))
+            data.update(extract_arg())
         return data
 
-
-dispatches= []
-dns_dispatches = []  # These global lists are where Dispatch classes register
-                     # to signify that
-                     # they need a parser built for them.
-
-
-def build_dns_parsers(base_parser):
-    # Search is a top level command.
-    search = base_parser.add_parser('search', help="Search for stuff.",
-                                    add_help=True)
-    search.add_argument('-q', dest='query', type=str, help="A query string "
-                        "surrounded by quotes. I.E `search -q "
-                        "'foo.bar.mozilla.com'`", required=True)
-
-    # Build all the records
-    for dispatch in dns_dispatches:
-        record_base_parser = base_parser.add_parser(dispatch.dtype, help="The"
-                " interface for {0} records".format(dispatch.dtype),
-                add_help=True)
-        action_parser = record_base_parser.add_subparsers(help="{0} record "
-                    "actions".format(dispatch.dtype), dest='action')
-        build_create_parser(dispatch, action_parser)
-        build_update_parser(dispatch, action_parser)
-        build_delete_parser(dispatch, action_parser)
-        build_detail_parser(dispatch, action_parser)
-
-
 class SearchDispatch(Dispatch):
-    dtype = 'search'
 
-    def search(self, nas):
+    def search(nas):
         """This is the fast display minimal information search. Use the
         object_search to get a more detailed view of a specific type of object.
         """
@@ -203,9 +191,25 @@ class SearchDispatch(Dispatch):
             return
         print resp.text
 
-
 dispatches.append(SearchDispatch())
 
+
+
+
+dispatches = []  # This global is where Dispatch classes register to signify that
+                 # they need a parser built for them.
+
+def build_dns_parsers(base_parser):
+    for dispatch in dispatches:
+        record_base_parser = base_parser.add_parser(dispatch.dtype, help="The"
+                " interface for {0} records".format(dispatch.dtype),
+                add_help=True)
+        action_parser = record_base_parser.add_subparsers(help="{0} record "
+                    "actions".format(dispatch.dtype), dest='action')
+        build_create_parser(dispatch, action_parser)
+        build_update_parser(dispatch, action_parser)
+        build_delete_parser(dispatch, action_parser)
+        build_detail_parser(dispatch, action_parser)
 
 def build_create_parser(dispatch, action_parser):
     create_parser = action_parser.add_parser('create', help="Create "
@@ -213,13 +217,11 @@ def build_create_parser(dispatch, action_parser):
     for add_arg, extract_arg in dispatch.create_args:
         add_arg(create_parser)
 
-
 def build_update_parser(dispatch, action_parser):
     update_parser = action_parser.add_parser('update', help="Update "
                         "a(n) {0} record".format(dispatch.dtype))
     for add_arg, extract_arg in dispatch.update_args:
         add_arg(update_parser)
-
 
 def build_delete_parser(dispatch, action_parser):
     delete_parser = action_parser.add_parser('delete', help="Delete "
@@ -227,13 +229,11 @@ def build_delete_parser(dispatch, action_parser):
     for add_arg, extract_arg in dispatch.delete_args:
         add_arg(delete_parser)
 
-
 def build_detail_parser(dispatch, action_parser):
     detail_parser = action_parser.add_parser('detail', help="Detail "
                         "a(n) {0} record".format(dispatch.dtype))
     for add_arg, extract_arg in dispatch.detail_args:
         add_arg(detail_parser)
-
 
 class DispatchA(ActionDispatch):
     resource_name = 'addressrecord'
@@ -256,44 +256,37 @@ class DispatchA(ActionDispatch):
 
     detail_args = [detail_pk_argument('pk', dtype)]
 
-    def get_create_data(self, nas):
-        data = super(DispatchA, self).get_create_data(nas)
+    def get_create_data():
+        data = super(ActionDispatchA, self).get_create_data()
         data['ip_type'] = 4
         return data
 
-    def get_update_data(self, nas):
-        data = super(DispatchA, self).get_update_data(nas)
+    def get_update_data():
+        data = super(ActionDispatchA, self).get_update_data()
         data['ip_type'] = 4
         return data
 
-
-dns_dispatches.append(DispatchA())
-
+dispatches.append(DispatchA())
 
 class DispatchAAAA(DispatchA):
     dtype = 'AAAA'
-    def get_create_data(self, nas):
-        data = super(DispatchAAAA, self).get_create_data()
-        data['ip_type'] = 6  # Clobber this
+    def get_create_data():
+        data = super(ActionDispatchA, self).get_create_data()
+        data['ip_type'] = 6
         return data
 
-    def get_update_data(self, nas):
-        data = super(DispatchAAAA, self).get_update_data(nas)
-        data['ip_type'] = 6  # Clobber this
+    def get_update_data():
+        data = super(ActionDispatchA, self).get_update_data()
+        data['ip_type'] = 6
         return data
 
-
-dns_dispatches.append(DispatchAAAA())
-
+dispatches.append(DispatchAAAA())
 
 def dispatch(nas):
-    for dispatch in dispatches + dns_dispatches:
+    for dispatch in dispatches:
         if dispatch.dtype == nas.dtype:
-            if hasattr(nas, 'action'):
-                return getattr(dispatch, nas.action)(nas)
-            elif hasattr(dispatch, 'dtype'):
-                return getattr(dispatch, nas.dtype)(nas)
-            else:
+            try:
+                getattr(dispatch, nas.action)(nas)
+            except AttributeError:
                 print "ERROR: Something went terrible wrong"
                 print nas
-                return 1

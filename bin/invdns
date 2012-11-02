@@ -4,14 +4,11 @@ import argparse
 sys.path.insert(0, "./")
 from invdns.options import *
 from invdns.intr_options import *
-from invdns.dispatch import dispatch
+from invdns.dispatch import build_dns_parsers, dispatch
+import pdb
 
-inv_parser = argparse.ArgumentParser(prog='invdns')
-inv_parser.add_argument('--format', default='text', type=str,
-            choices=['json', 'text', 'bind', 'detail'],
-            help="The format the output")
-base_parser = inv_parser.add_subparsers(dest='rdtype')
 
+"""
 def dns_command_template(rdtype):
     recrod_base_parser = base_parser.add_parser(rdtype, help="The interface "
             "for {0} records".format(rdtype), add_help=True)
@@ -25,7 +22,6 @@ def dns_command_template(rdtype):
                         "an {0} record".format(rdtype))
     detail_parser = action_parser.add_parser('detail', help="Get details "
                         "about a(n) {0} object".format(rdtype))
-    add_detail_pk_argument(detail_parser, rdtype)
     return action_parser, create_parser, update_parser, delete_parser
 
 # Search #
@@ -254,6 +250,17 @@ map(lambda apply_arg: apply_arg(intr_update_parser, required=False), args)
 
 # Delete INTR Record options
 add_delete_pk_argument(intr_delete_parser, 'INTR')
+"""
 
 if __name__ == "__main__":
-    dispatch(inv_parser.parse_args(sys.argv[1:]))
+    inv_parser = argparse.ArgumentParser(prog='invdns')
+    inv_parser.add_argument('--format', default='text', type=str,
+                choices=['json', 'text'],
+                help="The format the output")
+    base_parser = inv_parser.add_subparsers(dest='dtype')
+    build_dns_parsers(base_parser)
+    resp_code = dispatch(inv_parser.parse_args(sys.argv[1:]))
+    if resp_code == 1:
+        sys.exit(1)
+    else:
+        sys.exit(0)
