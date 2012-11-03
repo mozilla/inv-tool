@@ -1,4 +1,5 @@
 import argparse
+from tests.test_data import *
 
 ###############
 # DNS OPTIONS #
@@ -32,7 +33,11 @@ def view_arguments(field_name):
             field_name: views
             }
         return data
-    return add_view_arguments, extract_views
+
+    def test_data():
+        return '', '--nopublic --private'
+
+    return add_view_arguments, extract_views, test_data
 
 
 def _add_domain_argument(parser, required=True):
@@ -47,7 +52,11 @@ def domain_argument(field_name):
                     field_name: nas.domain
                     })
             return data
-    return _add_domain_argument, extract_domain
+
+    def test_data():
+        return 'domain', TEST_DOMAIN
+
+    return _add_domain_argument, extract_domain, test_data
 
 def _add_label_argument(parser, required=True):
     parser.add_argument('--label', default="", type=str, dest='label',
@@ -89,7 +98,11 @@ def fqdn_argument(field_name):
                 data['domain'] = nas.domain
             return data
         raise Exception("Shouldn't have got here")
-    return add_fqdn_argument, extract_label_domain_or_fqdn
+
+    def test_data():
+        return 'fqdn', TEST_FQDN
+
+    return add_fqdn_argument, extract_label_domain_or_fqdn, test_data
 
 def ip_argument(field_name):
     def add_ip_argument(parser, required=True):
@@ -104,7 +117,11 @@ def ip_argument(field_name):
             field_name: nas.ip
             }
         return data
-    return add_ip_argument, extract_ip_str
+
+    def test_data():
+        return 'ip', TEST_IP
+
+    return add_ip_argument, extract_ip_str, test_data
 
 def target_argument(field_name):
     def add_target_argument(parser, required=True):
@@ -120,7 +137,11 @@ def comment_argument(field_name):
         if nas.comment:
             data[field_name] = nas.comment
         return data
-    return add_comment_argument, extract_comment
+
+    def test_data():
+        return 'comment', TEST_COMMENT
+
+    return add_comment_argument, extract_comment, test_data
 
 def text_argument(field_name):
     def add_text_argument(parser, required=True):
@@ -141,7 +162,11 @@ def ttl_argument(field_name):
         if nas.ttl:
             data['ttl'] = nas.ttl
         return data
-    return add_ttl_argument, extract_ttl
+
+    def test_data():
+        return 'ttl', TEST_TTL
+
+    return add_ttl_argument, extract_ttl, test_data
 
 def key_argument(field_name):
     def add_key_argument(parser, required=True):
@@ -193,7 +218,7 @@ def update_pk_argument(field_name, rdtype):
     def extract_pk(nas):
         return _extract_pk(nas, field_name)
 
-    return add_update_pk_argument, extract_pk
+    return add_update_pk_argument, extract_pk, lambda: None
 
 
 def detail_pk_argument(field_name, rdtype):
@@ -206,7 +231,7 @@ def detail_pk_argument(field_name, rdtype):
     def extract_pk(nas):
         return _extract_pk(nas, field_name)
 
-    return add_detail_pk_argument, extract_pk
+    return add_detail_pk_argument, extract_pk, lambda: None
 
 def delete_pk_argument(field_name, rdtype):
     def add_delete_pk_argument(parser):
@@ -218,4 +243,4 @@ def delete_pk_argument(field_name, rdtype):
     def extract_pk(nas):
         return _extract_pk(nas, field_name)
 
-    return add_delete_pk_argument, extract_pk
+    return add_delete_pk_argument, extract_pk, lambda: None

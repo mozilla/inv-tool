@@ -26,7 +26,6 @@ class Dispatch(object):
     object_url = "/mozdns/api/v{0}_dns/{1}/{2}/"
     object_list_url = "/mozdns/api/v{0}_dns/{1}/"
 
-
     def handle_resp(self, nas, data, resp):
         resp_msg = self.get_resp_text(resp)
         if resp.status_code == 404:
@@ -107,7 +106,7 @@ class Dispatch(object):
         return 1
 
 
-class ActionDispatch(Dispatch):
+class DNSDispatch(Dispatch):
     def delete(self, nas):
         url = self.object_url.format(API_MAJOR_VERSION,
                                           self.resource_name, nas.pk)
@@ -146,22 +145,27 @@ class ActionDispatch(Dispatch):
 
     def get_create_data(self, nas):
         data = {}
-        for add_arg, extract_arg in self.create_args:
+        for add_arg, extract_arg, test_method in self.create_args:
             data.update(extract_arg(nas))
         return data
-
 
     def get_update_data(self, nas):
         data = {}
-        for add_arg, extract_arg in self.update_args:
+        for add_arg, extract_arg, test_method in self.update_args:
             data.update(extract_arg(nas))
         return data
 
 
-dispatches= []
-dns_dispatches = []  # These global lists are where Dispatch classes register
-                     # to signify that
-                     # they need a parser built for them.
+class Registrar():
+    dns_dispatches = []
+    dispatches = []
+    def register(self, dispatch):
+        if isinstance(dispatch, DNSDispatch):
+            self.dns_dispatches.append(dispatch)
+        else:
+            self.dispatches.append(dispatch)
+
+registrar = Registrar()
 
 
 def build_dns_parsers(base_parser):
@@ -173,7 +177,8 @@ def build_dns_parsers(base_parser):
                         "'foo.bar.mozilla.com'`", required=True)
 
     # Build all the records
-    for dispatch in dns_dispatches:
+
+    for dispatch in registrar.dns_dispatches:
         record_base_parser = base_parser.add_parser(dispatch.dtype, help="The"
                 " interface for {0} records".format(dispatch.dtype),
                 add_help=True)
@@ -204,38 +209,38 @@ class SearchDispatch(Dispatch):
         print resp.text
 
 
-dispatches.append(SearchDispatch())
+registrar.register(SearchDispatch())
 
 
 def build_create_parser(dispatch, action_parser):
     create_parser = action_parser.add_parser('create', help="Create "
                         "a(n) {0} record".format(dispatch.dtype))
-    for add_arg, extract_arg in dispatch.create_args:
+    for add_arg, extract_arg, test_method in dispatch.create_args:
         add_arg(create_parser)
 
 
 def build_update_parser(dispatch, action_parser):
     update_parser = action_parser.add_parser('update', help="Update "
                         "a(n) {0} record".format(dispatch.dtype))
-    for add_arg, extract_arg in dispatch.update_args:
+    for add_arg, extract_arg, test_method in dispatch.update_args:
         add_arg(update_parser)
 
 
 def build_delete_parser(dispatch, action_parser):
     delete_parser = action_parser.add_parser('delete', help="Delete "
                         "a(n) {0} record".format(dispatch.dtype))
-    for add_arg, extract_arg in dispatch.delete_args:
+    for add_arg, extract_arg, test_method  in dispatch.delete_args:
         add_arg(delete_parser)
 
 
 def build_detail_parser(dispatch, action_parser):
     detail_parser = action_parser.add_parser('detail', help="Detail "
                         "a(n) {0} record".format(dispatch.dtype))
-    for add_arg, extract_arg in dispatch.detail_args:
+    for add_arg, extract_arg, test_method in dispatch.detail_args:
         add_arg(detail_parser)
 
 
-class DispatchA(ActionDispatch):
+class DispatchA(DNSDispatch):
     resource_name = 'addressrecord'
     dtype = 'A'
 
@@ -267,7 +272,7 @@ class DispatchA(ActionDispatch):
         return data
 
 
-dns_dispatches.append(DispatchA())
+registrar.register(DispatchA())
 
 
 class DispatchAAAA(DispatchA):
@@ -283,7 +288,7 @@ class DispatchAAAA(DispatchA):
         return data
 
 
-dns_dispatches.append(DispatchAAAA())
+registrar.register(DispatchAAAA())
 
 
 def dispatch(nas):
