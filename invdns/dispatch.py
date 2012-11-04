@@ -27,53 +27,41 @@ class Dispatch(object):
     object_list_url = "/mozdns/api/v{0}_dns/{1}/"
 
     def handle_resp(self, nas, data, resp):
-        resp_msg = self.get_resp_text(resp)
-        if resp.status_code == 404:
+        def format_response(resp_msg, user_msg):
             if nas.format == 'text':
+                print user_msg
                 for k, v in resp_msg.iteritems():
                     print "{0}: {1}".format(k, v)
-            else:
-                self.error_out(nas, data, resp)
+            if nas.format == 'json':
+                print json.dumps(resp_msg)
+
+        resp_msg = self.get_resp_text(resp)
+        if resp.status_code == 404:
+            format_response(resp_msg, "http_status: 404 (file not found)")
         elif resp.status_code == 204:
             if nas.format == 'text':
                 print "http_status: 204 (request fulfilled)"
+            else:
+                print json.dumps(resp_msg)
         elif resp.status_code == 500:
             print "SERVER ERROR! (Please email this output to a code monkey)"
             self.error_out(data, resp)
         elif resp.status_code == 400:
             # Bad Request
             if nas.format == 'json':
-                print resp_msg
+                print json.dumps(resp_msg)
             elif nas.format in ('text', 'bind'):
                 if 'error_messages' in resp_msg:
                     print self.get_errors(resp_msg['error_messages'])
             return 1
         elif resp.status_code == 201:
-            # Created
-            if nas.format == 'text':
-                print "http_status: 201 (Created)"
-                for k, v in resp_msg.iteritems():
-                    print "{0}: {1}".format(k, v)
-            if nas.format == 'json':
-                print resp_msg
+            format_response(resp_msg, "http_status: 201 (created)")
             return 0
         elif resp.status_code == 202:
-            # Accepted
-            if nas.format == 'text':
-                print "http_status: 202 (Accepted)"
-                for k, v in resp_msg.iteritems():
-                    print "{0}: {1}".format(k, v)
-            if nas.format == 'json':
-                print resp_msg
+            format_response(resp_msg, "http_status: 202 (Accepted)")
             return 0
         elif resp.status_code == 200:
-            # Success
-            if nas.format == 'text':
-                print "http_status: 200 (Success)"
-                for k, v in resp_msg.iteritems():
-                    print "{0}: {1}".format(k, v)
-            if nas.format == 'json':
-                print resp_msg
+            format_response(resp_msg, "http_status: 200 (Success)")
             return 0
         else:
             print "Client didn't understand the response."
@@ -82,7 +70,7 @@ class Dispatch(object):
             return 1
 
     def get_errors(self, resp_msg):
-        messages = json.loads(resp_msg)
+        messages = json.loads(resp_msg, 'unicode')
         errors = ''
         for error, msg in messages.iteritems():
             if error == '__all__':
@@ -125,7 +113,7 @@ class DNSDispatch(Dispatch):
 
     def update(self, nas):
         data = self.get_update_data(nas)  # Dispatch defined Hook
-        tmp_url = object_url.format(API_MAJOR_VERSION, self.resource_name,
+        tmp_url = self.object_url.format(API_MAJOR_VERSION, self.resource_name,
                                     nas.pk)
         url = "{0}{1}".format(REMOTE, tmp_url)
         return self.action(nas, url, requests.patch, data)
@@ -179,11 +167,11 @@ def build_dns_parsers(base_parser):
     # Build all the records
 
     for dispatch in registrar.dns_dispatches:
-        record_base_parser = base_parser.add_parser(dispatch.dtype, help="The"
-                " interface for {0} records".format(dispatch.dtype),
+        record_base_parser = base_parser.add_parser(dispatch.rdtype, help="The"
+                " interface for {0} records".format(dispatch.rdtype),
                 add_help=True)
         action_parser = record_base_parser.add_subparsers(help="{0} record "
-                    "actions".format(dispatch.dtype), dest='action')
+                    "actions".format(dispatch.rdtype), dest='action')
         build_create_parser(dispatch, action_parser)
         build_update_parser(dispatch, action_parser)
         build_delete_parser(dispatch, action_parser)
@@ -214,35 +202,35 @@ registrar.register(SearchDispatch())
 
 def build_create_parser(dispatch, action_parser):
     create_parser = action_parser.add_parser('create', help="Create "
-                        "a(n) {0} record".format(dispatch.dtype))
+                        "a(n) {0} record".format(dispatch.rdtype))
     for add_arg, extract_arg, test_method in dispatch.create_args:
         add_arg(create_parser)
 
 
 def build_update_parser(dispatch, action_parser):
     update_parser = action_parser.add_parser('update', help="Update "
-                        "a(n) {0} record".format(dispatch.dtype))
+                        "a(n) {0} record".format(dispatch.rdtype))
     for add_arg, extract_arg, test_method in dispatch.update_args:
         add_arg(update_parser)
 
 
 def build_delete_parser(dispatch, action_parser):
     delete_parser = action_parser.add_parser('delete', help="Delete "
-                        "a(n) {0} record".format(dispatch.dtype))
+                        "a(n) {0} record".format(dispatch.rdtype))
     for add_arg, extract_arg, test_method  in dispatch.delete_args:
         add_arg(delete_parser)
 
 
 def build_detail_parser(dispatch, action_parser):
     detail_parser = action_parser.add_parser('detail', help="Detail "
-                        "a(n) {0} record".format(dispatch.dtype))
+                        "a(n) {0} record".format(dispatch.rdtype))
     for add_arg, extract_arg, test_method in dispatch.detail_args:
         add_arg(detail_parser)
 
 
 class DispatchA(DNSDispatch):
     resource_name = 'addressrecord'
-    dtype = 'A'
+    rdtype = 'A'
 
     create_args = [
         fqdn_argument('fqdn'), # ~> (labmda, lambda)
@@ -252,14 +240,14 @@ class DispatchA(DNSDispatch):
         comment_argument('comment')]
 
     update_args = create_args + [
-        update_pk_argument('pk', dtype)
+        update_pk_argument('pk', rdtype)
     ]
 
     delete_args = [
-        delete_pk_argument('pk', dtype)
+        delete_pk_argument('pk', rdtype)
     ]
 
-    detail_args = [detail_pk_argument('pk', dtype)]
+    detail_args = [detail_pk_argument('pk', rdtype)]
 
     def get_create_data(self, nas):
         data = super(DispatchA, self).get_create_data(nas)
@@ -276,7 +264,7 @@ registrar.register(DispatchA())
 
 
 class DispatchAAAA(DispatchA):
-    dtype = 'AAAA'
+    rdtype = 'AAAA'
     def get_create_data(self, nas):
         data = super(DispatchAAAA, self).get_create_data()
         data['ip_type'] = 6  # Clobber this
@@ -292,13 +280,9 @@ registrar.register(DispatchAAAA())
 
 
 def dispatch(nas):
-    for dispatch in dispatches + dns_dispatches:
-        if dispatch.dtype == nas.dtype:
-            if hasattr(nas, 'action'):
-                return getattr(dispatch, nas.action)(nas)
-            elif hasattr(dispatch, 'dtype'):
+    if hasattr(nas, 'dtype'):
+        for dispatch in registrar.dispatches:
+            if dispatch.dtype == nas.dtype:
                 return getattr(dispatch, nas.dtype)(nas)
-            else:
-                print "ERROR: Something went terrible wrong"
-                print nas
-                return 1
+    for dispatch in registrar.dns_dispatches:
+        return getattr(dispatch, nas.action)(nas)

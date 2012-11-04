@@ -35,7 +35,7 @@ def view_arguments(field_name):
         return data
 
     def test_data():
-        return '', '--nopublic --private'
+        return '', '--no-public --private'
 
     return add_view_arguments, extract_views, test_data
 
