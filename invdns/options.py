@@ -1,5 +1,17 @@
 import argparse
+import pdb
 from tests.test_data import *
+
+def build_extractor(field_name, nas_name):
+    def extractor(nas):
+        if nas.action == 'update':
+            if not getattr(nas, nas_name):
+                return {}
+        data = {
+            field_name: getattr(nas, nas_name)
+            }
+        return data
+    return extractor
 
 ###############
 # DNS OPTIONS #
@@ -104,29 +116,28 @@ def fqdn_argument(field_name):
 
     return add_fqdn_argument, extract_label_domain_or_fqdn, test_data
 
-def ip_argument(field_name):
+def ip_argument(field_name, ip_type):
     def add_ip_argument(parser, required=True):
         parser.add_argument('--ip', default=None, type=str, dest='ip', help="A "
                 "string representation of an IP address.", required=required)
 
-    def extract_ip_str(nas):
-        if nas.action == 'update':
-            if not nas.ip:
-                return {}
-        data = {
-            field_name: nas.ip
-            }
-        return data
-
     def test_data():
-        return 'ip', TEST_IP
+        if ip_type == '4':
+            return 'ip', TEST_IPv4
+        elif ip_type == '6':
+            return 'ip', TEST_IPv6
 
-    return add_ip_argument, extract_ip_str, test_data
+    return add_ip_argument, build_extractor(field_name, 'ip'), test_data
 
 def target_argument(field_name):
     def add_target_argument(parser, required=True):
         parser.add_argument('--target', default=None, type=str, dest='target',
                 help="The target name of a record", required=required)
+
+    def test_data():
+        return 'target', TEST_FQDN
+
+    return add_target_argument, build_extractor(field_name, 'target'), test_data
 
 def comment_argument(field_name):
     def add_comment_argument(parser, required=False):

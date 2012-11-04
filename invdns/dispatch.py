@@ -194,7 +194,12 @@ class SearchDispatch(Dispatch):
             print "CLIENT ERROR! (Please email this output to a code monkey)"
             error_out(nas, search, resp)
             return
-        print resp.text
+        results = resp.text.strip()
+        if not results:
+            return 0
+        else:
+            print results
+            return 0
 
 
 registrar.register(SearchDispatch())
@@ -231,13 +236,15 @@ def build_detail_parser(dispatch, action_parser):
 class DispatchA(DNSDispatch):
     resource_name = 'addressrecord'
     rdtype = 'A'
+    ip_type = '4'
 
     create_args = [
         fqdn_argument('fqdn'), # ~> (labmda, lambda)
         ttl_argument('ttl'),
-        ip_argument('ip_str'),
+        ip_argument('ip_str', ip_type),
         view_arguments('views'),
-        comment_argument('comment')]
+        comment_argument('comment')
+    ]
 
     update_args = create_args + [
         update_pk_argument('pk', rdtype)
@@ -251,32 +258,101 @@ class DispatchA(DNSDispatch):
 
     def get_create_data(self, nas):
         data = super(DispatchA, self).get_create_data(nas)
-        data['ip_type'] = 4
+        data['ip_type'] = self.ip_type
         return data
 
     def get_update_data(self, nas):
         data = super(DispatchA, self).get_update_data(nas)
-        data['ip_type'] = 4
+        data['ip_type'] = self.ip_type
         return data
 
+class DispatchPTR(DNSDispatch):
+    resource_name = 'ptr'
+    rdtype = 'PTR'
 
-registrar.register(DispatchA())
+    create_args = [
+        ttl_argument('ttl'),
+        ip_argument('ip_str', '4'),
+        view_arguments('views'),
+        target_argument('name'),
+        comment_argument('comment')
+    ]
 
+    update_args = create_args + [
+        update_pk_argument('pk', rdtype)
+    ]
 
-class DispatchAAAA(DispatchA):
-    rdtype = 'AAAA'
+    delete_args = [
+        delete_pk_argument('pk', rdtype)
+    ]
+
+    detail_args = [detail_pk_argument('pk', rdtype)]
+
+    def determine_ip_type(self, ip_str):
+        if ip_str.find(':') > -1:
+            ip_type = '6'
+        else:
+            ip_type = '4' # Default to 4
+        return ip_type
+
     def get_create_data(self, nas):
-        data = super(DispatchAAAA, self).get_create_data()
-        data['ip_type'] = 6  # Clobber this
+        data = super(DispatchPTR, self).get_create_data(nas)
+        data['ip_type'] = self.determine_ip_type(data.get('ip_str', ''))
         return data
 
     def get_update_data(self, nas):
-        data = super(DispatchAAAA, self).get_update_data(nas)
-        data['ip_type'] = 6  # Clobber this
+        data = super(DispatchPTR, self).get_update_data(nas)
+        data['ip_type'] = self.determine_ip_type(data.get('ip_str', ''))
         return data
 
+class DispatchAAAA(DispatchA):
+    rdtype = 'AAAA'
+    ip_type = '6'
+    create_args = [
+        fqdn_argument('fqdn'), # ~> (labmda, lambda)
+        ttl_argument('ttl'),
+        ip_argument('ip_str', ip_type),
+        view_arguments('views'),
+        comment_argument('comment')
+    ]
 
+    update_args = create_args + [
+        update_pk_argument('pk', rdtype)
+    ]
+
+    delete_args = [
+        delete_pk_argument('pk', rdtype)
+    ]
+
+    detail_args = [detail_pk_argument('pk', rdtype)]
+
+
+class DispatchCNAME(DNSDispatch):
+    resource_name = 'cname'
+    rdtype = 'CNAME'
+
+    create_args = [
+        fqdn_argument('fqdn'), # ~> (labmda, lambda)
+        ttl_argument('ttl'),
+        target_argument('target'),
+        view_arguments('views'),
+        comment_argument('comment')]
+
+    update_args = create_args + [
+        update_pk_argument('pk', rdtype)
+    ]
+
+    delete_args = [
+        delete_pk_argument('pk', rdtype)
+    ]
+
+    detail_args = [detail_pk_argument('pk', rdtype)]
+
+
+registrar.register(DispatchA())
 registrar.register(DispatchAAAA())
+registrar.register(DispatchCNAME())
+registrar.register(DispatchPTR())
 
 
 def dispatch(nas):
@@ -285,4 +361,5 @@ def dispatch(nas):
             if dispatch.dtype == nas.dtype:
                 return getattr(dispatch, nas.dtype)(nas)
     for dispatch in registrar.dns_dispatches:
-        return getattr(dispatch, nas.action)(nas)
+        if dispatch.rdtype == nas.dtype:
+            return getattr(dispatch, nas.action)(nas)
