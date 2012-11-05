@@ -2,7 +2,7 @@ import pdb
 import subprocess, shlex
 import unittest
 import sys
-sys.path.insert(0, "/home/juber/repositories/inv-tool")
+sys.path.insert(0, "/home/juber/repositories/invdns")
 import simplejson as json
 from gettext import gettext as _
 
@@ -89,6 +89,16 @@ def run_tests():
             self.assertEqual(ret['http_status'], 200)
             self.assertTrue('pk' in ret)
             self.assertEqual(ret['pk'], obj_pk)
+
+            # Make sure an update doesn't require all the fields to be
+            # specified
+            blank_update_command = _("{0} {1} update --pk {2}".format(EXEC_PATH,
+                                                    dispatch.rdtype, obj_pk))
+            ret, errors = call_to_json(blank_update_command)
+            if errors:
+                self.fail(errors)
+            self.assertTrue('http_status' in ret)
+            self.assertEqual(ret['http_status'], 202)
 
             # Delete the object
             delete_command = _("{0} {1} delete --pk {2}".format(EXEC_PATH,

@@ -216,7 +216,7 @@ def build_update_parser(dispatch, action_parser):
     update_parser = action_parser.add_parser('update', help="Update "
                         "a(n) {0} record".format(dispatch.rdtype))
     for add_arg, extract_arg, test_method in dispatch.update_args:
-        add_arg(update_parser)
+        add_arg(update_parser, required=False)
 
 
 def build_delete_parser(dispatch, action_parser):
@@ -239,7 +239,7 @@ class DispatchA(DNSDispatch):
     ip_type = '4'
 
     create_args = [
-        fqdn_argument('fqdn'), # ~> (labmda, lambda)
+        fqdn_argument('fqdn', rdtype), # ~> (labmda, lambda)
         ttl_argument('ttl'),
         ip_argument('ip_str', ip_type),
         view_arguments('views'),
@@ -309,7 +309,7 @@ class DispatchAAAA(DispatchA):
     rdtype = 'AAAA'
     ip_type = '6'
     create_args = [
-        fqdn_argument('fqdn'), # ~> (labmda, lambda)
+        fqdn_argument('fqdn', rdtype), # ~> (labmda, lambda)
         ttl_argument('ttl'),
         ip_argument('ip_str', ip_type),
         view_arguments('views'),
@@ -332,8 +332,32 @@ class DispatchCNAME(DNSDispatch):
     rdtype = 'CNAME'
 
     create_args = [
-        fqdn_argument('fqdn'), # ~> (labmda, lambda)
+        fqdn_argument('fqdn', rdtype), # ~> (labmda, lambda)
         ttl_argument('ttl'),
+        target_argument('target'),
+        view_arguments('views'),
+        comment_argument('comment')]
+
+    update_args = create_args + [
+        update_pk_argument('pk', rdtype)
+    ]
+
+    delete_args = [
+        delete_pk_argument('pk', rdtype)
+    ]
+
+    detail_args = [detail_pk_argument('pk', rdtype)]
+
+class DispatchSRV(DNSDispatch):
+    resource_name = 'srv'
+    rdtype = 'SRV'
+
+    create_args = [
+        fqdn_argument('fqdn', rdtype), # ~> (labmda, lambda)
+        ttl_argument('ttl'),
+        port_argument('port'),
+        weight_argument('weight'),
+        priority_argument('priority'),
         target_argument('target'),
         view_arguments('views'),
         comment_argument('comment')]
@@ -353,6 +377,7 @@ registrar.register(DispatchA())
 registrar.register(DispatchAAAA())
 registrar.register(DispatchCNAME())
 registrar.register(DispatchPTR())
+registrar.register(DispatchSRV())
 
 
 def dispatch(nas):

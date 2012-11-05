@@ -76,7 +76,8 @@ def _add_label_argument(parser, required=True):
             "used and is analigouse to using '@' in a zone file (the record "
             "will get it's domain's name as it's fqdn).", required=False)
 
-def fqdn_argument(field_name):
+def fqdn_argument(field_name, rdtype):
+    # We need rdtype because SRV requires a '_' to prefix it's test data
     def add_fqdn_argument(parser, required=True):
         _add_label_argument(parser, required)
         _add_domain_argument(parser, required)
@@ -112,7 +113,10 @@ def fqdn_argument(field_name):
         raise Exception("Shouldn't have got here")
 
     def test_data():
-        return 'fqdn', TEST_FQDN
+        if rdtype == "SRV":
+            return 'fqdn', "_" + TEST_FQDN
+        else:
+            return 'fqdn', TEST_FQDN
 
     return add_fqdn_argument, extract_label_domain_or_fqdn, test_data
 
@@ -140,24 +144,19 @@ def target_argument(field_name):
     return add_target_argument, build_extractor(field_name, 'target'), test_data
 
 def comment_argument(field_name):
-    def add_comment_argument(parser, required=False):
+    def add_comment_argument(parser, **kwargs):
         parser.add_argument('--comment', default="", type=str, dest='comment',
                 help="Tell us a little about this record", required=False)
-    def extract_comment(nas):
-        data = {}
-        if nas.comment:
-            data[field_name] = nas.comment
-        return data
 
     def test_data():
         return 'comment', TEST_COMMENT
 
-    return add_comment_argument, extract_comment, test_data
+    return add_comment_argument, build_extractor(field_name, 'comment'), test_data
 
 def text_argument(field_name):
     def add_text_argument(parser, required=True):
         parser.add_argument('--text', default=None, type=str, dest='text',
-                help="The text data.", required=False)
+                help="The text data.", required=required)
 
 def write_num_argument(parser, name, dest, help_text, required=False):
     parser.add_argument('--{0}'.format(name), default=None, type=int,
@@ -165,7 +164,7 @@ def write_num_argument(parser, name, dest, help_text, required=False):
     return parser
 
 def ttl_argument(field_name):
-    def add_ttl_argument(parser, required=True):
+    def add_ttl_argument(parser, **kwargs):
         write_num_argument(parser, 'ttl', 'ttl', "The ttl "
                             "of a record.", required=False)
     def extract_ttl(nas):
@@ -177,12 +176,12 @@ def ttl_argument(field_name):
     def test_data():
         return 'ttl', TEST_TTL
 
-    return add_ttl_argument, extract_ttl, test_data
+    return add_ttl_argument, build_extractor(field_name, 'ttl'), test_data
 
 def key_argument(field_name):
     def add_key_argument(parser, required=True):
         parser.add_argument('--key', default=None, type=str, dest='sshfp_key',
-                help="The key data.", required=True)
+                help="The key data.", required=required)
 
 def algorithm_argument(field_name):
     def add_algorithm_argument(parser, required=True):
@@ -206,21 +205,35 @@ def priority_argument(field_name):
         write_num_argument(parser, 'priority', 'priority',
                             "The priority number of a record", required=required)
 
+    def test_data():
+        return 'priority', TEST_PRIORITY
+
+    return add_priority_argument, build_extractor(field_name, 'priority'), test_data
+
 def port_argument(field_name):
     def add_port_argument(parser, required=True):
         write_num_argument(parser, 'port', 'port', "The "
                             "target port of an SRV " "record", required=required)
 
+    def test_data():
+        return 'port', TEST_PORT
+
+    return add_port_argument, build_extractor(field_name, 'port'), test_data
+
 def weight_argument(field_name):
     def add_weight_argument(parser, required=True):
         write_num_argument(parser, 'weight', 'weight', "The "
                             "weight number of an SRV record", required=required)
+    def test_data():
+        return 'weight', TEST_WEIGHT
+
+    return add_weight_argument, build_extractor(field_name, 'weight'), test_data
 
 def _extract_pk(nas, field_name):
     return {field_name: nas.pk}
 
 def update_pk_argument(field_name, rdtype):
-    def add_update_pk_argument(parser):
+    def add_update_pk_argument(parser, **kwargs):
         parser.add_argument('--{0}'.format("pk"), required=True, default=None,
                 type=int, dest='pk', help="The database integer primary key (id) "
                 "of the {0} you are updating.".format(rdtype))
@@ -233,7 +246,7 @@ def update_pk_argument(field_name, rdtype):
 
 
 def detail_pk_argument(field_name, rdtype):
-    def add_detail_pk_argument(parser):
+    def add_detail_pk_argument(parser, **kwargs):
         parser.add_argument('--{0}'.format("pk"), required=True, default=None,
                 type=int, dest='pk', help="The database integer primary key (id) "
                 "of the {0} you are updating.".format(rdtype))
@@ -245,7 +258,8 @@ def detail_pk_argument(field_name, rdtype):
     return add_detail_pk_argument, extract_pk, lambda: None
 
 def delete_pk_argument(field_name, rdtype):
-    def add_delete_pk_argument(parser):
+    # Required has no affect.
+    def add_delete_pk_argument(parser, **kwargs):
         parser.add_argument('--{0}'.format("pk"), default=None, type=int,
                 dest='pk', help="Delete the {0} record with the database primary "
                 "key of 'pk'".format(rdtype), required=True)
