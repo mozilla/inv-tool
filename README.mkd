@@ -2,17 +2,19 @@ A Command Line Interface for poking at Mozilla's Inventory project.
 
 An Example
 ----------
-To create the A record you would first look at the output of the command:
+Let's create an A record. Before using a command it can be useful to look at
+the help text of the command.
 
 ```
 invdns A create --help
 ```
 
-Not that you know what the options are let's create the A record `host1.scl3.mozilla.com A 10.2.3.4`.
+Now that you know what the options are, let's create the A record
+`host1.scl3.mozilla.com A 10.2.3.4`.
 
 The command will look something like this:
 ```
-~/ » ./bin/invdns A create --fqdn host1.scl3.mozilla.com --ip 10.2.3.4
+~/ » invdns A create --fqdn host1.scl3.mozilla.com --ip 10.2.3.4
 http_status: 201 (created)
 comment:
 domain: scl3.mozilla.com
@@ -29,16 +31,21 @@ resource_uri: /mozdns/api/v1_dns/addressrecord/13033/
 ```
 
 Whenever you create an object the tool will display information about that
-object. Note that the object does not belong to any view. To add the object to
+object.
+
+The A record we just created does not belong to any view. To add the object to
 the private view you can run this command:
 
 ```
 ~/ » invdns A update --pk 13033 --private
+http_status: 202 (Accepted)
+...
+...
 ```
 
-The `--pk` flag tells the api which object you want to update. The pk field is
-returned to you when you create the object and can be used to update, delete,
-or show details about an object.
+The `--pk` flag tells the api which object you want to update. The `pk` value
+is returned to you when you first created the object and can be used to update,
+delete, or show details about an object.
 
 _An object's primary key (pk) is only unique within it's own type. (The
 exception to this rule is A and AAAA records which are considered be the same type
@@ -59,6 +66,7 @@ Let's add a comment to out record.
 
 ```
 ~/ » invdns A update --pk 13033 --comment "foobar comment"
+http_status: 202 (Accepted)
 ...
 ...
 ```
@@ -67,10 +75,21 @@ Every call to update is translated into a PATCH request that is sent to the
 server. The request contains the fields that should updated and the values that
 should be used to patch the fields.
 
+If we wanted to change the `ip` address of our A record we would use the `--ip`
+flag and specify a new ip.
+
+```
+~/ » invdns A update --pk 13033 --ip 33.33.33.33
+http_status: 202 (Accepted)
+...
+...
+```
+
 You can get a detailed description of an object by using the `detail` command.
 
 ```
 ~/ » invdns A detail --pk 13033
+http_status: 200 (Success)
 ...
 ...
 ```
@@ -79,8 +98,7 @@ To delete an object use the `delete` command.
 
 ```
 ~/ » invdns A delete --pk 13033
-...
-...
+http_status: 204 (request fulfilled)
 ```
 
 Notes on installing:
