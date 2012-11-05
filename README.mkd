@@ -1,28 +1,90 @@
 A Command Line Interface for poking at Mozilla's Inventory project.
 
-
-Some exploratory commands.
-
-```
-./bin/invdns --help
-```
+An Example
+----------
+To create the A record you would first look at the output of the command:
 
 ```
-./bin/invdns search -q
+invdns A create --help
 ```
 
+Not that you know what the options are let's create the A record `host1.scl3.mozilla.com A 10.2.3.4`.
+
+The command will look something like this:
 ```
-./bin/invdns AAAA --help
+~/ » ./bin/invdns A create --fqdn host1.scl3.mozilla.com --ip 10.2.3.4
+http_status: 201 (created)
+comment:
+domain: scl3.mozilla.com
+views: []
+ttl: 3600
+fqdn: host1.scl3.mozilla.com
+label: host1
+meta: {u'soa': u'SOA for scl3.mozilla.com', u'fqdn': u'host1.scl3.mozilla.com'}
+http_status: 201
+ip_type: 4
+ip_str: 10.2.3.4
+pk: 13033
+resource_uri: /mozdns/api/v1_dns/addressrecord/13033/
 ```
 
+Whenever you create an object the tool will display information about that
+object. Note that the object does not belong to any view. To add the object to
+the private view you can run this command:
+
 ```
-./bin/invdns AAAA update --help
+~/ » invdns A update --pk 13033 --private
 ```
 
-Notes on installing (eventually this will be done within setup.py)
+The `--pk` flag tells the api which object you want to update. The pk field is
+returned to you when you create the object and can be used to update, delete,
+or show details about an object.
 
-Libraries needed:
+_An object's primary key (pk) is only unique within it's own type. (The
+exception to this rule is A and AAAA records which are considered be the same type
+of object)._
+
+If you forget an object's primary key, you can look the object up by using the
+`search` command. Printed before every object is the object's primary key.
+Let's look up our A record.
+
 ```
-    requests
-    simplejson
+~/ » invdns search -q "host1.scl"
+13033 host1.scl3.mozilla.com.                  3600 IN  A    10.2.3.4
+```
+
+It's primary key is indeed 13033.
+
+Let's add a comment to out record.
+
+```
+~/ » invdns A update --pk 13033 --comment "foobar comment"
+...
+...
+```
+
+Every call to update is translated into a PATCH request that is sent to the
+server. The request contains the fields that should updated and the values that
+should be used to patch the fields.
+
+You can get a detailed description of an object by using the `detail` command.
+
+```
+~/ » invdns A detail --pk 13033
+...
+...
+```
+
+To delete an object use the `delete` command.
+
+```
+~/ » invdns A delete --pk 13033
+...
+...
+```
+
+Notes on installing:
+
+```
+pip install -r requirements.txt
 ```
