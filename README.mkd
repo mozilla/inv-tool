@@ -52,7 +52,7 @@ exception to this rule is A and AAAA records which are considered be the same ty
 of object)._
 
 If you forget an object's primary key, you can look the object up by using the
-`search` command. Printed before every object is the object's primary key.
+`search` command where printed before every object is the object's primary key.
 Let's look up our A record.
 
 ```
@@ -62,7 +62,7 @@ Let's look up our A record.
 
 It's primary key is indeed 13033.
 
-Let's add a comment to out record.
+Let's add a comment to our record.
 
 ```
 ~/ » invdns A update --pk 13033 --comment "foobar comment"
@@ -72,8 +72,8 @@ http_status: 202 (Accepted)
 ```
 
 Every call to update is translated into a PATCH request that is sent to the
-server. The request contains the fields that should updated and the values that
-should be used to patch the fields.
+server. The request contains the fields and values that should be used to patch
+the object.
 
 If we wanted to change the `ip` address of our A record we would use the `--ip`
 flag and specify a new ip.
@@ -122,7 +122,7 @@ When being displayed by the `search` command an object is always in the format:
 <pk>    <lhs (left hand side)> <rdclass> <ttl> <rdtpe> <rhs (right hand side)>
 ```
 
-We can exploit this pattern and use a tool like awk to do mass updates/deletes.
+We can exploit this pattern and use a tool like `awk` to do mass updates/deletes.
 
 
 For example, we can add all objects that have the string `testfqdn` in their
@@ -139,7 +139,11 @@ invdns PTR update --pk 13483 --private --no-public
 
 
 Notes on installing:
+--------------------
 
 ```
 pip install -r requirements.txt
+cp config.cfg-dist config.cfg
 ```
+
+Make sure to fill in the correct options in the config file
