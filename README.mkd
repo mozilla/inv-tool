@@ -116,7 +116,7 @@ JSON format.
 
 Cook Book
 ---------
-When being output by the `search` command an object is always in the format:
+When being displayed by the `search` command an object is always in the format:
 
 ```
 <pk>    <lhs (left hand side)> <rdclass> <ttl> <rdtpe> <rhs (right hand side)>
@@ -129,8 +129,12 @@ For example, add all objects that have the string `testfqdn` in their name to
 the private view and remove them from the public view:
 
 ```
-./bin/invdns search -q "testfqdn" | awk '{ print "./bin/invdns " $5  " update \
-                                            --pk " ( " --private --no-public"}'
+~/ » invdns search -q "testfqdn" | awk '{ print "./bin/invdns " $5  " update --pk " $1 " --private --no-public"}'
+
+./bin/invdns SRV update --pk 134 --private --no-public
+./bin/invdns A update --pk 13052 --private --no-public
+./bin/invdns AAAA update --pk 13053 --private --no-public
+./bin/invdns PTR update --pk 13483 --private --no-public
 ```
 
 
