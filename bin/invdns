@@ -255,12 +255,14 @@ add_delete_pk_argument(intr_delete_parser, 'INTR')
 if __name__ == "__main__":
     inv_parser = argparse.ArgumentParser(prog='invdns')
     inv_parser.add_argument('--format', default='text', type=str,
-                choices=['json', 'text'],
+                choices=['json', 'text', 'silent'],
                 help="The format the output")
     base_parser = inv_parser.add_subparsers(dest='dtype')
     build_dns_parsers(base_parser)
-    resp_code = dispatch(inv_parser.parse_args(sys.argv[1:]))
-    if resp_code == 1:
-        sys.exit(1)
+    nas = inv_parser.parse_args(sys.argv[1:])
+    resp_code, resp_list = dispatch(nas)
+    if nas.format == 'silent':
+        pass
     else:
-        sys.exit(0)
+        print '\n'.join(resp_list)
+    sys.exit(resp_code)

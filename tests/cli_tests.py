@@ -2,7 +2,7 @@ import pdb
 import subprocess, shlex
 import unittest
 import sys
-sys.path.insert(0, "/home/juber/repositories/invdns")
+sys.path.insert(0, "/home/juber/repositories/inv-tool")
 import simplejson as json
 from gettext import gettext as _
 
@@ -26,13 +26,15 @@ def call_to_json(command_str):
                            stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = p.communicate()
     if stderr:
-        return None, stderr
+        return None, stderr, p.returncode
 
     stdout = stdout.replace('u\'', '"').replace('\'', '"').strip('\n')
     try:
-        return json.loads(stdout, 'unicode'), None
+        return json.loads(stdout, 'unicode'), None, p.returncode
     except json.decoder.JSONDecodeError, e:
-        return None, "Ret was: {0}. Got error: {1}".format(stdout, str(e))
+        return (None,
+                "Ret was: {0}. Got error: {1}".format(stdout, str(e)),
+                p.returncode)
 
 def run_tests():
 
@@ -47,10 +49,12 @@ def run_tests():
         def place_holder(self):
             # Create the object
             expected_status, command = commands[0]
-            ret, errors = call_to_json(command)
+            ret, errors, rc = call_to_json(command)
 
             if errors:
                 self.fail(errors)
+
+            self.assertEqual(0, rc)
 
             self.assertTrue('http_status' in ret)
             self.assertEqual(ret['http_status'], expected_status)
@@ -60,9 +64,10 @@ def run_tests():
             # Look up the object
             detail_command = _("{0} {1} detail --pk {2}".format(EXEC_PATH,
                                                     dispatch.rdtype, obj_pk))
-            ret, errors = call_to_json(detail_command)
+            ret, errors, rc = call_to_json(detail_command)
             if errors:
                 self.fail(errors)
+            self.assertEqual(0, rc)
 
             self.assertTrue('http_status' in ret)
             self.assertEqual(ret['http_status'], 200)
@@ -72,7 +77,8 @@ def run_tests():
             # The Update call
             expected_status, command = commands[1]
             command = "{0} --pk {1}".format(command, obj_pk)
-            ret, errors = call_to_json(command)
+            ret, errors, rc = call_to_json(command)
+            self.assertEqual(0, rc)
 
             if errors:
                 self.fail(errors)
@@ -81,9 +87,10 @@ def run_tests():
             self.assertEqual(ret['http_status'], expected_status)
 
             # Look up the object using the calculated detail command
-            ret, errors = call_to_json(detail_command)
+            ret, errors, rc = call_to_json(detail_command)
             if errors:
                 self.fail(errors)
+            self.assertEqual(0, rc)
 
             self.assertTrue('http_status' in ret)
             self.assertEqual(ret['http_status'], 200)
@@ -94,25 +101,28 @@ def run_tests():
             # specified
             blank_update_command = _("{0} {1} update --pk {2}".format(EXEC_PATH,
                                                     dispatch.rdtype, obj_pk))
-            ret, errors = call_to_json(blank_update_command)
+            ret, errors, rc = call_to_json(blank_update_command)
             if errors:
                 self.fail(errors)
+            self.assertEqual(0, rc)
             self.assertTrue('http_status' in ret)
             self.assertEqual(ret['http_status'], 202)
 
             # Delete the object
             delete_command = _("{0} {1} delete --pk {2}".format(EXEC_PATH,
                                                     dispatch.rdtype, obj_pk))
-            ret, errors = call_to_json(delete_command)
+            ret, errors, rc = call_to_json(delete_command)
             if errors:
                 self.fail(errors)
+            self.assertEqual(0, rc)
             self.assertTrue('http_status' in ret)
             self.assertEqual(ret['http_status'], 204)
 
             # Detail the object (expect a 404)
-            ret, errors = call_to_json(detail_command)
+            ret, errors, rc = call_to_json(detail_command)
             if errors:
                 self.fail(errors)
+            self.assertEqual(1, rc)
 
             self.assertTrue('http_status' in ret)
             self.assertEqual(ret['http_status'], 404)

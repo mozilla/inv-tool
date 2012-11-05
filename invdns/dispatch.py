@@ -28,57 +28,61 @@ class Dispatch(object):
 
     def handle_resp(self, nas, data, resp):
         def format_response(resp_msg, user_msg):
+            resp_list = []
             if nas.format == 'text':
-                print user_msg
+                resp_list.append(user_msg)
                 for k, v in resp_msg.iteritems():
-                    print "{0}: {1}".format(k, v)
+                    resp_list.append("{0}: {1}".format(k, v))
             if nas.format == 'json':
-                print json.dumps(resp_msg)
+                resp_list.append(json.dumps(resp_msg))
+            return resp_list
 
-        resp_msg = self.get_resp_text(resp)
+        resp_msg = self.get_resp_dict(resp)
+
         if resp.status_code == 404:
-            format_response(resp_msg, "http_status: 404 (file not found)")
+            return 1, format_response(resp_msg,
+                                    "http_status: 404 (file not found)")
         elif resp.status_code == 204:
             if nas.format == 'text':
-                print "http_status: 204 (request fulfilled)"
+                return 0, ["http_status: 204 (request fulfilled)"]
             else:
-                print json.dumps(resp_msg)
+                return 0, [json.dumps(resp_msg)]
         elif resp.status_code == 500:
-            print "SERVER ERROR! (Please email this output to a code monkey)"
-            self.error_out(data, resp)
+            resp_list = [_("SERVER ERROR! (Please email this output to a "
+                            "code monkey)")]
+            return self.error_out(data, resp, resp_list=resp_list)
         elif resp.status_code == 400:
             # Bad Request
             if nas.format == 'json':
-                print json.dumps(resp_msg)
-            elif nas.format in ('text', 'bind'):
+                return 1, [json.dumps(resp_msg)]
+            elif nas.format == 'text':
                 if 'error_messages' in resp_msg:
-                    print self.get_errors(resp_msg['error_messages'])
-            return 1
+                    return self.get_errors(resp_msg['error_messages'])
+                else:
+                    return 1, ["http_status: 400 (bad request)"]
         elif resp.status_code == 201:
-            format_response(resp_msg, "http_status: 201 (created)")
-            return 0
+            return 0, format_response(resp_msg, "http_status: 201 (created)")
         elif resp.status_code == 202:
-            format_response(resp_msg, "http_status: 202 (Accepted)")
-            return 0
+            return 0, format_response(resp_msg, "http_status: 202 (Accepted)")
         elif resp.status_code == 200:
-            format_response(resp_msg, "http_status: 200 (Success)")
-            return 0
+            return 0, format_response(resp_msg, "http_status: 200 (Success)")
         else:
-            print "Client didn't understand the response."
-            print "CLIENT ERROR! (Please email this output to a code monkey)"
-            self.error_out(nas, data, resp)
-            return 1
+            resp_list = []
+            resp_list.append("Client didn't understand the response.")
+            resp_list.append("CLIENT ERROR! (Please email this output to a "
+                             "code monkey)")
+            return self.error_out(nas, data, resp, resp_list=resp_list)
 
     def get_errors(self, resp_msg):
         messages = json.loads(resp_msg, 'unicode')
-        errors = ''
+        errors = []
         for error, msg in messages.iteritems():
             if error == '__all__':
                 error = "Object Error"
-            errors += "Error: {0}  {1}".format(error, ', '.join(msg))
-        return errors
+            errors.append("Error: {0}  {1}".format(error, ', '.join(msg)))
+        return 1, errors
 
-    def get_resp_text(self, resp):
+    def get_resp_dict(self, resp):
         if resp.text:
             # Tasty pie returns json that is unicode. Thats ok.
             msg = json.loads(resp.text, 'unicode')
@@ -87,11 +91,11 @@ class Dispatch(object):
         msg['http_status'] = resp.status_code
         return msg
 
-    def error_out(self, nas, data, resp):
-        print nas
-        print data
-        pprint.pprint(vars(resp))
-        return 1
+    def error_out(self, nas, data, resp, resp_list=[]):
+        resp_list.append(str(nas))
+        resp_list.append(str(data))
+        resp_list.append(pprint(vars(resp)))
+        return 1, resp_list
 
 
 class DNSDispatch(Dispatch):
@@ -191,15 +195,15 @@ class SearchDispatch(Dispatch):
         search = {'search': nas.query}
         resp = requests.get(url, params=search, headers=headers, auth=auth)
         if resp.status_code == 500:
-            print "CLIENT ERROR! (Please email this output to a code monkey)"
-            error_out(nas, search, resp)
+            resp_list = [_("CLIENT ERROR! (Please email this output to "
+                         "a code monkey)")]
+            self.error_out(nas, search, resp, resp_list=resp_list)
             return
         results = resp.text.strip()
         if not results:
-            return 0
+            return 0, ['']
         else:
-            print results
-            return 0
+            return 0, [results]
 
 
 registrar.register(SearchDispatch())
