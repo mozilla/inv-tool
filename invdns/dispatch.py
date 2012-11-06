@@ -201,7 +201,7 @@ class SearchDispatch(Dispatch):
             return
         results = resp.text.strip()
         if not results:
-            return 0, ['']
+            return 0, []
         else:
             return 0, [results]
 

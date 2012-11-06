@@ -9,29 +9,6 @@ import pdb
 
 
 """
-def dns_command_template(rdtype):
-    recrod_base_parser = base_parser.add_parser(rdtype, help="The interface "
-            "for {0} records".format(rdtype), add_help=True)
-    action_parser = recrod_base_parser.add_subparsers(help="{0} record "
-                "actions".format(rdtype), dest='action')
-    create_parser = action_parser.add_parser('create', help="Create "
-                        "an {0} record".format(rdtype))
-    update_parser = action_parser.add_parser('update', help="Update "
-                        "an {0} record".format(rdtype))
-    delete_parser = action_parser.add_parser('delete', help="Delete "
-                        "an {0} record".format(rdtype))
-    detail_parser = action_parser.add_parser('detail', help="Get details "
-                        "about a(n) {0} object".format(rdtype))
-    return action_parser, create_parser, update_parser, delete_parser
-
-# Search #
-# Search is a top level command. It does more than records ;)
-search = base_parser.add_parser('search', help="Search for stuff.",
-                                add_help=True)
-search.add_argument('-q', dest='query', type=str, help="A query string "
-                    "surrounded by quotes. I.E `search -q "
-                    "'foo.bar.mozilla.com'`", required=True)
-
 # Records #
 # A, AAAA, PTR, CNAME, MX, NS, SRV, TXT, SSHFP and SOA
 
@@ -116,8 +93,6 @@ if __name__ == "__main__":
     build_dns_parsers(base_parser)
     nas = inv_parser.parse_args(sys.argv[1:])
     resp_code, resp_list = dispatch(nas)
-    if nas.p_silent:
-        pass
-    else:
-        print '\n'.join(resp_list)
+    if not nas.p_silent and resp_list:
+        print '\n'.join(resp_list),
     sys.exit(resp_code)

@@ -9,7 +9,7 @@ from gettext import gettext as _
 from invdns.dispatch import registrar
 from invdns.dispatch import DNSDispatch
 
-EXEC_PATH = "./bin/invdns --json"
+EXEC = "./bin/invdns --json"
 
 def test_method_to_params(test_case):
     if not test_case:
@@ -62,7 +62,7 @@ def run_tests():
             obj_pk = ret['pk']
 
             # Look up the object
-            detail_command = _("{0} {1} detail --pk {2}".format(EXEC_PATH,
+            detail_command = _("{0} {1} detail --pk {2}".format(EXEC,
                                                     dispatch.rdtype, obj_pk))
             ret, errors, rc = call_to_json(detail_command)
             if errors:
@@ -99,7 +99,7 @@ def run_tests():
 
             # Make sure an update doesn't require all the fields to be
             # specified
-            blank_update_command = _("{0} {1} update --pk {2}".format(EXEC_PATH,
+            blank_update_command = _("{0} {1} update --pk {2}".format(EXEC,
                                                     dispatch.rdtype, obj_pk))
             ret, errors, rc = call_to_json(blank_update_command)
             if errors:
@@ -109,7 +109,7 @@ def run_tests():
             self.assertEqual(ret['http_status'], 202)
 
             # Delete the object
-            delete_command = _("{0} {1} delete --pk {2}".format(EXEC_PATH,
+            delete_command = _("{0} {1} delete --pk {2}".format(EXEC,
                                                     dispatch.rdtype, obj_pk))
             ret, errors, rc = call_to_json(delete_command)
             if errors:
@@ -137,12 +137,12 @@ def run_tests():
 
     def build_testcases(dispatch):
         commands = []
-        command = [EXEC_PATH, dispatch.rdtype, 'create']
+        command = [EXEC, dispatch.rdtype, 'create']
         for add_arg, extract_arg, test_method in dispatch.create_args:
             command.append(test_method_to_params(test_method()))
         commands.append((201, ' '.join(command)))
 
-        command = [EXEC_PATH, dispatch.rdtype, 'update']
+        command = [EXEC, dispatch.rdtype, 'update']
         for add_arg, extract_arg, test_method in dispatch.update_args:
             command.append(test_method_to_params(test_method()))
         commands.append((202, ' '.join(command)))
