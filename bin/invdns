@@ -54,49 +54,6 @@ map(lambda apply_arg: apply_arg(ns_update_parser, required=False), args)
 # Delete NS Record options
 add_delete_pk_argument(ns_delete_parser, 'NS')
 
-# MX Record
-(mx_action_parser, mx_create_parser, mx_update_parser,
-        mx_delete_parser) = dns_command_template('MX')
-
-# Create MX Record options
-args = [add_label_argument,
-        add_domain_argument,
-        add_fqdn_argument,
-        add_ttl_argument,
-        add_priority_argument,
-        add_target_argument,
-        add_view_arguments,
-        add_comment_argument]
-map(lambda apply_arg: apply_arg(mx_create_parser), args)
-
-# Update MX Record options
-add_update_pk_argument(mx_update_parser, 'MX')
-map(lambda apply_arg: apply_arg(mx_update_parser, required=False), args)
-
-# Delete MX Record options
-add_delete_pk_argument(mx_delete_parser, 'MX')
-
-# TXT Record
-(txt_action_parser, txt_create_parser, txt_update_parser,
-        txt_delete_parser) = dns_command_template('TXT')
-
-# Create TXT Record options
-args = [add_label_argument,
-        add_domain_argument,
-        add_fqdn_argument,
-        add_ttl_argument,
-        add_text_argument,
-        add_view_arguments,
-        add_comment_argument]
-map(lambda apply_arg: apply_arg(txt_create_parser), args)
-
-# Update TXT Record options
-add_update_pk_argument(txt_update_parser, 'TXT')
-map(lambda apply_arg: apply_arg(txt_update_parser, required=False), args)
-
-# Delete TXT Record options
-add_delete_pk_argument(txt_delete_parser, 'TXT')
-
 # SSHFP Record
 (sshfp_action_parser, sshfp_create_parser, sshfp_update_parser,
         sshfp_delete_parser) = dns_command_template('SSHFP')

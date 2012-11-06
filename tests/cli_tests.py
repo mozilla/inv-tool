@@ -9,7 +9,7 @@ from gettext import gettext as _
 from invdns.dispatch import registrar
 from invdns.dispatch import DNSDispatch
 
-EXEC_PATH = "./bin/invdns --format json"
+EXEC_PATH = "./bin/invdns --json"
 
 def test_method_to_params(test_case):
     if not test_case:

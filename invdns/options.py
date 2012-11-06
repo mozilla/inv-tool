@@ -4,9 +4,8 @@ from tests.test_data import *
 
 def build_extractor(field_name, nas_name):
     def extractor(nas):
-        if nas.action == 'update':
-            if not getattr(nas, nas_name):
-                return {}
+        if not getattr(nas, nas_name):
+            return {}
         data = {
             field_name: getattr(nas, nas_name)
             }
@@ -157,6 +156,10 @@ def text_argument(field_name):
     def add_text_argument(parser, required=True):
         parser.add_argument('--text', default=None, type=str, dest='text',
                 help="The text data.", required=required)
+    def test_data():
+        return 'text', TEST_TEXT
+
+    return add_text_argument, build_extractor(field_name, 'text'), test_data
 
 def write_num_argument(parser, name, dest, help_text, required=False):
     parser.add_argument('--{0}'.format(name), default=None, type=int,

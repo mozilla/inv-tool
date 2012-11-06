@@ -376,12 +376,57 @@ class DispatchSRV(DNSDispatch):
 
     detail_args = [detail_pk_argument('pk', rdtype)]
 
+class DispatchMX(DNSDispatch):
+    resource_name = 'mx'
+    rdtype = 'MX'
+
+    create_args = [
+        fqdn_argument('fqdn', rdtype), # ~> (labmda, lambda)
+        ttl_argument('ttl'),
+        priority_argument('priority'),
+        target_argument('server'),
+        view_arguments('views'),
+        comment_argument('comment')]
+
+    update_args = create_args + [
+        update_pk_argument('pk', rdtype)
+    ]
+
+    delete_args = [
+        delete_pk_argument('pk', rdtype)
+    ]
+
+    detail_args = [detail_pk_argument('pk', rdtype)]
+
+class DispatchTXT(DNSDispatch):
+    resource_name = 'txt'
+    rdtype = 'TXT'
+
+    create_args = [
+        fqdn_argument('fqdn', rdtype), # ~> (labmda, lambda)
+        ttl_argument('ttl'),
+        target_argument('txt_data'),
+        view_arguments('views'),
+        comment_argument('comment')]
+
+    update_args = create_args + [
+        update_pk_argument('pk', rdtype)
+    ]
+
+    delete_args = [
+        delete_pk_argument('pk', rdtype)
+    ]
+
+    detail_args = [detail_pk_argument('pk', rdtype)]
+
 
 registrar.register(DispatchA())
 registrar.register(DispatchAAAA())
 registrar.register(DispatchCNAME())
+registrar.register(DispatchMX())
 registrar.register(DispatchPTR())
 registrar.register(DispatchSRV())
+registrar.register(DispatchTXT())
 
 
 def dispatch(nas):
