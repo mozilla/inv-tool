@@ -173,6 +173,10 @@ def build_dns_parsers(base_parser):
                         "Specify the range using: <ip-start>,<ip-end> format "
                         "(no spaces", default=None, required=False)
 
+    search.add_argument('--display-integers', dest='d_integers',
+                        help="Return integers when showing free ip ranges.",
+                        action='store_true', default=False, required=False)
+
     # Build all the records
 
     for dispatch in registrar.dns_dispatches:
@@ -205,6 +209,8 @@ class SearchDispatch(Dispatch):
         headers = {'content-type': 'application/json'}
         start, end = nas.irange.split(',')
         search = {'start': start, 'end': end}
+        if nas.d_integers:
+            search['format'] = 'integers'
         resp = requests.get(url, params=search, headers=headers, auth=auth)
         if resp.status_code == 500:
             resp_list = [_("CLIENT ERROR! (Please email this output to "
