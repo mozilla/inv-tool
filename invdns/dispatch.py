@@ -4,6 +4,7 @@ import ConfigParser
 import pdb
 import requests
 import simplejson as json
+from gettext import gettext as _
 from invdns.options import *
 
 pp = pprint.PrettyPrinter(indent=4)
@@ -94,7 +95,6 @@ class Dispatch(object):
     def error_out(self, nas, data, resp, resp_list=[]):
         resp_list.append(str(nas))
         resp_list.append(str(data))
-        resp_list.append(pprint(vars(resp)))
         return 1, resp_list
 
 

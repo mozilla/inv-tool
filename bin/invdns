@@ -5,6 +5,7 @@ sys.path.insert(0, "./")
 from invdns.options import *
 from invdns.intr_options import *
 from invdns.dispatch import build_dns_parsers, dispatch
+from gettext import gettext as _
 import pdb
 
 
