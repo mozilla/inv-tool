@@ -1,4 +1,4 @@
-tests:
+test:
 	python tests/cli_tests.py
 	python tests/search_tests.py
 

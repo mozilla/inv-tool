@@ -142,15 +142,15 @@ def target_argument(field_name):
 
     return add_target_argument, build_extractor(field_name, 'target'), test_data
 
-def comment_argument(field_name):
-    def add_comment_argument(parser, **kwargs):
-        parser.add_argument('--comment', default="", type=str, dest='comment',
+def description_argument(field_name):
+    def add_description_argument(parser, **kwargs):
+        parser.add_argument('--description', default="", type=str, dest='description',
                 help="Tell us a little about this record", required=False)
 
     def test_data():
-        return 'comment', TEST_COMMENT
+        return 'description', TEST_DESCRIPTION
 
-    return add_comment_argument, build_extractor(field_name, 'comment'), test_data
+    return add_description_argument, build_extractor(field_name, 'description'), test_data
 
 def text_argument(field_name):
     def add_text_argument(parser, required=True):

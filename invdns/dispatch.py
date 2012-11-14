@@ -221,7 +221,7 @@ class SearchDispatch(Dispatch):
         def display_ranges(free_ranges):
             ret_list = []
             for fstart, fend in free_ranges:
-                ret_list.append( "{0} to {1}".format(fstart, fend))
+                ret_list.append("{0} to {1}".format(fstart, fend))
             return ret_list
 
         if not results:
@@ -247,7 +247,7 @@ class SearchDispatch(Dispatch):
             self.error_out(nas, search, resp, resp_list=resp_list)
             return
         results = self.get_resp_dict(resp)
-        if not results:
+        if not results['text_response']:
             return 0, []
         else:
             if nas.p_json:
@@ -296,7 +296,7 @@ class DispatchA(DNSDispatch):
         ttl_argument('ttl'),
         ip_argument('ip_str', ip_type),
         view_arguments('views'),
-        comment_argument('comment')
+        description_argument('description')
     ]
 
     update_args = create_args + [
@@ -328,7 +328,7 @@ class DispatchPTR(DNSDispatch):
         ip_argument('ip_str', '4'),
         view_arguments('views'),
         target_argument('name'),
-        comment_argument('comment')
+        description_argument('description')
     ]
 
     update_args = create_args + [
@@ -366,7 +366,7 @@ class DispatchAAAA(DispatchA):
         ttl_argument('ttl'),
         ip_argument('ip_str', ip_type),
         view_arguments('views'),
-        comment_argument('comment')
+        description_argument('description')
     ]
 
     update_args = create_args + [
@@ -389,7 +389,7 @@ class DispatchCNAME(DNSDispatch):
         ttl_argument('ttl'),
         target_argument('target'),
         view_arguments('views'),
-        comment_argument('comment')]
+        description_argument('description')]
 
     update_args = create_args + [
         update_pk_argument('pk', rdtype)
@@ -413,7 +413,7 @@ class DispatchSRV(DNSDispatch):
         priority_argument('priority'),
         target_argument('target'),
         view_arguments('views'),
-        comment_argument('comment')]
+        description_argument('description')]
 
     update_args = create_args + [
         update_pk_argument('pk', rdtype)
@@ -435,7 +435,7 @@ class DispatchMX(DNSDispatch):
         priority_argument('priority'),
         target_argument('server'),
         view_arguments('views'),
-        comment_argument('comment')]
+        description_argument('description')]
 
     update_args = create_args + [
         update_pk_argument('pk', rdtype)
@@ -456,7 +456,7 @@ class DispatchTXT(DNSDispatch):
         ttl_argument('ttl'),
         target_argument('txt_data'),
         view_arguments('views'),
-        comment_argument('comment')]
+        description_argument('description')]
 
     update_args = create_args + [
         update_pk_argument('pk', rdtype)

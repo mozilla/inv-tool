@@ -16,7 +16,7 @@ The command will look something like this:
 ```
 ~/ » invdns A create --fqdn host1.scl3.mozilla.com --ip 10.2.3.4
 http_status: 201 (created)
-comment:
+description:
 domain: scl3.mozilla.com
 views: []
 ttl: 3600
@@ -62,10 +62,10 @@ Let's look up our A record.
 
 It's primary key is indeed 13033.
 
-Let's add a comment to our record.
+Let's add a description to our record.
 
 ```
-~/ » invdns A update --pk 13033 --comment "foobar comment"
+~/ » invdns A update --pk 13033 --description "foobar description"
 http_status: 202 (Accepted)
 ...
 ...
