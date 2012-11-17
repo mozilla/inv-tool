@@ -78,38 +78,9 @@ def _add_label_argument(parser, required=True):
 def fqdn_argument(field_name, rdtype):
     # We need rdtype because SRV requires a '_' to prefix it's test data
     def add_fqdn_argument(parser, required=True):
-        _add_label_argument(parser, required)
-        _add_domain_argument(parser, required)
         parser.add_argument('--fqdn', default="", type=str, dest='fqdn',
                 help="The FQDN of the record being created. If you use this "
                 "option you cannot use label or domain", required=False)
-
-    def extract_label_domain_or_fqdn(nas):
-        if (nas.label or nas.domain) and nas.fqdn:
-            raise InvalidCommand("Use either domain (and label) OR use fqdn.")
-        if nas.action == 'create':
-            if not (nas.domain or nas.fqdn):
-                raise InvalidCommand("Use either domain (and label) OR use fqdn.")
-            if nas.label and not nas.domain:
-                raise InvalidCommand("If you specify a label you need to also specify "
-                    "a domain name")
-        data = {}
-        if nas.fqdn:
-            data.update({
-                    field_name: nas.fqdn
-                    })
-            return data
-        else:
-            if nas.action == 'update':
-                if nas.label:
-                    data['label'] = nas.label
-                if nas.domain:
-                    data['domain'] = nas.domain
-            elif nas.action == 'create':
-                data['label'] = nas.label
-                data['domain'] = nas.domain
-            return data
-        raise Exception("Shouldn't have got here")
 
     def test_data():
         if rdtype == "SRV":
@@ -117,7 +88,7 @@ def fqdn_argument(field_name, rdtype):
         else:
             return 'fqdn', TEST_FQDN
 
-    return add_fqdn_argument, extract_label_domain_or_fqdn, test_data
+    return add_fqdn_argument, build_extractor(field_name, 'fqdn'), test_data
 
 def ip_argument(field_name, ip_type):
     def add_ip_argument(parser, required=True):
