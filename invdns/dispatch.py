@@ -8,20 +8,21 @@ from gettext import gettext as _
 from invdns.options import *
 
 pp = pprint.PrettyPrinter(indent=4)
-auth=None
+auth = None
 API_MAJOR_VERSION = 1
 CONFIG_FILE = "./config.cfg"
 
 config = ConfigParser.ConfigParser()
 config.read(CONFIG_FILE)
 
-host = config.get('remote','host')
-port = config.get('remote','port')
+host = config.get('remote', 'host')
+port = config.get('remote', 'port')
 REMOTE = "http://{0}:{1}".format(host, port)
 
 
 class InvalidCommand(Exception):
     pass
+
 
 class Dispatch(object):
     object_url = "/mozdns/api/v{0}_dns/{1}/{2}/"
@@ -41,8 +42,8 @@ class Dispatch(object):
         resp_msg = self.get_resp_dict(resp)
 
         if resp.status_code == 404:
-            return 1, format_response(resp_msg,
-                                    "http_status: 404 (file not found)")
+            return 1, format_response(resp_msg, "http_status: 404 (file not "
+                                      "found)")
         elif resp.status_code == 204:
             if nas.p_json:
                 return 0, [json.dumps(resp_msg)]
@@ -50,7 +51,7 @@ class Dispatch(object):
                 return 0, ["http_status: 204 (request fulfilled)"]
         elif resp.status_code == 500:
             resp_list = [_("SERVER ERROR! (Please email this output to a "
-                            "code monkey)")]
+                         "code monkey)")]
             return self.error_out(data, resp, resp_list=resp_list)
         elif resp.status_code == 400:
             # Bad Request
@@ -100,16 +101,16 @@ class Dispatch(object):
 
 class DNSDispatch(Dispatch):
     def delete(self, nas):
-        url = self.object_url.format(API_MAJOR_VERSION,
-                                          self.resource_name, nas.pk)
+        url = self.object_url.format(API_MAJOR_VERSION, self.resource_name,
+                                     nas.pk)
         url = "{0}{1}?format=json".format(REMOTE, url)
         headers = {'content-type': 'application/json'}
         resp = requests.delete(url, headers=headers, auth=auth)
         return self.handle_resp(nas, {}, resp)
 
     def detail(self, nas):
-        url = self.object_url.format(API_MAJOR_VERSION,
-                                          self.resource_name, nas.pk)
+        url = self.object_url.format(API_MAJOR_VERSION, self.resource_name,
+                                     nas.pk)
         url = "{0}{1}?format=json".format(REMOTE, url)
         headers = {'content-type': 'application/json'}
         resp = requests.get(url, headers=headers, auth=auth)
@@ -118,7 +119,7 @@ class DNSDispatch(Dispatch):
     def update(self, nas):
         data = self.get_update_data(nas)  # Dispatch defined Hook
         tmp_url = self.object_url.format(API_MAJOR_VERSION, self.resource_name,
-                                    nas.pk)
+                                         nas.pk)
         url = "{0}{1}".format(REMOTE, tmp_url)
         return self.action(nas, url, requests.patch, data)
 
@@ -129,7 +130,7 @@ class DNSDispatch(Dispatch):
         url = "{0}{1}".format(REMOTE, tmp_url)
         return self.action(nas, url, requests.post, data)
 
-    def action(self,nas, url, method, data):
+    def action(self, nas, url, method, data):
         headers = {'content-type': 'application/json'}
         data = json.dumps(data)
         resp = method(url, headers=headers, data=data, auth=auth)
@@ -151,6 +152,7 @@ class DNSDispatch(Dispatch):
 class Registrar():
     dns_dispatches = []
     dispatches = []
+
     def register(self, dispatch):
         if isinstance(dispatch, DNSDispatch):
             self.dns_dispatches.append(dispatch)
@@ -181,10 +183,11 @@ def build_dns_parsers(base_parser):
 
     for dispatch in registrar.dns_dispatches:
         record_base_parser = base_parser.add_parser(dispatch.rdtype, help="The"
-                " interface for {0} records".format(dispatch.rdtype),
-                add_help=True)
+                                        " interface for {0} records".format(
+                                        dispatch.rdtype), add_help=True)
         action_parser = record_base_parser.add_subparsers(help="{0} record "
-                    "actions".format(dispatch.rdtype), dest='action')
+                                        "actions".format(dispatch.rdtype),
+                                        dest='action')
         build_create_parser(dispatch, action_parser)
         build_update_parser(dispatch, action_parser)
         build_delete_parser(dispatch, action_parser)
@@ -218,6 +221,7 @@ class SearchDispatch(Dispatch):
             self.error_out(nas, search, resp, resp_list=resp_list)
             return
         results = self.get_resp_dict(resp)
+
         def display_ranges(free_ranges):
             ret_list = []
             for fstart, fend in free_ranges:
@@ -229,9 +233,9 @@ class SearchDispatch(Dispatch):
         else:
             if nas.p_json:
                 return 0, [json.dumps(results)]
-            resp_list = [ "# of Used IPs: {0}".format(results['used']),
-                        "# of Unused IPs: {0}".format(results['unused']),
-                        "------ Vacant IP ranges ------"]
+            resp_list = ["# of Used IPs: {0}".format(results['used']),
+                         "# of Unused IPs: {0}".format(results['unused']),
+                         "------ Vacant IP ranges ------"]
             resp_list += display_ranges(results['free_ranges'])
             return 0, resp_list
 
@@ -260,28 +264,32 @@ registrar.register(SearchDispatch())
 
 def build_create_parser(dispatch, action_parser):
     create_parser = action_parser.add_parser('create', help="Create "
-                        "a(n) {0} record".format(dispatch.rdtype))
+                                             "a(n) {0} record".format(
+                                             dispatch.rdtype))
     for add_arg, extract_arg, test_method in dispatch.create_args:
         add_arg(create_parser)
 
 
 def build_update_parser(dispatch, action_parser):
     update_parser = action_parser.add_parser('update', help="Update "
-                        "a(n) {0} record".format(dispatch.rdtype))
+                                             "a(n) {0} record".format(
+                                             dispatch.rdtype))
     for add_arg, extract_arg, test_method in dispatch.update_args:
         add_arg(update_parser, required=False)
 
 
 def build_delete_parser(dispatch, action_parser):
     delete_parser = action_parser.add_parser('delete', help="Delete "
-                        "a(n) {0} record".format(dispatch.rdtype))
-    for add_arg, extract_arg, test_method  in dispatch.delete_args:
+                                             "a(n) {0} record".format(
+                                             dispatch.rdtype))
+    for add_arg, extract_arg, test_method in dispatch.delete_args:
         add_arg(delete_parser)
 
 
 def build_detail_parser(dispatch, action_parser):
     detail_parser = action_parser.add_parser('detail', help="Detail "
-                        "a(n) {0} record".format(dispatch.rdtype))
+                                             "a(n) {0} record".format(
+                                             dispatch.rdtype))
     for add_arg, extract_arg, test_method in dispatch.detail_args:
         add_arg(detail_parser)
 
@@ -292,7 +300,7 @@ class DispatchA(DNSDispatch):
     ip_type = '4'
 
     create_args = [
-        fqdn_argument('fqdn', rdtype), # ~> (labmda, lambda)
+        fqdn_argument('fqdn', rdtype),  # ~> (labmda, lambda)
         ttl_argument('ttl'),
         ip_argument('ip_str', ip_type),
         view_arguments('views'),
@@ -318,6 +326,7 @@ class DispatchA(DNSDispatch):
         data = super(DispatchA, self).get_update_data(nas)
         data['ip_type'] = self.ip_type
         return data
+
 
 class DispatchPTR(DNSDispatch):
     resource_name = 'ptr'
@@ -345,7 +354,7 @@ class DispatchPTR(DNSDispatch):
         if ip_str.find(':') > -1:
             ip_type = '6'
         else:
-            ip_type = '4' # Default to 4
+            ip_type = '4'  # Default to 4
         return ip_type
 
     def get_create_data(self, nas):
@@ -358,11 +367,12 @@ class DispatchPTR(DNSDispatch):
         data['ip_type'] = self.determine_ip_type(data.get('ip_str', ''))
         return data
 
+
 class DispatchAAAA(DispatchA):
     rdtype = 'AAAA'
     ip_type = '6'
     create_args = [
-        fqdn_argument('fqdn', rdtype), # ~> (labmda, lambda)
+        fqdn_argument('fqdn', rdtype),  # ~> (labmda, lambda)
         ttl_argument('ttl'),
         ip_argument('ip_str', ip_type),
         view_arguments('views'),
@@ -385,7 +395,7 @@ class DispatchCNAME(DNSDispatch):
     rdtype = 'CNAME'
 
     create_args = [
-        fqdn_argument('fqdn', rdtype), # ~> (labmda, lambda)
+        fqdn_argument('fqdn', rdtype),  # ~> (labmda, lambda)
         ttl_argument('ttl'),
         target_argument('target'),
         view_arguments('views'),
@@ -401,12 +411,13 @@ class DispatchCNAME(DNSDispatch):
 
     detail_args = [detail_pk_argument('pk', rdtype)]
 
+
 class DispatchSRV(DNSDispatch):
     resource_name = 'srv'
     rdtype = 'SRV'
 
     create_args = [
-        fqdn_argument('fqdn', rdtype), # ~> (labmda, lambda)
+        fqdn_argument('fqdn', rdtype),  # ~> (labmda, lambda)
         ttl_argument('ttl'),
         port_argument('port'),
         weight_argument('weight'),
@@ -425,12 +436,13 @@ class DispatchSRV(DNSDispatch):
 
     detail_args = [detail_pk_argument('pk', rdtype)]
 
+
 class DispatchMX(DNSDispatch):
     resource_name = 'mx'
     rdtype = 'MX'
 
     create_args = [
-        fqdn_argument('fqdn', rdtype), # ~> (labmda, lambda)
+        fqdn_argument('fqdn', rdtype),  # ~> (labmda, lambda)
         ttl_argument('ttl'),
         priority_argument('priority'),
         target_argument('server'),
@@ -447,12 +459,13 @@ class DispatchMX(DNSDispatch):
 
     detail_args = [detail_pk_argument('pk', rdtype)]
 
+
 class DispatchTXT(DNSDispatch):
     resource_name = 'txt'
     rdtype = 'TXT'
 
     create_args = [
-        fqdn_argument('fqdn', rdtype), # ~> (labmda, lambda)
+        fqdn_argument('fqdn', rdtype),  # ~> (labmda, lambda)
         ttl_argument('ttl'),
         target_argument('txt_data'),
         view_arguments('views'),
