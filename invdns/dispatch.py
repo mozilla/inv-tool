@@ -229,7 +229,7 @@ class SearchDispatch(Dispatch):
             return ret_list
 
         if not results:
-            return 0, []
+            return 1, []
         else:
             if nas.p_json:
                 return 0, [json.dumps(results)]
@@ -252,7 +252,7 @@ class SearchDispatch(Dispatch):
             return
         results = self.get_resp_dict(resp)
         if not results['text_response']:
-            return 0, []
+            return 1, []
         else:
             if nas.p_json:
                 return 0, [json.dumps(results)]
