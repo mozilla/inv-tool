@@ -8,6 +8,7 @@ A Command Line Interface for poking at Mozilla's Inventory project.
 
 :Author: juber@mozilla.com
 :organization: Mozilla IT
+:Bugs: Report any bugs to juber@mozilla.com
 :Copyright: Mozilla Public Licence
 :Version: 0.0.1
 :Manual section: 1
@@ -42,8 +43,8 @@ Formating flags (like ``--json``) come directly after the name of the binary. Th
 ``--silent`` flag will silence all output and ``--json`` will display any output in
 JSON format.
 
-Searching with -q
-=================
+Searching
+=========
 
 The search command combined with the ``-q|--query`` flag is usefull for searching
 and filtering different types of objects.
@@ -56,6 +57,19 @@ Currently, only DNS objects are displayed; to see Systems use the web
 interface's search page.
 
 The following sections are an overview of how to build a ``query string``.
+
+Return codes
+============
+Every execution of a command returns either ``0`` or ``1``.
+
+Things that return ``1``:
+
+    * HTTP 500
+    * HTTP 200
+    * Empty search results
+    * Client errors
+
+Everything else returns ``0``.
 
 Search Patterns
 ---------------
@@ -85,6 +99,7 @@ Operators
         can also negate the ``type`` directive and parameters in parenthesis.
 
         ``Example``::
+
             [ hostname -hostname1 ]
 
     OR
@@ -168,6 +183,8 @@ Directives
 
             [ range=:192.168.3.10,192.168.3.100 ]
 
+A search that returns no objects has an exit code of ``1``. A search
+returning objects has an exit code of ``0``.
 
 Auditing IP space
 =================
@@ -332,14 +349,6 @@ name to the private view and remove them from the public view:
         invdns A update --pk 13052 --private --no-public
         invdns AAAA update --pk 13053 --private --no-public
         invdns PTR update --pk 13483 --private --no-public
-
-Notes on installing:
---------------------
-
-    ::
-
-        pip install -r requirements.txt
-        cp config.cfg-dist config.cfg
 
 
 Make sure to fill in the correct options in the config file
