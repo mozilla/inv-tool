@@ -30,6 +30,7 @@ SYNOPSIS
 
 Formating Output
 ================
+
 There are a few ways to format output:
 
     ::
@@ -43,6 +44,7 @@ JSON format.
 
 Searching with -q
 =================
+
 The search command combined with the ``-q|--query`` flag is usefull for searching
 and filtering different types of objects.
 
@@ -68,7 +70,7 @@ Search Patterns
             [ puppet phx1 ]
 
     '/' (forward slash)
-        A work starting with with */* is assumed to be regex pattern.  The
+        A word starting with with ``/`` is assumed to be regex pattern.  The
         regular language is that of MySQL.
 
         ``Example``::
@@ -79,22 +81,21 @@ Operators
 ---------
 
     \-
-        The character *-* can be used to negate any search pattern. It
-        can also negate the *type* directive and parameters in parenthesis.
+        The character ``-`` can be used to negate any search pattern. It
+        can also negate the ``type`` directive and parameters in parenthesis.
 
         ``Example``::
             [ hostname -hostname1 ]
 
     OR
-        Use of the binary *OR* operator will return the results of two seperate
-        queries.
+        The binary ``OR`` operator will return the results of two seperate queries.
 
         ``Example``::
 
             [ host1 OR host2 ]
 
     AND
-        Use of the binary *AND* operator will return the results a query that
+        The binary ``AND`` operator will return the results of a query that
         matches both of it's operands.
 
         ``Example``::
@@ -104,32 +105,37 @@ Operators
 Directives
 ----------
 
-    All directives are in the format *<directive-name>*\=:*<directive-value>*.
-    You use directives in your query string.
+    All directives are in the format ``<directive-name>``\=:``<directive-value>``.
+    Directives are used in query strings.
 
         ``Example``::
 
-            invdns search --query "type=:SOA"
+            invdns search --query "type=:SOA mozilla.com"
+                # This will return all SOA records that contain 'mozilla.com'
+                # in their name.
 
     type
-        The *type* directive can be used to target a type of object.  Type is
-        case insensitive. A search query contaning the type directive with no
-        other filter will return all objects of that type and might take a
-        while to complete depending on how many objects of that type exist.
+        The ``type`` directive can be used to target a type of object.
+        Values used in the ``type`` directive are case insensitive. A search
+        query contaning the type directive with no other filter will return all
+        objects of that type and might take a while to complete depending on
+        how many objects of that type exist.
 
         ``Example``::
 
             [ type=:CNAME web ]
+                # This returns all CNAMEs that contain the substring 'web'
 
     zone
-        The *zone* directive filters DNS records by DNS zone.
+        The ``zone`` directive filters DNS records by DNS zone.
 
         ``Example``::
 
             [ zone=:phx1.mozilla.com ]
+                # This returns all records the 'phx1.mozilla.com' zone
 
     site
-        The *site* directive can be used to search for objects that have IP
+        The ``site`` directive can be used to search for objects that have IP
         addresses that fall into one of the networks associated with a
         site (datacenter or business unit).
 
@@ -138,7 +144,7 @@ Directives
             [ site=:phx1 ]
 
     vlan
-        The 'vlan' directive can be used to search for objects that have IP
+        The ``vlan`` directive can be used to search for objects that have IP
         addresses within one of the networks associated with a specific
         vlan.
 
@@ -147,7 +153,7 @@ Directives
             [ vlan=:db ]
 
     network
-        The 'network' directive can be used to search for objects that have IP
+        The ``network`` directive can be used to search for objects that have IP
         addresses within a network.
 
         ``Example``::
@@ -155,7 +161,7 @@ Directives
             [ network=:192.168.3.0/23 ]
 
     range
-        The *range* directive can be used to search for objects that have IP
+        The ``range`` directive can be used to search for objects that have IP
         addresses within a specific IP range.
 
         ``Example``::
@@ -163,13 +169,14 @@ Directives
             [ range=:192.168.3.10,192.168.3.100 ]
 
 
-Free IP space
-=============
-Inventory is a source of truth so it can tell you which IP ranges are vacant
-(and used). To see free IP space between a ``start`` and ``end`` ip use the
-``--range`` option of the ``search`` command.
+Auditing IP space
+=================
 
-For example, to see all free IP ranges between 10.0.0.0 and 10.0.0.255
+Inventory is a source of truth so it can tell you which IP ranges are vacant
+and which IPs are used. To see free IP space between a ``start`` and ``end`` ip use the
+``search`` command combined with the ``--range`` option.
+
+For example, to see all free IP ranges between ``10.0.0.0`` and ``10.0.0.255``
 
     ::
 
@@ -182,13 +189,21 @@ along with the ``--query`` option
 
         invdns search --query "range=:10.0.0.0,10.0.0.255"
 
-Manipulating DNS Record: An Example
-====================================
+Manipulating DNS Records
+========================
+
 Before using a command it can be useful to look at the help text of the command
 
     ::
 
         invdns A create --help
+
+Interfacing with records is done per ``record class``. Each record class
+(``A``, ``PTR``, ``CNAME``, etc.) has the commands ``create``, ``update``,
+``detail``, and ``delete``.
+
+Creating an object
+------------------
 
 To create the ``A`` record ``host1.scl3.mozilla.com A 10.2.3.4``, run the command
 
@@ -212,8 +227,11 @@ To create the ``A`` record ``host1.scl3.mozilla.com A 10.2.3.4``, run the comman
 Whenever you create an object the tool will display information about that
 object.
 
-The ``A`` record we just created does not belong to any dns view. To add the object to
-the private view you can run this command:
+Updating an object
+------------------
+
+The ``A`` record just created does not belong to any dns view. To add the object to
+the private view run this command:
 
     ::
 
@@ -222,32 +240,31 @@ the private view you can run this command:
         ...
         ...
 
-The '...' represents omitted output, which in this case was details about the
-updated object.
+(The ``...`` represents omitted output, which in this case was details about the
+updated object.)
 
 The ``--pk`` flag tells the api which object you want to update. The ``pk`` value
 is returned to you when you first created the object and can be used to update,
 delete, or show details about an object.
 
-An object's primary key (``pk``) is only unique within it's own type. (The
-exception to this rule is ``A`` and ``AAAA`` records which are internally
+An object's ``pk`` (primary key) is only unique within it's own type. (There is
+an exception to this with  ``A`` and ``AAAA`` records, which are internally
 stored as the same type of object).
 
-If you forget an object's primary key, you can look the object up by using the
-``search`` command where printed before every object is the object's primary key.
-To look up the ``A`` record ``host1.scl3.mozilla.com A 10.2.3.4`` you could run a
-command similar to the following.
+If you forget an object's primary key, you can look the object up using the
+``search`` command. Printed before every object returned by a search is the
+object's primary key.  To look up the ``A`` record ``host1.scl3.mozilla.com A
+10.2.3.4`` you could run a command similar to the following.
 
     ::
 
         ~/ » invdns search -q "host1.scl"
         13033 host1.scl3.mozilla.com.                  3600 IN  A    10.2.3.4
 
-The ``A`` record's primary key is 13033.
-
-An example of updating a record could be changing the description to a record.
+The ``A`` record's primary key is ``13033``.
 
     ::
+        # Changing the description of an A record
 
         ~/ » invdns A update --pk 13033 --description "This record is fubar"
         http_status: 202 (Accepted)
@@ -268,7 +285,12 @@ flag and specify a new ip.
         ...
         ...
 
-You can get a detailed description of an object by using the ``detail`` command.
+
+Details about an object
+-----------------------
+
+You can get a detailed description of an object by using a record class's
+``detail`` command.
 
     ::
 
@@ -277,7 +299,10 @@ You can get a detailed description of an object by using the ``detail`` command.
         ...
         ...
 
-To delete an object use the ``delete`` command.
+Deleteing an object
+-------------------
+
+To delete an object use a record class's ``delete`` command.
 
     ::
 
@@ -285,9 +310,9 @@ To delete an object use the ``delete`` command.
         http_status: 204 (request fulfilled)
 
 
-
 Cook Book
 =========
+
 When being displayed by the ``search`` command a DNS object is always in the format:
 
     ::
