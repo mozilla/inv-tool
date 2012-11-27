@@ -197,7 +197,7 @@ For example, to see all free IP ranges between ``10.0.0.0`` and ``10.0.0.255``
 
     ::
 
-        invdns search --rang "10.0.0.0,10.0.0.255"
+        invdns search --range "10.0.0.0,10.0.0.255"
 
 To see the objects using IP addresses in this range, use the ``range`` directive
 along with the ``--query`` option
@@ -281,6 +281,7 @@ object's primary key.  To look up the ``A`` record ``host1.scl3.mozilla.com A
 The ``A`` record's primary key is ``13033``.
 
     ::
+
         # Changing the description of an A record
 
         ~/ » invdns A update --pk 13033 --description "This record is fubar"
