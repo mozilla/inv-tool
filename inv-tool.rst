@@ -17,33 +17,33 @@ A Command Line Interface for poking at Mozilla's Inventory project.
 SYNOPSIS
 ========
 
-``invtool`` ``--help``
+``invdns`` ``--help``
 
-``invtool`` [ --json | --silent ] search [ ``--query`` | ``--range`` ] *query-string*
+``invdns`` [ --json | --silent ] search [ ``--query`` | ``--range`` ] *query-string*
 
-``invtool`` [ --json | --silent ] ``rdtype`` ``action`` [ args | --help ]
+``invdns`` [ --json | --silent ] ``rdtype`` ``action`` [ args | --help ]
 
-``rdtype`` [ A | AAAA | CNAME | MX | PTR | SRV | TXT ]
+    ``rdtype`` [ A | AAAA | CNAME | MX | PTR | SRV | TXT ]
 
-``action``  [ create | update | delete | detail ]
+    ``action``  [ create | update | delete | detail ]
 
 
 Formating Output
 ================
-There are a few ways to format the output of the tool.
+There are a few ways to format output:
 
     ::
 
         ~/ » invdns -h
         usage: invdns [-h] [--json | --silent] ...
 
-Formating flags (like `--json`) come directly after the name of the binary. The
-`--silent` flag will silence all output and `--json` will display any output in
+Formating flags (like ``--json``) come directly after the name of the binary. The
+``--silent`` flag will silence all output and ``--json`` will display any output in
 JSON format.
 
 Searching with -q
 =================
-The search command combined with the `-q|--query` flag is usefull for searching
+The search command combined with the ``-q|--query`` flag is usefull for searching
 and filtering different types of objects.
 
     ::
@@ -53,7 +53,7 @@ and filtering different types of objects.
 Currently, only DNS objects are displayed; to see Systems use the web
 interface's search page.
 
-The following sections are an overview of how to build a `query string`.
+The following sections are an overview of how to build a ``query string``.
 
 Search Patterns
 ---------------
@@ -62,7 +62,7 @@ Search Patterns
         Filter objects with *plain text* words. Objects that match all of the words
         are returned.
 
-        `Example`::
+        ``Example``::
 
             [ foopy scl3 ]
             [ puppet phx1 ]
@@ -71,7 +71,7 @@ Search Patterns
         A work starting with with */* is assumed to be regex pattern.  The
         regular language is that of MySQL.
 
-        `Example`::
+        ``Example``::
 
               [ /^puppet\d+ ]
 
@@ -82,14 +82,14 @@ Operators
         The character *-* can be used to negate any search pattern. It
         can also negate the *type* directive and parameters in parenthesis.
 
-        `Example`::
+        ``Example``::
             [ hostname -hostname1 ]
 
     OR
         Use of the binary *OR* operator will return the results of two seperate
         queries.
 
-        `Example`::
+        ``Example``::
 
             [ host1 OR host2 ]
 
@@ -97,7 +97,7 @@ Operators
         Use of the binary *AND* operator will return the results a query that
         matches both of it's operands.
 
-        `Example`::
+        ``Example``::
 
             [ host1 AND domain1 ]
 
@@ -107,7 +107,7 @@ Directives
     All directives are in the format *<directive-name>*\=:*<directive-value>*.
     You use directives in your query string.
 
-        `Example`::
+        ``Example``::
 
             invdns search --query "type=:SOA"
 
@@ -117,14 +117,14 @@ Directives
         other filter will return all objects of that type and might take a
         while to complete depending on how many objects of that type exist.
 
-        `Example`::
+        ``Example``::
 
             [ type=:CNAME web ]
 
     zone
         The *zone* directive filters DNS records by DNS zone.
 
-        `Example`::
+        ``Example``::
 
             [ zone=:phx1.mozilla.com ]
 
@@ -133,7 +133,7 @@ Directives
         addresses that fall into one of the networks associated with a
         site (datacenter or business unit).
 
-        `Example`::
+        ``Example``::
 
             [ site=:phx1 ]
 
@@ -142,7 +142,7 @@ Directives
         addresses within one of the networks associated with a specific
         vlan.
 
-        `Example`::
+        ``Example``::
 
             [ vlan=:db ]
 
@@ -150,7 +150,7 @@ Directives
         The 'network' directive can be used to search for objects that have IP
         addresses within a network.
 
-        `Example`::
+        ``Example``::
 
             [ network=:192.168.3.0/23 ]
 
@@ -158,7 +158,7 @@ Directives
         The *range* directive can be used to search for objects that have IP
         addresses within a specific IP range.
 
-        `Example`::
+        ``Example``::
 
             [ range=:192.168.3.10,192.168.3.100 ]
 
@@ -166,8 +166,8 @@ Directives
 Free IP space
 =============
 Inventory is a source of truth so it can tell you which IP ranges are vacant
-(and used). To see free IP space between a `start` and `end` ip use the
-`--range` option of the `search` command.
+(and used). To see free IP space between a ``start`` and ``end`` ip use the
+``--range`` option of the ``search`` command.
 
 For example, to see all free IP ranges between 10.0.0.0 and 10.0.0.255
 
@@ -175,8 +175,8 @@ For example, to see all free IP ranges between 10.0.0.0 and 10.0.0.255
 
         invdns search --rang "10.0.0.0,10.0.0.255"
 
-To see the objects using IP addresses in this range, use the `range` directive
-along with the `--query` option
+To see the objects using IP addresses in this range, use the ``range`` directive
+along with the ``--query`` option
 
     ::
 
@@ -190,7 +190,7 @@ Before using a command it can be useful to look at the help text of the command
 
         invdns A create --help
 
-To create the `A` record `host1.scl3.mozilla.com A 10.2.3.4`, run the command
+To create the ``A`` record ``host1.scl3.mozilla.com A 10.2.3.4``, run the command
 
     ::
 
@@ -212,7 +212,7 @@ To create the `A` record `host1.scl3.mozilla.com A 10.2.3.4`, run the command
 Whenever you create an object the tool will display information about that
 object.
 
-The `A` record we just created does not belong to any dns view. To add the object to
+The ``A`` record we just created does not belong to any dns view. To add the object to
 the private view you can run this command:
 
     ::
@@ -225,17 +225,17 @@ the private view you can run this command:
 The '...' represents omitted output, which in this case was details about the
 updated object.
 
-The `--pk` flag tells the api which object you want to update. The `pk` value
+The ``--pk`` flag tells the api which object you want to update. The ``pk`` value
 is returned to you when you first created the object and can be used to update,
 delete, or show details about an object.
 
-An object's primary key (`pk`) is only unique within it's own type. (The
-exception to this rule is `A` and `AAAA` records which are internally
+An object's primary key (``pk``) is only unique within it's own type. (The
+exception to this rule is ``A`` and ``AAAA`` records which are internally
 stored as the same type of object).
 
 If you forget an object's primary key, you can look the object up by using the
-`search` command where printed before every object is the object's primary key.
-To look up the `A` record `host1.scl3.mozilla.com A 10.2.3.4` you could run a
+``search`` command where printed before every object is the object's primary key.
+To look up the ``A`` record ``host1.scl3.mozilla.com A 10.2.3.4`` you could run a
 command similar to the following.
 
     ::
@@ -243,7 +243,7 @@ command similar to the following.
         ~/ » invdns search -q "host1.scl"
         13033 host1.scl3.mozilla.com.                  3600 IN  A    10.2.3.4
 
-The `A` record's primary key is 13033.
+The ``A`` record's primary key is 13033.
 
 An example of updating a record could be changing the description to a record.
 
@@ -254,11 +254,11 @@ An example of updating a record could be changing the description to a record.
         ...
         ...
 
-Every call to update is translated into an HTTP `PATCH` request that is sent to
+Every call to update is translated into an HTTP ``PATCH`` request that is sent to
 Inventory. The request contains the fields and values that should be used to
 patch the object.
 
-If we wanted to change the `ip` address of an `A` record we would use the `--ip`
+If we wanted to change the ``ip`` address of an ``A`` record we would use the ``--ip``
 flag and specify a new ip.
 
     ::
@@ -268,7 +268,7 @@ flag and specify a new ip.
         ...
         ...
 
-You can get a detailed description of an object by using the `detail` command.
+You can get a detailed description of an object by using the ``detail`` command.
 
     ::
 
@@ -277,7 +277,7 @@ You can get a detailed description of an object by using the `detail` command.
         ...
         ...
 
-To delete an object use the `delete` command.
+To delete an object use the ``delete`` command.
 
     ::
 
@@ -288,16 +288,16 @@ To delete an object use the `delete` command.
 
 Cook Book
 =========
-When being displayed by the `search` command a DNS object is always in the format:
+When being displayed by the ``search`` command a DNS object is always in the format:
 
     ::
 
         <pk>    <lhs (left hand side)> <rdclass> <ttl> <rdtpe> <rhs (right hand side)>
 
-We can exploit this pattern and use a tool like `awk` to do mass updates/deletes.
+We can exploit this pattern and use a tool like ``awk`` to do mass updates/deletes.
 
 
-For example, one could add all objects that have the string `testfqdn` in their
+For example, one could add all objects that have the string ``testfqdn`` in their
 name to the private view and remove them from the public view:
 
     ::
