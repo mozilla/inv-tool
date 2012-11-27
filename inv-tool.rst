@@ -331,6 +331,8 @@ To delete an object use a record class's ``delete`` command.
 Cook Book
 =========
 
+Mass update or delete
+---------------------
 When being displayed by the ``search`` command a DNS object is always in the format:
 
     ::
@@ -352,4 +354,13 @@ name to the private view and remove them from the public view:
         invdns PTR update --pk 13483 --private --no-public
 
 
-Make sure to fill in the correct options in the config file
+Fetching details
+----------------
+
+You can look up the details of objects return by search results by using something like this...
+
+    ::
+
+        ~/ » invdns search -q "host-name-pattern" | awk '{ print "invdns " $5  " detail --pk " $1}' | bash)
+        ...
+        ...
