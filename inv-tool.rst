@@ -17,120 +17,16 @@ A Command Line Interface for poking at Mozilla's Inventory project.
 SYNOPSIS
 ========
 
-``invtool`` ``-h``
+``invtool`` ``--help``
 
-``invtool`` [ RDCOMMAND | COMMAND ]
+``invtool`` [ --json | --silent ] search [ ``--query`` | ``--range`` ] *query-string*
 
-``COMMAND`` search [ STYPE ] *query-string*
+``invtool`` [ --json | --silent ] ``rdtype`` ``action`` [ args | --help ]
 
-``RDCOMMAND`` [ RDTYPE ] [ ACTION ] [ ARGS ]
+``rdtype`` [ A | AAAA | CNAME | MX | PTR | SRV | TXT ]
 
-``RDTYPE``` [ A | AAAA | CNAME | MX | PTR | SRV | TXT ]
+``action``  [ create | update | delete | detail ]
 
-``ACTION``  [create | update | delete | detail ]
-
-
-Manipulating DNS Record: An Example
-====================================
-Before using a command it can be useful to look at the help text of the command
-
-    ::
-
-        invdns A create --help
-
-To create the `A` record `host1.scl3.mozilla.com A 10.2.3.4`, run the command
-
-    ::
-
-        ~/ » invdns A create --fqdn host1.scl3.mozilla.com --ip 10.2.3.4
-        http_status: 201 (created)
-        description:
-        domain: scl3.mozilla.com
-        views: []
-        ttl: 3600
-        fqdn: host1.scl3.mozilla.com
-        label: host1
-        meta: {u'soa': u'SOA for scl3.mozilla.com', u'fqdn': u'host1.scl3.mozilla.com'}
-        http_status: 201
-        ip_type: 4
-        ip_str: 10.2.3.4
-        pk: 13033
-        resource_uri: /mozdns/api/v1_dns/addressrecord/13033/
-
-Whenever you create an object the tool will display information about that
-object.
-
-The `A` record we just created does not belong to any dns view. To add the object to
-the private view you can run this command:
-
-    ::
-
-        ~/ » invdns A update --pk 13033 --private
-        http_status: 202 (Accepted)
-        ...
-        ...
-
-The '...' represents omitted output, which in this case was details about the
-updated object.
-
-The `--pk` flag tells the api which object you want to update. The `pk` value
-is returned to you when you first created the object and can be used to update,
-delete, or show details about an object.
-
-An object's primary key (`pk`) is only unique within it's own type. (The
-exception to this rule is `A` and `AAAA` records which are internally
-stored as the same type of object).
-
-If you forget an object's primary key, you can look the object up by using the
-`search` command where printed before every object is the object's primary key.
-To look up the `A` record `host1.scl3.mozilla.com A 10.2.3.4` you could run a
-command similar to the following.
-
-    ::
-
-        ~/ » invdns search -q "host1.scl"
-        13033 host1.scl3.mozilla.com.                  3600 IN  A    10.2.3.4
-
-The `A` record's primary key is 13033.
-
-An example of updating a record could be changing the description to a record.
-
-    ::
-
-        ~/ » invdns A update --pk 13033 --description "This record is fubar"
-        http_status: 202 (Accepted)
-        ...
-        ...
-
-Every call to update is translated into an HTTP `PATCH` request that is sent to
-Inventory. The request contains the fields and values that should be used to
-patch the object.
-
-If we wanted to change the `ip` address of an `A` record we would use the `--ip`
-flag and specify a new ip.
-
-    ::
-
-        ~/ » invdns A update --pk 13033 --ip 33.33.33.33
-        http_status: 202 (Accepted)
-        ...
-        ...
-
-You can get a detailed description of an object by using the `detail` command.
-
-    ::
-
-        ~/ » invdns A detail --pk 13033
-        http_status: 200 (Success)
-        ...
-        ...
-
-To delete an object use the `delete` command.
-
-    ::
-
-        ~/ » invdns A delete --pk 13033
-        http_status: 204 (request fulfilled)
 
 Formating Output
 ================
@@ -285,6 +181,109 @@ along with the `--query` option
     ::
 
         invdns search --query "range=:10.0.0.0,10.0.0.255"
+
+Manipulating DNS Record: An Example
+====================================
+Before using a command it can be useful to look at the help text of the command
+
+    ::
+
+        invdns A create --help
+
+To create the `A` record `host1.scl3.mozilla.com A 10.2.3.4`, run the command
+
+    ::
+
+        ~/ » invdns A create --fqdn host1.scl3.mozilla.com --ip 10.2.3.4
+        http_status: 201 (created)
+        description:
+        domain: scl3.mozilla.com
+        views: []
+        ttl: 3600
+        fqdn: host1.scl3.mozilla.com
+        label: host1
+        meta: {u'soa': u'SOA for scl3.mozilla.com', u'fqdn': u'host1.scl3.mozilla.com'}
+        http_status: 201
+        ip_type: 4
+        ip_str: 10.2.3.4
+        pk: 13033
+        resource_uri: /mozdns/api/v1_dns/addressrecord/13033/
+
+Whenever you create an object the tool will display information about that
+object.
+
+The `A` record we just created does not belong to any dns view. To add the object to
+the private view you can run this command:
+
+    ::
+
+        ~/ » invdns A update --pk 13033 --private
+        http_status: 202 (Accepted)
+        ...
+        ...
+
+The '...' represents omitted output, which in this case was details about the
+updated object.
+
+The `--pk` flag tells the api which object you want to update. The `pk` value
+is returned to you when you first created the object and can be used to update,
+delete, or show details about an object.
+
+An object's primary key (`pk`) is only unique within it's own type. (The
+exception to this rule is `A` and `AAAA` records which are internally
+stored as the same type of object).
+
+If you forget an object's primary key, you can look the object up by using the
+`search` command where printed before every object is the object's primary key.
+To look up the `A` record `host1.scl3.mozilla.com A 10.2.3.4` you could run a
+command similar to the following.
+
+    ::
+
+        ~/ » invdns search -q "host1.scl"
+        13033 host1.scl3.mozilla.com.                  3600 IN  A    10.2.3.4
+
+The `A` record's primary key is 13033.
+
+An example of updating a record could be changing the description to a record.
+
+    ::
+
+        ~/ » invdns A update --pk 13033 --description "This record is fubar"
+        http_status: 202 (Accepted)
+        ...
+        ...
+
+Every call to update is translated into an HTTP `PATCH` request that is sent to
+Inventory. The request contains the fields and values that should be used to
+patch the object.
+
+If we wanted to change the `ip` address of an `A` record we would use the `--ip`
+flag and specify a new ip.
+
+    ::
+
+        ~/ » invdns A update --pk 13033 --ip 33.33.33.33
+        http_status: 202 (Accepted)
+        ...
+        ...
+
+You can get a detailed description of an object by using the `detail` command.
+
+    ::
+
+        ~/ » invdns A detail --pk 13033
+        http_status: 200 (Success)
+        ...
+        ...
+
+To delete an object use the `delete` command.
+
+    ::
+
+        ~/ » invdns A delete --pk 13033
+        http_status: 204 (request fulfilled)
+
 
 
 Cook Book

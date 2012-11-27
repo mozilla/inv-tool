@@ -1,0 +1,14 @@
+Notes on installing:
+--------------------
+
+```
+    pip install -r requirements.txt
+    cp config.cfg-dist config.cfg
+```
+
+Make sure to fill in the correct options in the config file
+
+Documentation
+-------------
+
+This requries the tool `rst2man`. To build and view the man page without installing it to your man path, do `make veiw-docs`.
