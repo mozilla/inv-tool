@@ -114,6 +114,12 @@ Formating flags (like `--json`) come directly after the name of the binary. The
 `--silent` flag will silence all output and `--json` will display any output in
 JSON format.
 
+Search
+------
+The search tool described earlier is usefull for searching and filtering
+different types of objects. The `-r` (range) option can be used to query
+inventory for it's knowledge of IP ranges.
+
 Cook Book
 ---------
 When being displayed by the `search` command an object is always in the format:

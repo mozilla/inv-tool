@@ -1,7 +1,22 @@
-test:
+MANTARGET="invdns"
+RSTMAN="README.rst"
+
+do_tests:
 	python tests/cli_tests.py
 	python tests/search_tests.py
 
-inspect:
-	./bin/invdns search -q "testfqdn" | awk '{ print "./bin/invdns " $5  " delete --pk " $1}'
+docs:
+	rst2man $(RSTMAN) > $(MANTARGET).1
+	gzip $(MANTARGET).1
+	rm -rf man1
+	mkdir man1
+	mv $(MANTARGET).1.gz man1/
+	man -M ./ $(MANTARGET)
 
+inspect:
+	./bin/invdns search -q "testfqdn"
+
+clean:
+	rm -rf man1
+	rm -f $(MANTARGET).1
+	rm -f $(MANTARGET).1.gz
