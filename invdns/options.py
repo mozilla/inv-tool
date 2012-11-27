@@ -92,6 +92,9 @@ def fqdn_argument(field_name, rdtype):
                 "option you cannot use label or domain", required=False)
 
     def test_data():
+        if rdtype == "CNAME":
+            # Make the target different so avoid cname loop errors
+            return 'fqdn', "A" + TEST_FQDN
         if rdtype == "SRV":
             return 'fqdn', "_" + TEST_FQDN
         else:
@@ -136,6 +139,18 @@ def description_argument(field_name):
         return 'description', TEST_DESCRIPTION
 
     return add_desc_arg, build_extractor(field_name, 'description'), test_data
+
+def comment_argument(field_name):
+    def add_com_arg(parser, **kwargs):
+        parser.add_argument('--comment', default="", type=str,
+                dest='comment', help="Use this to record why a change is "
+                                         "being made",
+                required=False)
+
+    def test_data():
+        return 'comment', TEST_DESCRIPTION  # Reuse this test data
+
+    return add_com_arg, build_extractor(field_name, 'comment'), test_data
 
 
 def text_argument(field_name):
