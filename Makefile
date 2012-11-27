@@ -1,12 +1,13 @@
 MANTARGET="invdns"
 RSTMAN="README.rst"
+OPTIONS="--date"
 
 do_tests:
 	python tests/cli_tests.py
 	python tests/search_tests.py
 
 docs:
-	rst2man $(RSTMAN) > $(MANTARGET).1
+	rst2man $(OPTIONS) $(RSTMAN) > $(MANTARGET).1
 	gzip $(MANTARGET).1
 	rm -rf man1
 	mkdir man1
