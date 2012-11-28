@@ -39,15 +39,15 @@ There are a few ways to format output:
         ~/ » invtool -h
         usage: invtool [-h] [--json | --silent] ...
 
-Formating flags (like ``--json``) come directly after the name of the binary. The
-``--silent`` flag will silence all output and ``--json`` will display any output in
-JSON format.
+Formating flags (like ``--json``) come directly after the name of the binary.
+The ``--silent`` flag will silence all output and ``--json`` will display any
+output in JSON format.
 
 Searching
 =========
 
-The search command combined with the ``-q|--query`` flag is usefull for searching
-and filtering different types of objects.
+The search command combined with the ``-q|--query`` flag is usefull for
+searching and filtering different types of objects.
 
     ::
 
@@ -75,8 +75,8 @@ Search Patterns
 ---------------
 
     a-zA-Z0-9
-        Filter objects with *plain text* words. Objects that match all of the words
-        are returned.
+        Filter objects with *plain text* words. Objects that match all of the
+        words are returned.
 
         ``Example``::
 
@@ -95,15 +95,16 @@ Operators
 ---------
 
     \-
-        The character ``-`` can be used to negate any search pattern. It
-        can also negate the ``type`` directive and parameters in parenthesis.
+        The character ``-`` can be used to negate any search pattern. It can
+        also negate the ``type`` directive and parameters in parenthesis.
 
         ``Example``::
 
             [ hostname -hostname1 ]
 
     OR
-        The binary ``OR`` operator will return the results of two seperate queries.
+        The binary ``OR`` operator will return the results of two seperate
+        queries.
 
         ``Example``::
 
@@ -120,7 +121,7 @@ Operators
 Directives
 ----------
 
-    All directives are in the format ``<directive-name>``\=:``<directive-value>``.
+    All directives are in the format ``<directive>``\=:``<directive-value>``.
     Directives are used in query strings.
 
         ``Example``::
@@ -199,8 +200,8 @@ Auditing IP space
 =================
 
 Inventory is a source of truth so it can tell you which IP ranges are vacant
-and which IPs are used. To see free IP space between a ``start`` and ``end`` ip use the
-``search`` command combined with the ``--range`` option.
+and which IPs are used. To see free IP space between a ``start`` and ``end`` ip
+use the ``search`` command combined with the ``--range`` option.
 
 For example, to see all free IP ranges between ``10.0.0.0`` and ``10.0.0.255``
 
@@ -256,8 +257,8 @@ object.
 Updating an object
 ------------------
 
-The ``A`` record just created does not belong to any dns view. To add the object to
-the private view run this command:
+The ``A`` record just created does not belong to any dns view. To add the
+object to the private view run this command:
 
     ::
 
@@ -298,12 +299,12 @@ The ``A`` record's primary key is ``13033``.
         ...
         ...
 
-Every call to update is translated into an HTTP ``PATCH`` request that is sent to
-Inventory. The request contains the fields and values that should be used to
+Every call to update is translated into an HTTP ``PATCH`` request that is sent
+to Inventory. The request contains the fields and values that should be used to
 patch the object.
 
-If we wanted to change the ``ip`` address of an ``A`` record we would use the ``--ip``
-flag and specify a new ip.
+If we wanted to change the ``ip`` address of an ``A`` record we would use the
+``--ip`` flag and specify a new ip.
 
     ::
 
@@ -342,21 +343,25 @@ Cook Book
 
 Mass update or delete
 ---------------------
-When being displayed by the ``search`` command a DNS object is always in the format:
+When being displayed by the ``search`` command a DNS object is always in the
+format:
 
     ::
 
-        <pk>    <lhs (left hand side)> <rdclass> <ttl> <rdtpe> <rhs (right hand side)>
+        <pk>   <lhs> <rdclass> <ttl> <rdtpe> <rhs>
 
-We can exploit this pattern and use a tool like ``awk`` to do mass updates/deletes.
+We can exploit this pattern and use a tool like ``awk`` to do mass
+updates/deletes.
 
 
-For example, one could add all objects that have the string ``testfqdn`` in their
-name to the private view and remove them from the public view:
+For example, one could add all objects that have the string ``testfqdn`` in
+their name to the private view and remove them from the public view:
 
     ::
 
-        ~/ » invtool search -q "testfqdn" | awk '{ print "invtool " $5  " update --pk " $1 " --private --no-public"}'
+        ~/ » invtool search -q "testfqdn" | awk '{ print "invtool " $5  " \
+                    update --pk " $1 " --private --no-public"}'
+
         invtool SRV update --pk 134 --private --no-public
         invtool A update --pk 13052 --private --no-public
         invtool AAAA update --pk 13053 --private --no-public
@@ -366,10 +371,12 @@ name to the private view and remove them from the public view:
 Fetching details
 ----------------
 
-You can look up the details of objects return by search results by using something like this...
+You can look up the details of objects return by search results by using
+something like this...
 
     ::
 
-        ~/ » invtool search -q "host-name-pattern" | awk '{ print "invtool " $5  " detail --pk " $1}' | bash)
+        ~/ » invtool search -q "host-name-pattern" | awk '{ print "invtool " \
+                            $5 " detail --pk " $1}' | bash)
         ...
         ...

@@ -34,7 +34,14 @@ install:
 clean:
 	rm -rf ./docs/man1
 
+VE:
+	virtualenv test-invtool
+
+destroy-VE:
+	rm -rf test-invtool
+
 uninstall:
 	sudo rm -rf /usr/lib/python2.7/site-packages/invtool
 	sudo rm -f /usr/bin/invtool
 	sudo rm -f /usr/lib/python2.7/site-packages/Mozilla_Inventory_Tool-0.1.0-py2.7.egg-info
+	sudo rm -f /etc/invtool.conf
