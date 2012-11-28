@@ -25,9 +25,8 @@ Notes On Installing
 
 ``invtool`` requires ``requests`` and ``simplejson`` (and ``argparse`` if you are running python2.6).
 
-    ::
-        sudo pip install -r requirements.txt
-        sudo python setup.py install
+    sudo pip install -r requirements.txt
+    sudo python setup.py install
 
 RTFM
 ====
