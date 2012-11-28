@@ -10,7 +10,7 @@ setup(
     url='https://github.com/uberj/inv-tool',
     license='LICENSE.txt',
     description='An interface to inventory',
-    long_description=open('README.txt').read(),
+    long_description=open('README.rst').read(),
     install_requires=[
         open('requirements.txt').read().strip('\n').replace('\n',',')
     ],
