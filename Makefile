@@ -3,6 +3,7 @@ MANTARGET="./docs/invtool"
 RSTMAN="README.txt"
 OPTIONS="--date"
 INVTOOLPATH="./invtool"
+SHELL_CONFIG=~/.zshrc
 
 do_tests:
 	python $(INVTOOLPATH)/tests/cli_tests.py
@@ -16,7 +17,7 @@ view-docs:
 	mv $(MANTARGET).1.gz ./docs/man1/
 	cd ./docs/ && man -M ./ $(MANNAME) ; cd ..
 
-docs:
+doc:
 	rst2man $(OPTIONS) $(RSTMAN) > $(MANTARGET).1
 	gzip $(MANTARGET).1
 	rm -rf ./docs/man1
@@ -26,5 +27,14 @@ docs:
 inspect:
 	$(INVTOOLPATH)/bin/invtool search -q "testfqdn"
 
+install:
+	sudo python setup.py install
+	source $(SHELL_CONFIG)
+
 clean:
 	rm -rf ./docs/man1
+
+uninstall:
+	sudo rm -rf /usr/lib/python2.7/site-packages/invtool
+	sudo rm -f /usr/bin/invtool
+	sudo rm -f /usr/lib/python2.7/site-packages/Mozilla_Inventory_Tool-0.1.0-py2.7.egg-info
