@@ -17,6 +17,9 @@ view-docs:
 	mv $(MANTARGET).1.gz ./docs/man1/
 	cd ./docs/ && man -M ./ $(MANNAME) ; cd ..
 
+man:
+	cd ./docs/ && man -M ./ $(MANNAME) ; cd ..
+
 doc:
 	rst2man $(OPTIONS) $(RSTMAN) > $(MANTARGET).1
 	gzip $(MANTARGET).1
