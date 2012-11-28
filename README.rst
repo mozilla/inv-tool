@@ -17,4 +17,4 @@ Notes On Installing
 RTFM
 ====
 
-``man invtool`` OR checkout the repo, install ``docutils``, run ``make man``.
+``man invtool`` OR checkout the repo and run ``make man``.
