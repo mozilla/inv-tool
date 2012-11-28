@@ -1,4 +1,4 @@
-from invdns import *
+from invtool import *
 
 args = [
         '--format json A create --label foo --domain bar.com --ip 10.2.3.4 --no-private --no-public',

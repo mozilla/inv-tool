@@ -18,11 +18,11 @@ A Command Line Interface for poking at Mozilla's Inventory project.
 SYNOPSIS
 ========
 
-``invdns`` ``--help``
+``invtool`` ``--help``
 
-``invdns`` [ --json | --silent ] search [ ``--query`` | ``--range`` ] *query-string*
+``invtool`` [ --json | --silent ] search [ ``--query`` | ``--range`` ] *query-string*
 
-``invdns`` [ --json | --silent ] ``rdtype`` ``action`` [ args | --help ]
+``invtool`` [ --json | --silent ] ``rdtype`` ``action`` [ args | --help ]
 
     ``rdtype`` [ A | AAAA | CNAME | MX | PTR | SRV | TXT ]
 
@@ -36,8 +36,8 @@ There are a few ways to format output:
 
     ::
 
-        ~/ » invdns -h
-        usage: invdns [-h] [--json | --silent] ...
+        ~/ » invtool -h
+        usage: invtool [-h] [--json | --silent] ...
 
 Formating flags (like ``--json``) come directly after the name of the binary. The
 ``--silent`` flag will silence all output and ``--json`` will display any output in
@@ -51,7 +51,7 @@ and filtering different types of objects.
 
     ::
 
-        invdns search -q "<query string>"
+        invtool search -q "<query string>"
 
 Currently, only DNS objects are displayed; to see Systems use the web
 interface's search page.
@@ -125,7 +125,7 @@ Directives
 
         ``Example``::
 
-            invdns search --query "type=:SOA mozilla.com"
+            invtool search --query "type=:SOA mozilla.com"
                 # This will return all SOA records that contain 'mozilla.com'
                 # in their name.
 
@@ -140,6 +140,15 @@ Directives
 
             [ type=:CNAME web ]
                 # This returns all CNAMEs that contain the substring 'web'
+
+    view
+        Filter DNS records by view.
+
+        ``Example``::
+
+            [ puppet view=:private ]
+                # This returns all records that contain the substring 'puppet'
+                # and are in the public view
 
     zone
         The ``zone`` directive filters DNS records by DNS zone.
@@ -197,14 +206,14 @@ For example, to see all free IP ranges between ``10.0.0.0`` and ``10.0.0.255``
 
     ::
 
-        invdns search --range "10.0.0.0,10.0.0.255"
+        invtool search --range "10.0.0.0,10.0.0.255"
 
 To see the objects using IP addresses in this range, use the ``range`` directive
 along with the ``--query`` option
 
     ::
 
-        invdns search --query "range=:10.0.0.0,10.0.0.255"
+        invtool search --query "range=:10.0.0.0,10.0.0.255"
 
 Manipulating DNS Records
 ========================
@@ -213,7 +222,7 @@ Before using a command it can be useful to look at the help text of the command
 
     ::
 
-        invdns A create --help
+        invtool A create --help
 
 Interfacing with records is done per ``record class``. Each record class
 (``A``, ``PTR``, ``CNAME``, etc.) has the commands ``create``, ``update``,
@@ -226,7 +235,7 @@ To create the ``A`` record ``host1.scl3.mozilla.com A 10.2.3.4``, run the comman
 
     ::
 
-        ~/ » invdns A create --fqdn host1.scl3.mozilla.com --ip 10.2.3.4
+        ~/ » invtool A create --fqdn host1.scl3.mozilla.com --ip 10.2.3.4
         http_status: 201 (created)
         description:
         domain: scl3.mozilla.com
@@ -252,7 +261,7 @@ the private view run this command:
 
     ::
 
-        ~/ » invdns A update --pk 13033 --private
+        ~/ » invtool A update --pk 13033 --private
         http_status: 202 (Accepted)
         ...
         ...
@@ -275,7 +284,7 @@ object's primary key.  To look up the ``A`` record ``host1.scl3.mozilla.com A
 
     ::
 
-        ~/ » invdns search -q "host1.scl"
+        ~/ » invtool search -q "host1.scl"
         13033 host1.scl3.mozilla.com.                  3600 IN  A    10.2.3.4
 
 The ``A`` record's primary key is ``13033``.
@@ -284,7 +293,7 @@ The ``A`` record's primary key is ``13033``.
 
         # Changing the description of an A record
 
-        ~/ » invdns A update --pk 13033 --description "This record is fubar"
+        ~/ » invtool A update --pk 13033 --description "This record is fubar"
         http_status: 202 (Accepted)
         ...
         ...
@@ -298,7 +307,7 @@ flag and specify a new ip.
 
     ::
 
-        ~/ » invdns A update --pk 13033 --ip 33.33.33.33
+        ~/ » invtool A update --pk 13033 --ip 33.33.33.33
         http_status: 202 (Accepted)
         ...
         ...
@@ -312,7 +321,7 @@ You can get a detailed description of an object by using a record class's
 
     ::
 
-        ~/ » invdns A detail --pk 13033
+        ~/ » invtool A detail --pk 13033
         http_status: 200 (Success)
         ...
         ...
@@ -324,7 +333,7 @@ To delete an object use a record class's ``delete`` command.
 
     ::
 
-        ~/ » invdns A delete --pk 13033
+        ~/ » invtool A delete --pk 13033
         http_status: 204 (request fulfilled)
 
 
@@ -347,11 +356,11 @@ name to the private view and remove them from the public view:
 
     ::
 
-        ~/ » invdns search -q "testfqdn" | awk '{ print "invdns " $5  " update --pk " $1 " --private --no-public"}'
-        invdns SRV update --pk 134 --private --no-public
-        invdns A update --pk 13052 --private --no-public
-        invdns AAAA update --pk 13053 --private --no-public
-        invdns PTR update --pk 13483 --private --no-public
+        ~/ » invtool search -q "testfqdn" | awk '{ print "invtool " $5  " update --pk " $1 " --private --no-public"}'
+        invtool SRV update --pk 134 --private --no-public
+        invtool A update --pk 13052 --private --no-public
+        invtool AAAA update --pk 13053 --private --no-public
+        invtool PTR update --pk 13483 --private --no-public
 
 
 Fetching details
@@ -361,6 +370,6 @@ You can look up the details of objects return by search results by using somethi
 
     ::
 
-        ~/ » invdns search -q "host-name-pattern" | awk '{ print "invdns " $5  " detail --pk " $1}' | bash)
+        ~/ » invtool search -q "host-name-pattern" | awk '{ print "invtool " $5  " detail --pk " $1}' | bash)
         ...
         ...

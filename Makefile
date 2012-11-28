@@ -1,30 +1,30 @@
-MANTARGET="invdns"
-RSTMAN="inv-tool.rst"
+MANNAME="invtool"
+MANTARGET="./docs/invtool"
+RSTMAN="README.txt"
 OPTIONS="--date"
+INVTOOLPATH="./invtool"
 
 do_tests:
-	python tests/cli_tests.py
-	python tests/search_tests.py
+	python $(INVTOOLPATH)/tests/cli_tests.py
+	python $(INVTOOLPATH)/tests/search_tests.py
 
 view-docs:
 	rst2man $(OPTIONS) $(RSTMAN) > $(MANTARGET).1
 	gzip $(MANTARGET).1
-	rm -rf man1
-	mkdir man1
-	mv $(MANTARGET).1.gz man1/
-	man -M ./ $(MANTARGET)
+	rm -rf ./docs/man1
+	mkdir ./docs/man1
+	mv $(MANTARGET).1.gz ./docs/man1/
+	cd ./docs/ && man -M ./ $(MANNAME) ; cd ..
 
 docs:
 	rst2man $(OPTIONS) $(RSTMAN) > $(MANTARGET).1
 	gzip $(MANTARGET).1
-	rm -rf man1
-	mkdir man1
-	mv $(MANTARGET).1.gz man1/
+	rm -rf ./docs/man1
+	mkdir ./docs/man1
+	mv $(MANTARGET).1.gz ./docs/man1/
 
 inspect:
-	./bin/invdns search -q "testfqdn"
+	$(INVTOOLPATH)/bin/invtool search -q "testfqdn"
 
 clean:
-	rm -rf man1
-	rm -f $(MANTARGET).1
-	rm -f $(MANTARGET).1.gz
+	rm -rf ./docs/man1

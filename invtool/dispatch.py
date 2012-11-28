@@ -1,3 +1,4 @@
+import os
 import pprint
 import sys
 import ConfigParser
@@ -5,12 +6,25 @@ import pdb
 import requests
 import simplejson as json
 from gettext import gettext as _
-from invdns.options import *
+from invtool.options import *
 
 pp = pprint.PrettyPrinter(indent=4)
 auth = None
 API_MAJOR_VERSION = 1
-CONFIG_FILE = "./config.cfg"
+GLOBAL_CONFIG_FILE = "/etc/invtool.conf"
+LOCAL_CONFIG_FILE = "./etc/invtool.conf"
+
+if os.path.isfile(LOCAL_CONFIG_FILE):
+    CONFIG_FILE = LOCAL_CONFIG_FILE
+    #print "Warning: Using local config file '{0}' ".format(LOCAL_CONFIG_FILE)
+else:
+    if os.path.isfile(GLOBAL_CONFIG_FILE):
+        CONFIG_FILE = GLOBAL_CONFIG_FILE
+    else:
+        raise Exception("Can't find global config file "
+                "'{0}'".format(GLOBAL_CONFIG_FILE))
+
+
 
 config = ConfigParser.ConfigParser()
 config.read(CONFIG_FILE)
@@ -251,7 +265,7 @@ class SearchDispatch(Dispatch):
             self.error_out(nas, search, resp, resp_list=resp_list)
             return
         results = self.get_resp_dict(resp)
-        if not results['text_response']:
+        if 'text_response' not in results:
             return 1, []
         else:
             if nas.p_json:

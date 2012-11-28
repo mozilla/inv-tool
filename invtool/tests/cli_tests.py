@@ -6,10 +6,10 @@ sys.path.insert(0, "/home/juber/repositories/inv-tool")
 import simplejson as json
 from gettext import gettext as _
 
-from invdns.dispatch import registrar
-from invdns.dispatch import DNSDispatch
+from invtool.dispatch import registrar
+from invtool.dispatch import DNSDispatch
 
-EXEC = "./bin/invdns --json"
+EXEC = "./bin/invtool --json"
 
 def test_method_to_params(test_case):
     if not test_case:
