@@ -24,7 +24,6 @@ pip-log.txt
 
 #Mr Developer
 config.cfg
+etc/invtool.conf
 
 # Stuff
-man1/
-README.rst
