@@ -1,6 +1,6 @@
 MANNAME="invtool"
 MANTARGET="./docs/invtool"
-RSTMAN="README.txt"
+RSTMAN="./docs/invtool.man.rst"
 OPTIONS="--date"
 INVTOOLPATH="./invtool"
 SHELL_CONFIG=~/.zshrc
