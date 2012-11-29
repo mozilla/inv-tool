@@ -39,24 +39,9 @@ There are a few ways to format output:
         ~/ » invtool -h
         usage: invtool [-h] [--json | --silent] ...
 
-Formating flags (like ``--json``) come directly after the name of the binary.
+Formating flags (like ``--json``) come directly after ``invtool``.
 The ``--silent`` flag will silence all output and ``--json`` will display any
 output in JSON format.
-
-Searching
-=========
-
-The search command combined with the ``-q|--query`` flag is usefull for
-searching and filtering different types of objects.
-
-    ::
-
-        invtool search -q "<query string>"
-
-Currently, only DNS objects are displayed; to see Systems use the web
-interface's search page.
-
-The following sections are an overview of how to build a ``query string``.
 
 Return codes
 ============
@@ -70,6 +55,21 @@ Things that return ``1``:
     * Client errors
 
 Everything else returns ``0``.
+
+Searching
+=========
+
+The search command combined with the ``-q|--query`` flag is useful for
+searching and filtering different types of objects.
+
+    ::
+
+        invtool search -q "<query string>"
+
+Currently, only DNS objects are displayed; to see Systems use the web
+interface's search page.
+
+The following sections are an overview of how to build a ``query string``.
 
 Search Patterns
 ---------------

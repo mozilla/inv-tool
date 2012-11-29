@@ -1,7 +1,8 @@
 import argparse
 import pdb
-from tests.test_data import *
+from invtool.tests.test_data import *
 
+print "HERE"
 
 def build_extractor(field_name, nas_name):
     def extractor(nas):

@@ -46,7 +46,7 @@ class Dispatch(object):
         def format_response(resp_msg, user_msg):
             resp_list = []
             if nas.p_json:
-                resp_list.append(json.dumps(resp_msg))
+                resp_list.append(json.dumps(resp_msg, indent=2))
             else:
                 resp_list.append(user_msg)
                 for k, v in resp_msg.iteritems():
@@ -60,7 +60,7 @@ class Dispatch(object):
                                       "found)")
         elif resp.status_code == 204:
             if nas.p_json:
-                return 0, [json.dumps(resp_msg)]
+                return 0, [json.dumps(resp_msg, indent=2)]
             else:
                 return 0, ["http_status: 204 (request fulfilled)"]
         elif resp.status_code == 500:
@@ -70,7 +70,7 @@ class Dispatch(object):
         elif resp.status_code == 400:
             # Bad Request
             if nas.p_json:
-                return 1, [json.dumps(resp_msg)]
+                return 1, [json.dumps(resp_msg, indent=2)]
             else:
                 if 'error_messages' in resp_msg:
                     return self.get_errors(resp_msg['error_messages'])
@@ -146,7 +146,7 @@ class DNSDispatch(Dispatch):
 
     def action(self, nas, url, method, data):
         headers = {'content-type': 'application/json'}
-        data = json.dumps(data)
+        data = json.dumps(data, indent=2)
         resp = method(url, headers=headers, data=data, auth=auth)
         return self.handle_resp(nas, data, resp)
 
@@ -246,7 +246,7 @@ class SearchDispatch(Dispatch):
             return 1, []
         else:
             if nas.p_json:
-                return 0, [json.dumps(results)]
+                return 0, [json.dumps(results, indent=2)]
             resp_list = ["# of Used IPs: {0}".format(results['used']),
                          "# of Unused IPs: {0}".format(results['unused']),
                          "------ Vacant IP ranges ------"]
@@ -269,7 +269,7 @@ class SearchDispatch(Dispatch):
             return 1, []
         else:
             if nas.p_json:
-                return 0, [json.dumps(results)]
+                return 0, [json.dumps(results, indent=2)]
             return 0, [results['text_response']]
 
 

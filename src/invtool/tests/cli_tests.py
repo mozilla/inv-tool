@@ -1,8 +1,6 @@
-import pdb
 import subprocess, shlex
 import unittest
-import sys
-sys.path.insert(0, "/home/juber/repositories/inv-tool")
+
 import simplejson as json
 from gettext import gettext as _
 
@@ -167,4 +165,3 @@ if __name__ == "__main__":
         suite.addTests(tests)
 
     unittest.TextTestRunner(verbosity=2).run(suite)
-

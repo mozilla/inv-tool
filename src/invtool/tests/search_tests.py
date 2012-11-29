@@ -1,8 +1,5 @@
-import pdb
 import subprocess, shlex
 import unittest
-import sys
-sys.path.insert(0, "/home/juber/repositories/inv-tool")
 import simplejson as json
 from gettext import gettext as _
 
