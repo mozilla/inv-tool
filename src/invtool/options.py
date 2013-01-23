@@ -1,8 +1,8 @@
-import argparse
-import pdb
-from invtool.tests.test_data import *
+from invtool.tests.test_data import (
+    TEST_DOMAIN, TEST_FQDN, TEST_IPv4, TEST_IPv6, TEST_DESCRIPTION,
+    TEST_TTL, TEST_PORT, TEST_WEIGHT, TEST_PRIORITY, TEST_TEXT
+)
 
-print "HERE"
 
 def build_extractor(field_name, nas_name):
     def extractor(nas):
@@ -61,8 +61,9 @@ def view_arguments(field_name):
 
 
 def _add_domain_argument(parser, required=True):
-    parser.add_argument('--domain', default=None, type=str, dest='domain',
-            help="The domain a record is in.", required=False)
+    parser.add_argument(
+        '--domain', default=None, type=str, dest='domain',
+        help="The domain a record is in.", required=False)
 
 
 def domain_argument(field_name):
@@ -79,18 +80,22 @@ def domain_argument(field_name):
 
 
 def _add_label_argument(parser, required=True):
-    parser.add_argument('--label', default="", type=str, dest='label',
-            help="The first label in the fqdn. If label is ommited then '' is "
-            "used and is analigouse to using '@' in a zone file (the record "
-            "will get it's domain's name as it's fqdn).", required=False)
+    parser.add_argument(
+        '--label', default="", type=str, dest='label',
+        help="The first label in the fqdn. If label is ommited then '' is "
+        "used and is analigouse to using '@' in a zone file (the record "
+        "will get it's domain's name as it's fqdn).", required=False
+    )
 
 
 def fqdn_argument(field_name, rdtype):
     # We need rdtype because SRV requires a '_' to prefix it's test data
     def add_fqdn_argument(parser, required=True):
-        parser.add_argument('--fqdn', default="", type=str, dest='fqdn',
-                help="The FQDN of the record being created. If you use this "
-                "option you cannot use label or domain", required=False)
+        parser.add_argument(
+            '--fqdn', default="", type=str, dest='fqdn',
+            help="The FQDN of the record being created. If you use this "
+            "option you cannot use label or domain", required=False
+        )
 
     def test_data():
         if rdtype == "CNAME":
@@ -106,9 +111,11 @@ def fqdn_argument(field_name, rdtype):
 
 def ip_argument(field_name, ip_type):
     def add_ip_argument(parser, required=True):
-        parser.add_argument('--ip', default=None, type=str, dest='ip',
-                help="A string representation of an IP address.",
-                required=required)
+        parser.add_argument(
+            '--ip', default=None, type=str, dest='ip',
+            help="A string representation of an IP address.",
+            required=required
+        )
 
     def test_data():
         if ip_type == '4':
@@ -121,8 +128,10 @@ def ip_argument(field_name, ip_type):
 
 def target_argument(field_name):
     def add_target_arg(parser, required=True):
-        parser.add_argument('--target', default=None, type=str, dest='target',
-                help="The target name of a record", required=required)
+        parser.add_argument(
+            '--target', default=None, type=str, dest='target',
+            help="The target name of a record", required=required
+        )
 
     def test_data():
         return 'target', TEST_FQDN
@@ -132,21 +141,24 @@ def target_argument(field_name):
 
 def description_argument(field_name):
     def add_desc_arg(parser, **kwargs):
-        parser.add_argument('--description', default="", type=str,
-                dest='description', help="Tell us a little about this record",
-                required=False)
+        parser.add_argument(
+            '--description', default="", type=str, dest='description',
+            help="Tell us a little about this record", required=False
+        )
 
     def test_data():
         return 'description', TEST_DESCRIPTION
 
     return add_desc_arg, build_extractor(field_name, 'description'), test_data
 
+
 def comment_argument(field_name):
     def add_com_arg(parser, **kwargs):
-        parser.add_argument('--comment', default="", type=str,
-                dest='comment', help="Use this to record why a change is "
-                                         "being made",
-                required=False)
+        parser.add_argument(
+            '--comment', default="", type=str,
+            dest='comment', help="Use this to record why a change is "
+            "being made", required=False
+        )
 
     def test_data():
         return 'comment', TEST_DESCRIPTION  # Reuse this test data
@@ -156,8 +168,10 @@ def comment_argument(field_name):
 
 def text_argument(field_name):
     def add_text_argument(parser, required=True):
-        parser.add_argument('--text', default=None, type=str, dest='text',
-                help="The text data.", required=required)
+        parser.add_argument(
+            '--text', default=None, type=str, dest='text',
+            help="The text data.", required=required
+        )
 
     def test_data():
         return 'text', TEST_TEXT
@@ -166,15 +180,18 @@ def text_argument(field_name):
 
 
 def write_num_argument(parser, name, dest, help_text, required=False):
-    parser.add_argument('--{0}'.format(name), default=None, type=int,
-            dest=dest, help=help_text, required=required)
+    parser.add_argument(
+        '--{0}'.format(name), default=None, type=int,
+        dest=dest, help=help_text, required=required
+    )
     return parser
 
 
 def ttl_argument(field_name):
     def add_ttl_argument(parser, **kwargs):
-        write_num_argument(parser, 'ttl', 'ttl', "The ttl "
-                            "of a record.", required=False)
+        write_num_argument(
+            parser, 'ttl', 'ttl', "The ttl of a record.", required=False
+        )
 
     def extract_ttl(nas):
         data = {}
@@ -190,34 +207,38 @@ def ttl_argument(field_name):
 
 def key_argument(field_name):
     def add_key_argument(parser, required=True):
-        parser.add_argument('--key', default=None, type=str, dest='sshfp_key',
-                help="The key data.", required=required)
+        parser.add_argument(
+            '--key', default=None, type=str, dest='sshfp_key',
+            help="The key data.", required=required
+        )
 
 
 def algorithm_argument(field_name):
     def add_algorithm_argument(parser, required=True):
-        parser.add_argument('--algo', metavar="algorithm type",
-                type=str, dest='algorith_type',
-                choices=['RSA', 'DSS'],
-                help="The Algorithm type. See RFC 4255.", required=required)
+        parser.add_argument(
+            '--algo', metavar="algorithm type", type=str, dest='algorith_type',
+            choices=['RSA', 'DSS'],
+            help="The Algorithm type. See RFC 4255.", required=required
+        )
         return parser
 
 
 def fingerprint_argument(field_name):
     def add_fingerprint_argument(parser, required=False):
-        parser.add_argument('--finger-type', metavar="fingerprint number",
-                type=str, dest='fingerprint_type',
-                choices=['SHA1'], default='SHA1',
-                help="The fingerprint type. See RFC 4255",
-                required=required)
+        parser.add_argument(
+            '--finger-type', metavar="fingerprint number", type=str,
+            dest='fingerprint_type', choices=['SHA1'], default='SHA1',
+            help="The fingerprint type. See RFC 4255", required=required
+        )
         return parser
 
 
 def priority_argument(field_name):
     def add_priority_arg(parser, required=True):
-        write_num_argument(parser, 'priority', 'priority',
-                            "The priority number of a record",
-                            required=required)
+        write_num_argument(
+            parser, 'priority', 'priority', "The priority number of a record",
+            required=required
+        )
 
     def test_data():
         return 'priority', TEST_PRIORITY
@@ -227,9 +248,10 @@ def priority_argument(field_name):
 
 def port_argument(field_name):
     def add_port_argument(parser, required=True):
-        write_num_argument(parser, 'port', 'port', "The "
-                            "target port of an SRV " "record",
-                            required=required)
+        write_num_argument(
+            parser, 'port', 'port', "The target port of an SRV " "record",
+            required=required
+        )
 
     def test_data():
         return 'port', TEST_PORT
@@ -239,9 +261,10 @@ def port_argument(field_name):
 
 def weight_argument(field_name):
     def add_weight_arg(parser, required=True):
-        write_num_argument(parser, 'weight', 'weight', "The "
-                            "weight number of an SRV record",
-                            required=required)
+        write_num_argument(
+            parser, 'weight', 'weight', "The " "weight number of an SRV "
+            "record", required=required
+        )
 
     def test_data():
         return 'weight', TEST_WEIGHT
@@ -255,9 +278,11 @@ def _extract_pk(nas, field_name):
 
 def update_pk_argument(field_name, rdtype):
     def add_update_pk_argument(parser, **kwargs):
-        parser.add_argument('--{0}'.format("pk"), required=True, default=None,
-                type=int, dest='pk', help="The database integer primary key "
-                "(id) of the {0} you are updating.".format(rdtype))
+        parser.add_argument(
+            '--{0}'.format("pk"), required=True, default=None, type=int,
+            dest='pk', help="The database integer primary key (id) of the "
+            "{0} you are updating.".format(rdtype)
+        )
         return parser
 
     def extract_pk(nas):
@@ -268,9 +293,11 @@ def update_pk_argument(field_name, rdtype):
 
 def detail_pk_argument(field_name, rdtype):
     def add_detail_pk_argument(parser, **kwargs):
-        parser.add_argument('--{0}'.format("pk"), required=True, default=None,
-                type=int, dest='pk', help="The database integer primary key "
-                "(id) of the {0} you are updating.".format(rdtype))
+        parser.add_argument(
+            '--{0}'.format("pk"), required=True, default=None, type=int,
+            dest='pk', help="The database integer primary key (id) of the "
+            "{0} you are updating.".format(rdtype)
+        )
         return parser
 
     def extract_pk(nas):
@@ -282,9 +309,11 @@ def detail_pk_argument(field_name, rdtype):
 def delete_pk_argument(field_name, rdtype):
     # Required has no affect.
     def add_delete_pk_argument(parser, **kwargs):
-        parser.add_argument('--{0}'.format("pk"), default=None, type=int,
-                dest='pk', help="Delete the {0} record with the database "
-                "primary key of 'pk'".format(rdtype), required=True)
+        parser.add_argument(
+            '--{0}'.format("pk"), default=None, type=int, dest='pk',
+            help="Delete the {0} record with the database " "primary key of "
+            "'pk'".format(rdtype), required=True
+        )
         return parser
 
     def extract_pk(nas):
