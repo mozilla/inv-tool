@@ -15,6 +15,9 @@ if __name__ == "__main__":
     format_group.add_argument('--silent', default=False, dest='p_silent',
                             help="Silence all stdout and stderr",
                             action='store_true')
+    format_group.add_argument('--debug', default=False, dest='DEBUG',
+                            help="Print stuff",
+                            action='store_true')
     base_parser = inv_parser.add_subparsers(dest='dtype')
     build_dns_parsers(base_parser)
     nas = inv_parser.parse_args(sys.argv[1:])

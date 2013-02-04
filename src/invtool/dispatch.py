@@ -1,8 +1,6 @@
 import os
 import pprint
-import sys
 import ConfigParser
-import pdb
 import requests
 import simplejson as json
 from gettext import gettext as _

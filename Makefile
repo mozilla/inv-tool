@@ -3,6 +3,7 @@ MANTARGET="./docs/invtool"
 RSTMAN="./docs/invtool.man.rst"
 OPTIONS="--date"
 INVTOOLPATH="./src/invtool"
+INVTOOLBIN="./bin/invtool"
 SHELL_CONFIG=~/.zshrc
 
 do_tests:
@@ -28,7 +29,7 @@ doc:
 	mv $(MANTARGET).1.gz ./docs/man1/
 
 inspect:
-	$(INVTOOLPATH)/bin/invtool search -q "testfqdn"
+	$(INVTOOLBIN) search -q "testfqdn"
 
 install:
 	sudo python setup.py install
