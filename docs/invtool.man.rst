@@ -359,8 +359,7 @@ their name to the private view and remove them from the public view:
 
     ::
 
-        ~/ » invtool search -q "testfqdn" | awk '{ print "invtool " $5  " \
-                    update --pk " $1 " --private --no-public"}'
+        ~/ » invtool search -q "testfqdn" | awk '{ print "invtool " $5  " update --pk " $1 " --private --no-public"}'
 
         invtool SRV update --pk 134 --private --no-public
         invtool A update --pk 13052 --private --no-public
@@ -376,7 +375,6 @@ something like this...
 
     ::
 
-        ~/ » invtool search -q "host-name-pattern" | awk '{ print "invtool " \
-                            $5 " detail --pk " $1}' | bash)
+        ~/ » invtool search -q "host-name-pattern" | awk '{ print "invtool "  $5 " detail --pk " $1}' | bash)
         ...
         ...

@@ -1,5 +1,4 @@
 import os
-import sys
 import pprint
 import ConfigParser
 import requests
@@ -12,12 +11,8 @@ API_MAJOR_VERSION = 1
 GLOBAL_CONFIG_FILE = "/etc/invtool.conf"
 LOCAL_CONFIG_FILE = "./etc/invtool.conf"
 
-import pdb; pdb.set_trace()
 if os.path.isfile(LOCAL_CONFIG_FILE):
     CONFIG_FILE = LOCAL_CONFIG_FILE
-    sys.stderr.write(
-        "Warning: Using local config file '{0}' ".format(LOCAL_CONFIG_FILE)
-    )
 else:
     if os.path.isfile(GLOBAL_CONFIG_FILE):
         CONFIG_FILE = GLOBAL_CONFIG_FILE
@@ -30,7 +25,13 @@ config.read(CONFIG_FILE)
 
 host = config.get('remote', 'host')
 port = config.get('remote', 'port')
-REMOTE = "http://{0}:{1}".format(host, port)
+secure = config.get('remote', 'secure')
+
+REMOTE = "http{0}://{1}{2}".format(
+    's' if secure else '',
+    host,
+    '' if port == '80' else ':' + port
+)
 
 auth = (config.get('authorization', 'ldap_username'),
         config.get('authorization', 'ldap_password'))

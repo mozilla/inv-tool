@@ -1,12 +1,10 @@
-import subprocess, shlex
+import subprocess
+import shlex
 import unittest
 import simplejson as json
-from gettext import gettext as _
 
-from invtool.dispatch import registrar
-from invtool.dispatch import DNSDispatch
+EXEC = "./inv --json"
 
-EXEC = "./bin/invtool --json"
 
 def test_method_to_params(test_case):
     if not test_case:
@@ -16,11 +14,14 @@ def test_method_to_params(test_case):
     else:
         return "--{0} {1}".format(*test_case)
 
+
 def call_to_json(command_str):
     """Given a string, this function will shell out, execute the command
     and parse the json returned by that command"""
-    p = subprocess.Popen(shlex.split(command_str),
-                           stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    p = subprocess.Popen(
+        shlex.split(command_str), stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE
+    )
     stdout, stderr = p.communicate()
     if stderr:
         return None, stderr, p.returncode
@@ -33,8 +34,8 @@ def call_to_json(command_str):
                 "Ret was: {0}. Got error: {1}".format(stdout, str(e)),
                 p.returncode)
 
-def run_tests():
 
+def run_tests():
     def build_testcase(commands):
         """The first command is used to create an object. Using the pk returned
         from the object's creation we look up the object and use the second
@@ -68,7 +69,6 @@ def run_tests():
             self.assertTrue('http_status' in ret)
             self.assertEqual(ret['http_status'], expected_status)
 
-
         test_name = "test_{0}".format('search')
         place_holder.__name__ = test_name
         setattr(_TestCase, test_name, place_holder)
@@ -84,7 +84,7 @@ def run_tests():
 
         return build_testcase(commands)
 
-    ts = unittest.TestSuite()
+    unittest.TestSuite()
     test_cases = [build_testcases()]
     return test_cases
 
@@ -97,4 +97,3 @@ if __name__ == "__main__":
         suite.addTests(tests)
 
     unittest.TextTestRunner(verbosity=2).run(suite)
-
