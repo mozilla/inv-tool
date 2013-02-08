@@ -1,4 +1,5 @@
 import os
+import sys
 import pprint
 import ConfigParser
 import requests
@@ -7,22 +8,22 @@ from gettext import gettext as _
 from invtool.options import *
 
 pp = pprint.PrettyPrinter(indent=4)
-auth = None
 API_MAJOR_VERSION = 1
 GLOBAL_CONFIG_FILE = "/etc/invtool.conf"
 LOCAL_CONFIG_FILE = "./etc/invtool.conf"
 
+import pdb; pdb.set_trace()
 if os.path.isfile(LOCAL_CONFIG_FILE):
     CONFIG_FILE = LOCAL_CONFIG_FILE
-    #print "Warning: Using local config file '{0}' ".format(LOCAL_CONFIG_FILE)
+    sys.stderr.write(
+        "Warning: Using local config file '{0}' ".format(LOCAL_CONFIG_FILE)
+    )
 else:
     if os.path.isfile(GLOBAL_CONFIG_FILE):
         CONFIG_FILE = GLOBAL_CONFIG_FILE
     else:
         raise Exception("Can't find global config file "
-                "'{0}'".format(GLOBAL_CONFIG_FILE))
-
-
+                        "'{0}'".format(GLOBAL_CONFIG_FILE))
 
 config = ConfigParser.ConfigParser()
 config.read(CONFIG_FILE)
@@ -30,6 +31,9 @@ config.read(CONFIG_FILE)
 host = config.get('remote', 'host')
 port = config.get('remote', 'port')
 REMOTE = "http://{0}:{1}".format(host, port)
+
+auth = (config.get('authorization', 'ldap_username'),
+        config.get('authorization', 'ldap_password'))
 
 
 class InvalidCommand(Exception):
@@ -194,12 +198,15 @@ def build_dns_parsers(base_parser):
     # Build all the records
 
     for dispatch in registrar.dns_dispatches:
-        record_base_parser = base_parser.add_parser(dispatch.rdtype, help="The"
-                                        " interface for {0} records".format(
-                                        dispatch.rdtype), add_help=True)
-        action_parser = record_base_parser.add_subparsers(help="{0} record "
-                                        "actions".format(dispatch.rdtype),
-                                        dest='action')
+        record_base_parser = base_parser.add_parser(
+            dispatch.rdtype,
+            help="The interface for {0} records".format(dispatch.rdtype),
+            add_help=True
+        )
+        action_parser = record_base_parser.add_subparsers(
+            help="{0} record actions".format(dispatch.rdtype),
+            dest='action'
+        )
         build_create_parser(dispatch, action_parser)
         build_update_parser(dispatch, action_parser)
         build_delete_parser(dispatch, action_parser)

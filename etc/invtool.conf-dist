@@ -1,3 +1,7 @@
 [remote]
 host    = <webserver>
 port    = <webserver port>
+
+[authorization]
+ldap_username =
+ldap_password =

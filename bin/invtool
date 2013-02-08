@@ -4,7 +4,6 @@ import argparse
 from invtool.options import *
 from invtool.intr_options import *
 from invtool.dispatch import build_dns_parsers, dispatch
-from gettext import gettext as _
 
 if __name__ == "__main__":
     inv_parser = argparse.ArgumentParser(prog='invtool')
