@@ -25,16 +25,19 @@ config.read(CONFIG_FILE)
 
 host = config.get('remote', 'host')
 port = config.get('remote', 'port')
-secure = config.get('remote', 'secure')
+dev = config.get('dev', 'dev')
 
 REMOTE = "http{0}://{1}{2}".format(
-    's' if secure else '',
+    's' if dev != 'True' else '',
     host,
     '' if port == '80' else ':' + port
 )
 
-auth = (config.get('authorization', 'ldap_username'),
-        config.get('authorization', 'ldap_password'))
+if dev == 'True':
+    auth = None
+else:
+    auth = (config.get('authorization', 'ldap_username'),
+            config.get('authorization', 'ldap_password'))
 
 
 class InvalidCommand(Exception):
@@ -42,8 +45,8 @@ class InvalidCommand(Exception):
 
 
 class Dispatch(object):
-    object_url = "/mozdns/api/v{0}_dns/{1}/{2}/"
-    object_list_url = "/mozdns/api/v{0}_dns/{1}/"
+    object_url = "/en-US/mozdns/api/v{0}_dns/{1}/{2}/"
+    object_list_url = "/en-US/mozdns/api/v{0}_dns/{1}/"
 
     def handle_resp(self, nas, data, resp):
         def format_response(resp_msg, user_msg):

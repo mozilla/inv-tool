@@ -1,7 +1,9 @@
 [remote]
 host    = <webserver>
 port    = <webserver port>
-secure  = True
+
+[dev]
+dev = False
 
 [authorization]
 ldap_username =
