@@ -16,8 +16,10 @@ def test_method_to_params(test_case):
 
 
 def call_to_json(command_str):
-    """Given a string, this function will shell out, execute the command
-    and parse the json returned by that command"""
+    """
+    Given a string, this function will shell out, execute the command
+    and parse the json returned by that command
+    """
     p = subprocess.Popen(
         shlex.split(command_str), stderr=subprocess.PIPE,
         stdout=subprocess.PIPE

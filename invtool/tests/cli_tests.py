@@ -7,7 +7,8 @@ from gettext import gettext as _
 
 import sys
 sys.path.insert(0, '')
-from invtool.dispatch import registrar
+
+from invtool.dns_dispatch import registrar
 
 EXEC = "./inv --json"
 
@@ -22,8 +23,10 @@ def test_method_to_params(test_case):
 
 
 def call_to_json(command_str):
-    """Given a string, this function will shell out, execute the command
-    and parse the json returned by that command"""
+    """
+    Given a string, this function will shell out, execute the command
+    and parse the json returned by that command
+    """
     p = subprocess.Popen(shlex.split(command_str),
                          stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = p.communicate()
@@ -65,7 +68,7 @@ def run_tests():
 
             # Look up the object
             detail_command = _("{0} {1} detail --pk {2}".format(
-                EXEC, dispatch.rdtype, obj_pk)
+                EXEC, dispatch.dtype, obj_pk)
             )
             ret, errors, rc = call_to_json(detail_command)
             if errors:
@@ -103,7 +106,7 @@ def run_tests():
             # Make sure an update doesn't require all the fields to be
             # specified
             blank_update_command = _("{0} {1} update --pk {2}".format(
-                EXEC, dispatch.rdtype, obj_pk)
+                EXEC, dispatch.dtype, obj_pk)
             )
             ret, errors, rc = call_to_json(blank_update_command)
             if errors:
@@ -114,7 +117,7 @@ def run_tests():
 
             # Delete the object
             delete_command = _("{0} {1} delete --pk {2}".format(
-                EXEC, dispatch.rdtype, obj_pk)
+                EXEC, dispatch.dtype, obj_pk)
             )
             ret, errors, rc = call_to_json(delete_command)
             if errors:
@@ -133,19 +136,19 @@ def run_tests():
             self.assertEqual(ret['http_status'], 404)
             self.assertFalse('pk' in ret)
 
-        test_name = "test_{0}".format(dispatch.rdtype)
+        test_name = "test_{0}".format(dispatch.dtype)
         place_holder.__name__ = test_name
         setattr(_TestCase, test_name, place_holder)
         return _TestCase
 
     def build_testcases(dispatch):
         commands = []
-        command = [EXEC, dispatch.rdtype, 'create']
+        command = [EXEC, dispatch.dtype, 'create']
         for add_arg, extract_arg, test_method in dispatch.create_args:
             command.append(test_method_to_params(test_method()))
         commands.append((201, ' '.join(command)))
 
-        command = [EXEC, dispatch.rdtype, 'update']
+        command = [EXEC, dispatch.dtype, 'update']
         for add_arg, extract_arg, test_method in dispatch.update_args:
             command.append(test_method_to_params(test_method()))
         commands.append((202, ' '.join(command)))
@@ -155,9 +158,10 @@ def run_tests():
     unittest.TestSuite()
     test_cases = []
     # Build DNS test cases
-    for dispatch in registrar.dns_dispatches:
-        tc = build_testcases(dispatch)
-        test_cases.append(tc)
+    for dispatch in registrar.dispatches:
+        if dispatch.dgroup == 'dns':
+            tc = build_testcases(dispatch)
+            test_cases.append(tc)
 
     return test_cases
 

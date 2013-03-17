@@ -2,8 +2,8 @@ MANNAME="invtool"
 MANTARGET="./docs/invtool"
 RSTMAN="./docs/invtool.man.rst"
 OPTIONS="--date"
-INVTOOLPATH="./invtool"
-INVTOOLBIN="./bin/invtool"
+INVTOOLPATH=./invtool
+INVTOOLBIN=./bin/inv
 SHELL_CONFIG=~/.zshrc
 
 do_tests:
