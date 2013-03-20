@@ -25,6 +25,7 @@ pip-log.txt
 #Mr Developer
 config.cfg
 etc/invtool.conf
+etc/invtool.conf.bak
 
 # Stuff
 inv
