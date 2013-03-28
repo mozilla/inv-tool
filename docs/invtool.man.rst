@@ -19,6 +19,7 @@ SYNOPSIS
 ========
 
 ``invtool`` ``--help``
+``invtool`` [ --json | --silent ] status
 
 ``invtool`` [ --json | --silent ] search [ ``--query`` | ``--range`` ] *query-string*
 
