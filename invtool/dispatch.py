@@ -10,22 +10,24 @@ class Dispatch(object):
     object_url = "/en-US/mozdns/api/v{0}_dns/{1}/{2}/"
     object_list_url = "/en-US/mozdns/api/v{0}_dns/{1}/"
 
+    def format_response(self, nas, resp_msg, user_msg):
+        resp_list = []
+        if nas.p_json:
+            resp_list.append(json.dumps(resp_msg, indent=2))
+        else:
+            resp_list.append(user_msg)
+            for k, v in resp_msg.iteritems():
+                resp_list.append("{0}: {1}".format(k, v))
+        return resp_list
+
     def handle_resp(self, nas, data, resp):
-        def format_response(resp_msg, user_msg):
-            resp_list = []
-            if nas.p_json:
-                resp_list.append(json.dumps(resp_msg, indent=2))
-            else:
-                resp_list.append(user_msg)
-                for k, v in resp_msg.iteritems():
-                    resp_list.append("{0}: {1}".format(k, v))
-            return resp_list
 
         resp_msg = self.get_resp_dict(resp)
 
         if resp.status_code == 404:
-            return 1, format_response(resp_msg, "http_status: 404 (file not "
-                                      "found)")
+            return 1, self.format_response(
+                nas, resp_msg, "http_status: 404 (file not found)"
+            )
         elif resp.status_code == 204:
             if nas.p_json:
                 return 0, [json.dumps(resp_msg, indent=2)]
@@ -45,11 +47,17 @@ class Dispatch(object):
                 else:
                     return 1, ["http_status: 400 (bad request)"]
         elif resp.status_code == 201:
-            return 0, format_response(resp_msg, "http_status: 201 (created)")
+            return 0, self.format_response(
+                nas, resp_msg, "http_status: 201 (created)"
+            )
         elif resp.status_code == 202:
-            return 0, format_response(resp_msg, "http_status: 202 (Accepted)")
+            return 0, self.format_response(
+                nas, resp_msg, "http_status: 202 (Accepted)"
+            )
         elif resp.status_code == 200:
-            return 0, format_response(resp_msg, "http_status: 200 (Success)")
+            return 0, self.format_response(
+                nas, resp_msg, "http_status: 200 (Success)"
+            )
         else:
             resp_list = []
             resp_list.append("Client didn't understand the response.")

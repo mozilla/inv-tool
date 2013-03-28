@@ -6,7 +6,7 @@ random.seed(time.time())
 N = 32
 TEST_DOMAIN = _(
     ''.join(random.choice(string.ascii_uppercase + string.digits)
-            for x in range(N)) + ".foo.bar.test_domain.scl3.mozilla.com"
+            for x in range(N)) + ".foo.bar.test_domain.lab1.mozilla.net"
 )
 TEST_FQDN = "testfqdn." + TEST_DOMAIN
 TEST_IPv4 = "10.1.2.3"

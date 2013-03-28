@@ -3,6 +3,7 @@ import argparse
 from invtool.dispatch import dispatch
 from invtool.dns_dispatch import build_dns_parsers
 from invtool.search_dispatch import build_search_parsers
+from invtool.status_dispatch import build_status_parsers
 
 
 def main(args):
@@ -25,6 +26,7 @@ def main(args):
     # Build parsers. Parses should register arguments.
     build_dns_parsers(base_parser)
     build_search_parsers(base_parser)
+    build_status_parsers(base_parser)
 
     nas = inv_parser.parse_args(args[1:])
     resp_code, resp_list = dispatch(nas)
