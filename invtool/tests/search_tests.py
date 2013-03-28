@@ -1,7 +1,11 @@
 import subprocess
 import shlex
 import unittest
-import simplejson as json
+
+try:
+    import simplejson as json
+except ImportError:
+    import json
 
 EXEC = "./inv --json"
 

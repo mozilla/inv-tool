@@ -1,5 +1,9 @@
 import requests
-import simplejson as json
+
+try:
+    import simplejson as json
+except ImportError:
+    import json
 
 from invtool.dispatch import Dispatch
 from invtool.lib.registrar import registrar
