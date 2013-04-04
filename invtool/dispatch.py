@@ -2,14 +2,14 @@ try:
     import simplejson as json
 except ImportError:
     import json
+import requests
+
 from gettext import gettext as _
 from invtool.lib.registrar import registrar
+from invtool.lib.config import REMOTE, auth
 
 
 class Dispatch(object):
-    object_url = "/en-US/mozdns/api/v{0}_dns/{1}/{2}/"
-    object_list_url = "/en-US/mozdns/api/v{0}_dns/{1}/"
-
     def format_response(self, nas, resp_msg, user_msg):
         resp_list = []
         if nas.p_json:
@@ -21,12 +21,11 @@ class Dispatch(object):
         return resp_list
 
     def handle_resp(self, nas, data, resp):
-
         resp_msg = self.get_resp_dict(resp)
 
         if resp.status_code == 404:
             return 1, self.format_response(
-                nas, resp_msg, "http_status: 404 (file not found)"
+                nas, resp_msg, "http_status: 404 (not found)"
             )
         elif resp.status_code == 204:
             if nas.p_json:
@@ -36,7 +35,7 @@ class Dispatch(object):
         elif resp.status_code == 500:
             resp_list = [_("SERVER ERROR! (Please email this output to a "
                          "code monkey)")]
-            return self.error_out(data, resp, resp_list=resp_list)
+            return self.error_out(nas, data, resp, resp_list=resp_list)
         elif resp.status_code == 400:
             # Bad Request
             if nas.p_json:
@@ -44,6 +43,8 @@ class Dispatch(object):
             else:
                 if 'error_messages' in resp_msg:
                     return self.get_errors(resp_msg['error_messages'])
+                elif 'message' in resp_msg:
+                    return 1, [resp_msg['message']]
                 else:
                     return 1, ["http_status: 400 (bad request)"]
         elif resp.status_code == 201:
@@ -85,9 +86,50 @@ class Dispatch(object):
         return msg
 
     def error_out(self, nas, data, resp, resp_list=[]):
+        resp_list.append(resp.content)
         resp_list.append(str(nas))
         resp_list.append(str(data))
         return 1, resp_list
+
+    def delete(self, nas):
+        url = "{0}{1}?format=json".format(REMOTE, self.delete_url(nas))
+        headers = {'content-type': 'application/json'}
+        resp = requests.delete(url, headers=headers, auth=auth)
+        return self.handle_resp(nas, {}, resp)
+
+    def detail(self, nas):
+        url = "{0}{1}?format=json".format(REMOTE, self.detail_url(nas))
+        headers = {'content-type': 'application/json'}
+        resp = requests.get(url, headers=headers, auth=auth)
+        return self.handle_resp(nas, {}, resp)
+
+    def update(self, nas):
+        data = self.get_update_data(nas)  # Dispatch defined Hook
+        url = "{0}{1}".format(REMOTE, self.update_url(nas))
+        return self.action(nas, url, requests.patch, data)
+
+    def create(self, nas):
+        data = self.get_create_data(nas)  # Dispatch defined Hook
+        url = "{0}{1}".format(REMOTE, self.create_url(nas))
+        return self.action(nas, url, requests.post, data)
+
+    def action(self, nas, url, method, data):
+        headers = {'content-type': 'application/json'}
+        data = json.dumps(data, indent=2)
+        resp = method(url, headers=headers, data=data, auth=auth)
+        return self.handle_resp(nas, data, resp)
+
+    def get_create_data(self, nas):
+        data = {}
+        for add_arg, extract_arg, test_method in self.create_args:
+            data.update(extract_arg(nas))
+        return data
+
+    def get_update_data(self, nas):
+        data = {}
+        for add_arg, extract_arg, test_method in self.update_args:
+            data.update(extract_arg(nas))
+        return data
 
 
 def dispatch(nas):
