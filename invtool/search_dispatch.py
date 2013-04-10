@@ -10,32 +10,31 @@ from invtool.lib.registrar import registrar
 from invtool.lib.config import REMOTE, auth
 
 
-def build_search_parsers(base_parser):
-    # Search is a top level command.
-    search = base_parser.add_parser(
-        'search', help="Search for stuff.", add_help=True
-    )
-    search.add_argument(
-        '--query', '-q', dest='query', type=str, help="A query string "
-        "surrounded by quotes. I.E `search -q 'foo.bar.mozilla.com'`",
-        default=None, required=False
-    )
-
-    search.add_argument(
-        '--range', '-r', dest='irange', type=str, help="Get information and "
-        "statistics about an IP range. Specify the range using: "
-        "<ip-start>,<ip-end> format (no spaces)", default=None, required=False
-    )
-
-    search.add_argument(
-        '--display-integers', dest='d_integers', help="Return integers when "
-        "showing free ip ranges.", action='store_true', default=False,
-        required=False
-    )
-
-
 class SearchDispatch(Dispatch):
     dgroup = dtype = 'search'
+
+    def build_parser(self, base_parser):
+        # Search is a top level command.
+        search = base_parser.add_parser(
+            'search', help="Search for stuff.", add_help=True
+        )
+        search.add_argument(
+            '--query', '-q', dest='query', type=str, help="A query string "
+            "surrounded by quotes. I.E `search -q 'foo.bar.mozilla.com'`",
+            default=None, required=False
+        )
+
+        search.add_argument(
+            '--range', '-r', dest='irange', type=str, help="Get information and "
+            "statistics about an IP range. Specify the range using: "
+            "<ip-start>,<ip-end> format (no spaces)", default=None, required=False
+        )
+
+        search.add_argument(
+            '--display-integers', dest='d_integers', help="Return integers when "
+            "showing free ip ranges.", action='store_true', default=False,
+            required=False
+        )
 
     def route(self, nas):
         return getattr(self, nas.dtype)(nas)

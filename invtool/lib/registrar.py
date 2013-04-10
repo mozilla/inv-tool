@@ -1,5 +1,4 @@
 class Registrar():
-    dns_dispatches = []
     dispatches = []
 
     def register(self, dispatch):

@@ -10,8 +10,11 @@ from invtool.lib.dns_options import (
     fqdn_argument, ttl_argument, ip_argument, view_arguments,
     description_argument, comment_argument, update_pk_argument,
     delete_pk_argument, target_argument, detail_pk_argument, priority_argument,
-    port_argument, weight_argument, system_argument, mac_argument,
-    interface_name_argument
+    port_argument, weight_argument,
+)
+from invtool.lib.parser import (
+    build_create_parser, build_update_parser, build_delete_parser,
+    build_detail_parser
 )
 
 
@@ -22,6 +25,21 @@ class DNSDispatch(Dispatch):
     def route(self, nas):
         if self.dtype.lower() == nas.dtype.lower():
             return getattr(self, nas.action.lower())(nas)
+
+    def build_parser(self, base_parser):
+        record_base_parser = base_parser.add_parser(
+            self.dtype,
+            help="Interface for {0} records".format(self.dtype),
+            add_help=True
+        )
+        action_parser = record_base_parser.add_subparsers(
+            help="{0} record actions".format(self.dtype),
+            dest='action'
+        )
+        build_create_parser(self, action_parser)
+        build_update_parser(self, action_parser)
+        build_delete_parser(self, action_parser)
+        build_detail_parser(self, action_parser)
 
     # TODO, dedup this code
     def delete_url(self, nas):
@@ -43,56 +61,6 @@ class DNSDispatch(Dispatch):
         return self.object_list_url.format(
             API_MAJOR_VERSION, self.resource_name
         )
-
-
-class DispatchINTR(DNSDispatch):
-    resource_name = 'staticinterface'
-    dtype = 'INTR'
-    dgroup = 'dns'
-    ip_type = '4'  # Used for testing
-
-    update_args = [
-        fqdn_argument('fqdn', dtype),
-        mac_argument('mac'),
-        interface_name_argument('interface_name'),
-        ttl_argument('ttl'),
-        ip_argument('ip_str', ip_type),
-        view_arguments('views'),
-        description_argument('description'),
-        comment_argument('comment')
-    ]
-
-    create_args = update_args + [
-        system_argument('system_hostname'),
-    ]
-
-    update_args = update_args + [
-        update_pk_argument('pk', dtype)
-    ]
-
-    delete_args = [
-        delete_pk_argument('pk', dtype)
-    ]
-
-    detail_args = [detail_pk_argument('pk', dtype)]
-
-    def get_create_data(self, nas):
-        data = super(DispatchINTR, self).get_create_data(nas)
-        if 'ip_str' in data:
-            if data['ip_str'].find(':') < 0:
-                data['ip_type'] = '4'
-            else:
-                data['ip_type'] = '4'
-        return data
-
-    def get_update_data(self, nas):
-        data = super(DispatchINTR, self).get_update_data(nas)
-        if 'ip_str' in data:
-            if data['ip_str'].find(':') < 0:
-                data['ip_type'] = '4'
-            else:
-                data['ip_type'] = '4'
-        return data
 
 
 class DispatchA(DNSDispatch):
@@ -302,7 +270,6 @@ class DispatchTXT(DNSDispatch):
     detail_args = [detail_pk_argument('pk', dtype)]
 
 
-registrar.register(DispatchINTR())
 registrar.register(DispatchA())
 registrar.register(DispatchAAAA())
 registrar.register(DispatchCNAME())
@@ -312,44 +279,12 @@ registrar.register(DispatchSRV())
 registrar.register(DispatchTXT())
 
 
-def build_create_parser(dispatch, action_parser):
-    create_parser = action_parser.add_parser(
-        'create', help="Create a(n) {0} record".format(dispatch.dtype)
-    )
-    for add_arg, extract_arg, test_method in dispatch.create_args:
-        add_arg(create_parser)
-
-
-def build_update_parser(dispatch, action_parser):
-    update_parser = action_parser.add_parser(
-        'update', help="Update a(n) {0} record".format(dispatch.dtype)
-    )
-    for add_arg, extract_arg, test_method in dispatch.update_args:
-        add_arg(update_parser, required=False)
-
-
-def build_delete_parser(dispatch, action_parser):
-    delete_parser = action_parser.add_parser(
-        'delete', help="Delete a(n) {0} record".format(dispatch.dtype)
-    )
-    for add_arg, extract_arg, test_method in dispatch.delete_args:
-        add_arg(delete_parser)
-
-
-def build_detail_parser(dispatch, action_parser):
-    detail_parser = action_parser.add_parser(
-        'detail', help="Detail a(n) {0} record".format(dispatch.dtype)
-    )
-    for add_arg, extract_arg, test_method in dispatch.detail_args:
-        add_arg(detail_parser)
-
-
 def build_dns_parsers(base_parser):
     # Build all the records
     for dispatch in [d for d in registrar.dispatches if d.dgroup == 'dns']:
         record_base_parser = base_parser.add_parser(
             dispatch.dtype,
-            help="The interface for {0} records".format(dispatch.dtype),
+            help="Interface for {0} records".format(dispatch.dtype),
             add_help=True
         )
         action_parser = record_base_parser.add_subparsers(

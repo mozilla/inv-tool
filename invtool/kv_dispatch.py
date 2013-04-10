@@ -13,11 +13,49 @@ from invtool.lib.kv_options import (
     delete_pk_argument, detail_pk_argument, kvlist_pk_argument
 )
 
+from invtool.lib.parser import (
+    build_create_parser, build_update_parser, build_delete_parser,
+    build_detail_parser
+)
+
+
+def build_kvlist_parser(dispatch, action_parser):
+    kvlist_parser = action_parser.add_parser(
+        'kvlist', help="List a object's KV pairs"
+    )
+    for add_arg, extract_arg, test_method in dispatch.kvlist_args:
+        add_arg(kvlist_parser)
+
 
 class DispatchKV(Dispatch):
     def route(self, nas):
         if self.dtype.lower() == nas.dtype.lower():
             return getattr(self, nas.action.lower())(nas)
+
+    def build_parser(self, base_parser):
+        record_base_parser = base_parser.add_parser(
+            self.dtype,
+            help="The interface for CRUDing {0} Key Value "
+            "pairs".format(self.dtype),
+            add_help=True
+        )
+        action_parser = record_base_parser.add_subparsers(
+            help="{0} record actions".format(self.dtype),
+            dest='action'
+        )
+        build_create_parser(
+            self, action_parser, help="Create a {0} KV pair".format(self.dtype)
+        )
+        build_update_parser(
+            self, action_parser, help="Update a {0} KV pair".format(self.dtype)
+        )
+        build_delete_parser(
+            self, action_parser, help="Delete a {0} KV pair".format(self.dtype)
+        )
+        build_detail_parser(
+            self, action_parser, help="Detail a {0} KV pair".format(self.dtype)
+        )
+        build_kvlist_parser(self, action_parser)
 
     def action(self, nas, url, method, data):
         headers = {'content-type': 'application/json'}
@@ -129,62 +167,3 @@ class BondedInterfaceKV(DispatchKV):
 
 registrar.register(StaticInterfaceKV())
 registrar.register(BondedInterfaceKV())
-
-
-def build_create_parser(dispatch, action_parser):
-    create_parser = action_parser.add_parser(
-        'create', help="Create a {0} KV pair".format(dispatch.dtype)
-    )
-    for add_arg, extract_arg, test_method in dispatch.create_args:
-        add_arg(create_parser)
-
-
-def build_update_parser(dispatch, action_parser):
-    update_parser = action_parser.add_parser(
-        'update', help="Update a {0} KV pair".format(dispatch.dtype)
-    )
-    for add_arg, extract_arg, test_method in dispatch.update_args:
-        add_arg(update_parser, required=False)
-
-
-def build_delete_parser(dispatch, action_parser):
-    delete_parser = action_parser.add_parser(
-        'delete', help="Delete a {0} KV pair".format(dispatch.dtype)
-    )
-    for add_arg, extract_arg, test_method in dispatch.delete_args:
-        add_arg(delete_parser)
-
-
-def build_detail_parser(dispatch, action_parser):
-    detail_parser = action_parser.add_parser(
-        'detail', help="Detail a {0} KV pair".format(dispatch.dtype)
-    )
-    for add_arg, extract_arg, test_method in dispatch.detail_args:
-        add_arg(detail_parser)
-
-
-def build_kvlist_parser(dispatch, action_parser):
-    kvlist_parser = action_parser.add_parser(
-        'kvlist', help="List a object's KV pairs"
-    )
-    for add_arg, extract_arg, test_method in dispatch.kvlist_args:
-        add_arg(kvlist_parser)
-
-
-def build_kv_parsers(base_parser):
-    for dispatch in [d for d in registrar.dispatches if d.dgroup == 'kv']:
-        record_base_parser = base_parser.add_parser(
-            dispatch.dtype,
-            help="The interface for CRUDing {0} Key Value "
-            "pairs".format(dispatch.dtype),
-            add_help=True
-        )
-        action_parser = record_base_parser.add_subparsers(
-            help="{0} record actions".format(dispatch.dtype),
-            dest='action'
-        )
-        build_create_parser(dispatch, action_parser)
-        build_update_parser(dispatch, action_parser)
-        build_delete_parser(dispatch, action_parser)
-        build_detail_parser(dispatch, action_parser)
-        build_kvlist_parser(dispatch, action_parser)

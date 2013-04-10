@@ -8,18 +8,16 @@ from invtool.lib.registrar import registrar
 from invtool.lib import config
 
 
-def build_status_parsers(base_parser):
-    # Search is a top level command.
-    base_parser.add_parser(
-        'status', help="Print config vars.", add_help=True
-    )
-
-
 class StatusDispatch(Dispatch):
     dgroup = dtype = 'status'
 
     def route(self, nas):
         return getattr(self, nas.dtype)(nas)
+
+    def build_parser(self, base_parser):
+        base_parser.add_parser(
+            'status', help="Print config vars.", add_help=True
+        )
 
     def status(self, nas):
         """

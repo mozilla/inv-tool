@@ -1,10 +1,12 @@
 import argparse
 
 from invtool.dispatch import dispatch
-from invtool.dns_dispatch import build_dns_parsers
-from invtool.search_dispatch import build_search_parsers
-from invtool.status_dispatch import build_status_parsers
-from invtool.kv_dispatch import build_kv_parsers
+
+import invtool.dns_dispatch
+import invtool.search_dispatch
+import invtool.status_dispatch
+import invtool.kv_dispatch
+from  invtool.lib.registrar import registrar
 
 
 def main(args):
@@ -25,10 +27,8 @@ def main(args):
     base_parser = inv_parser.add_subparsers(dest='dtype')
 
     # Build parsers. Parses should register arguments.
-    build_dns_parsers(base_parser)
-    build_search_parsers(base_parser)
-    build_status_parsers(base_parser)
-    build_kv_parsers(base_parser)
+    for d in registrar.dispatches:
+        d.build_parser(base_parser)
 
     nas = inv_parser.parse_args(args[1:])
     resp_code, resp_list = dispatch(nas)
