@@ -95,13 +95,13 @@ Search Patterns
 Operators
 ---------
 
-    \-
-        The character ``-`` can be used to negate any search pattern. It can
+    !
+        The character ``!`` can be used to negate any search pattern. It can
         also negate the ``type`` directive and parameters in parenthesis.
 
         ``Example``::
 
-            [ hostname -hostname1 ]
+            [ hostname !hostname1 ]
 
     OR
         The binary ``OR`` operator will return the results of two seperate
