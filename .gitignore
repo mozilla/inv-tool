@@ -29,3 +29,5 @@ etc/invtool.conf.bak
 
 # Stuff
 inv
+devinvtool
+bug_*
