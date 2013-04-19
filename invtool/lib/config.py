@@ -31,6 +31,25 @@ REMOTE = "http{0}://{1}{2}".format(
 
 if dev == 'True':
     auth = None
+elif config.has_option('authorization', 'keyring'):
+    try:
+        import keyring
+    except ImportError:
+        raise Exception(
+            "The keyring module could not be imported. "
+            "For keyring support, install the keyring "
+            "module.")
+    auth = (
+        config.get('authorization', 'ldap_username'),
+        keyring.get_password(
+            config.get('authorization', 'keyring'),
+            config.get('authorization', 'ldap_username')),
+    )
+    if auth[1] is None:
+        raise Exception(
+            "Can't find ldap password in keyring '{0}'"
+            .format(config.get('authorization', 'keyring'))
+        )
 else:
     auth = (
         config.get('authorization', 'ldap_username'),
