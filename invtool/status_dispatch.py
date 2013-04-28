@@ -31,6 +31,7 @@ class StatusDispatch(Dispatch):
             'CONFIG_FILE',
             'GLOBAL_CONFIG_FILE',
             'LOCAL_CONFIG_FILE',
+            'AUTH_TYPE',
             'REMOTE',
             'dev',
             'host',
