@@ -25,7 +25,7 @@ class StatusDispatch(Dispatch):
         """
         Look at the config module and print out interesting things.
         """
-        # Items of intrest
+        # Items of interest
         items = (
             'API_MAJOR_VERSION',
             'CONFIG_FILE',
