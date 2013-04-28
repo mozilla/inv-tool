@@ -28,6 +28,12 @@ non-root install::
     ln -s ./bin/invtool ./devinvtool
     ./devinvtool status
 
+On this first invocation, if no credentials have been previously set, invtool
+will prompt you for them. If the keyring module is present, your password will
+be stored in the system keyring for later use under the service
+"invtool-ldap". The keyring service name can be changed in the configuration
+file.
+
 RTFM
 ====
 

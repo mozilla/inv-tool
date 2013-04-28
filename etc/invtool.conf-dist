@@ -7,4 +7,4 @@ dev = False
 
 [authorization]
 ldap_username =
-ldap_password =
+keyring = invtool-ldap
