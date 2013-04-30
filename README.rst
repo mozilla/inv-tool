@@ -14,6 +14,11 @@ Notes On Installing
     sudo pip install -r requirements.txt
     sudo python setup.py install
 
+An optional package (though highly recommend and included in
+``requirements.txt``) is ``keychain``. If you need to use ``invtool`` without
+it, remove it from ``requirements.txt`` and store your ldap password in
+plaintext.
+
 ``invtool`` requires you to store your ldap username in a clear text
 configuration file. Your ldap password can be stored either in plaintext in the
 same file or else in the system keyring. In order to use the keyring you need
