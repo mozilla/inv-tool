@@ -101,14 +101,15 @@ def system_argument(field_name):
     def add_system_argument(parser, required=True):
         parser.add_argument(
             '--{0}'.format(field_name), default="", type=str, dest=field_name,
-            help="The hostname of the system this INTR is associated with",
-            required=True
+            help="The hostname of the system this registration is associated "
+            "with", required=True
         )
 
     def test_data():
         return 'system_hostname', 'toolsdev1.dmz.scl3.mozilla.com'
 
-    return add_system_argument, build_extractor(field_name, field_name), test_data
+    extractor = build_extractor(field_name, field_name)
+    return add_system_argument, extractor, test_data
 
 
 def ip_argument(field_name, ip_type):
@@ -167,31 +168,19 @@ def comment_argument(field_name):
 
     return add_com_arg, build_extractor(field_name, 'comment'), test_data
 
-def interface_name_argument(field_name):
+
+def name_argument(field_name):
     def add_com_arg(parser, required=True, **kwargs):
         parser.add_argument(
-            '--{0}'.format('iname'), type=str,
-            dest='iname', help="The name of the interface (i.e eth0)",
+            '--{0}'.format('name'), type=str,
+            dest='name', help="A short name",
             required=required
         )
 
     def test_data():
-        return 'iname', TEST_INAME()  # Reuse this test data
+        return 'name', TEST_INAME()  # Reuse this test data
 
-    return add_com_arg, build_extractor(field_name, 'iname'), test_data
-
-def mac_argument(field_name):
-    def add_com_arg(parser, required=True, **kwargs):
-        parser.add_argument(
-            '--{0}'.format(field_name), default="", type=str,
-            dest='mac', help="Mac Address",
-            required=required
-        )
-
-    def test_data():
-        return field_name, '11:22:33:44:55:66'  # Reuse this test data
-
-    return add_com_arg, build_extractor(field_name, field_name), test_data
+    return add_com_arg, build_extractor(field_name, 'name'), test_data
 
 
 def text_argument(field_name):

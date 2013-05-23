@@ -10,7 +10,7 @@ invtool/main.py
 invtool/search_dispatch.py
 invtool/lib/__init__.py
 invtool/lib/config.py
-invtool/lib/intr_options.py
+invtool/lib/sreg_options.py
 invtool/lib/options.py
 invtool/lib/registrar.py
 invtool/tests/__init__.py

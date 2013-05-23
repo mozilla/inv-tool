@@ -3,9 +3,8 @@ try:
 except ImportError:
     import json
 
-from invtool.dispatch import Dispatch
+from invtool.dispatch import ObjectDispatch
 from invtool.lib.registrar import registrar
-from invtool.lib.config import API_MAJOR_VERSION
 from invtool.lib.dns_options import (
     fqdn_argument, ttl_argument, ip_argument, view_arguments,
     description_argument, comment_argument, update_pk_argument,
@@ -18,49 +17,9 @@ from invtool.lib.parser import (
 )
 
 
-class DNSDispatch(Dispatch):
+class DNSDispatch(ObjectDispatch):
     object_url = "/en-US/mozdns/api/v{0}_dns/{1}/{2}/"
     object_list_url = "/en-US/mozdns/api/v{0}_dns/{1}/"
-
-    def route(self, nas):
-        if self.dtype.lower() == nas.dtype.lower():
-            return getattr(self, nas.action.lower())(nas)
-
-    def build_parser(self, base_parser):
-        record_base_parser = base_parser.add_parser(
-            self.dtype,
-            help="Interface for {0} records".format(self.dtype),
-            add_help=True
-        )
-        action_parser = record_base_parser.add_subparsers(
-            help="{0} record actions".format(self.dtype),
-            dest='action'
-        )
-        build_create_parser(self, action_parser)
-        build_update_parser(self, action_parser)
-        build_delete_parser(self, action_parser)
-        build_detail_parser(self, action_parser)
-
-    # TODO, dedup this code
-    def delete_url(self, nas):
-        return self.object_url.format(
-            API_MAJOR_VERSION, self.resource_name, nas.pk
-        )
-
-    def detail_url(self, nas):
-        return self.object_url.format(
-            API_MAJOR_VERSION, self.resource_name, nas.pk
-        )
-
-    def update_url(self, nas):
-        return self.object_url.format(
-            API_MAJOR_VERSION, self.resource_name, nas.pk
-        )
-
-    def create_url(self, nas):
-        return self.object_list_url.format(
-            API_MAJOR_VERSION, self.resource_name
-        )
 
 
 class DispatchA(DNSDispatch):

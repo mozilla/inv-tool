@@ -18,3 +18,11 @@ TEST_WEIGHT = "7777"
 TEST_PRIORITY = "5555"
 TEST_TEXT = "FOO 'BAR' baz"
 TEST_INAME = lambda: "eth" + str(random.randint(0, 255))
+TEST_MAC = lambda: '{0}{0}:{1}{1}:{2}{2}:{3}{3}:{4}{4}:{5}{5}'.format(
+    random.randint(0, 9),
+    random.randint(0, 9),
+    random.randint(0, 9),
+    random.randint(0, 9),
+    random.randint(0, 9),
+    random.randint(0, 9)
+)

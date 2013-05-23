@@ -6,6 +6,7 @@ import invtool.dns_dispatch
 import invtool.search_dispatch
 import invtool.status_dispatch
 import invtool.kv_dispatch
+import invtool.sreg_dispatch
 from  invtool.lib.registrar import registrar
 
 

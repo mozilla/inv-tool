@@ -1,6 +1,7 @@
 import subprocess
 import shlex
 import unittest
+from itertools import chain
 
 try:
     import simplejson as json
@@ -13,6 +14,7 @@ import sys
 sys.path.insert(0, '')
 
 from invtool.dns_dispatch import registrar
+from invtool.sreg_dispatch import DispatchHW, DispatchSREG
 
 EXEC = "./inv --json"
 
@@ -46,7 +48,7 @@ def call_to_json(command_str):
                 p.returncode)
 
 
-def run_tests():
+def run_dns_tests():
     def build_testcase(dispatch, commands):
         """The first command is used to create an object. Using the pk returned
         from the object's creation we look up the object and use the second
@@ -169,11 +171,163 @@ def run_tests():
 
     return test_cases
 
+
+def run_dhcp_tests():
+    class SREGHWTestCase(unittest.TestCase):
+        def test_HW_and_SREG(self):
+            # Create the SREG
+            command = [EXEC, DispatchSREG.dtype, 'create']
+            for add_arg, extract_arg, test_method in DispatchSREG.create_args:
+                command.append(test_method_to_params(test_method()))
+
+            sreg_ret, sreg_errors, sreg_rc = call_to_json(' '.join(command))
+
+            if sreg_errors:
+                self.fail(sreg_errors)
+
+            self.assertEqual(0, sreg_rc)
+
+            # Make sure the SREG was created correctly
+            self.assertTrue('http_status' in sreg_ret)
+            self.assertEqual(sreg_ret['http_status'], 201)
+            self.assertTrue('pk' in sreg_ret)
+            sreg_pk = sreg_ret['pk']
+
+            # Create a HW
+            command = [EXEC, DispatchHW.dtype, 'create']
+            for add_arg, extract_arg, test_method in DispatchHW.create_args:
+                command.append(test_method_to_params(test_method()))
+            command_str = ' '.join(command)
+            # lol, we are jinja2. evaluate our placeholder
+            command_str = command_str.replace('{{ sreg_pk }}', str(sreg_pk))
+            hw_ret, hw_errors, hw_rc = call_to_json(command_str)
+
+            if hw_errors:
+                self.fail(sreg_errors)
+
+            self.assertEqual(0, hw_rc)
+            self.assertTrue('http_status' in hw_ret)
+            self.assertEqual(hw_ret['http_status'], 201)
+            self.assertTrue('pk' in hw_ret)
+            hw_pk = hw_ret['pk']
+
+            # Detail the hw and make sure we get the correct results
+            def hw_detail():
+                # Use a closure to keep outer context more clean
+                detail_command = _("{0} {1} detail --pk {2}".format(
+                    EXEC, DispatchHW.dtype, hw_pk)
+                )
+                ret, errors, rc = call_to_json(detail_command)
+                if errors:
+                    self.fail(errors)
+                self.assertEqual(0, rc)
+
+                self.assertTrue('http_status' in ret)
+                self.assertEqual(ret['http_status'], 200)
+                self.assertTrue('pk' in ret)
+                self.assertEqual(ret['pk'], hw_pk)
+
+            # Detail the sreg and make sure we see the hw we created
+            def detail_sreg_1():
+                detail_command = _("{0} {1} detail --pk {2}".format(
+                    EXEC, DispatchSREG.dtype, sreg_pk)
+                )
+                ret, errors, rc = call_to_json(detail_command)
+                if errors:
+                    self.fail(errors)
+                self.assertEqual(0, rc)
+
+                self.assertTrue('http_status' in ret)
+                self.assertEqual(ret['http_status'], 200)
+                self.assertTrue('pk' in ret)
+                self.assertEqual(ret['pk'], sreg_pk)
+
+                self.assertTrue('hwadapter_set' in ret)
+                self.assertEqual(1, len(ret['hwadapter_set']))
+                self.assertEqual(hw_pk, ret['hwadapter_set'][0]['pk'])
+
+            detail_sreg_1()
+
+            def delete_hw():
+                # Create a HW
+                command = [EXEC, DispatchHW.dtype, 'create']
+                for add_arg, extract_arg, tm in DispatchHW.create_args:
+                    command.append(test_method_to_params(tm()))
+                command_str = ' '.join(command)
+                # lol, we are jinja2. evaluate our placeholder
+                command_str = command_str.replace(
+                    '{{ sreg_pk }}', str(sreg_pk))
+                local_ret, local_errors, local_rc = call_to_json(command_str)
+
+                if local_errors:
+                    self.fail(sreg_errors)
+
+                self.assertTrue('http_status' in local_ret)
+                self.assertEqual(local_ret['http_status'], 201)
+                self.assertTrue('pk' in local_ret)
+                local_pk = local_ret['pk']
+
+                delete_command = _("{0} {1} delete --pk {2}".format(
+                    EXEC, DispatchHW.dtype, local_pk)
+                )
+                ret, errors, rc = call_to_json(delete_command)
+
+                if errors:
+                    self.fail(errors)
+                self.assertEqual(0, rc)
+
+                detail_command = _("{0} {1} detail --pk {2}".format(
+                    EXEC, DispatchHW.dtype, local_pk)
+                )
+                ret, errors, rc = call_to_json(detail_command)
+
+                if errors:
+                    self.fail(errors)
+
+                self.assertEqual(1, rc)
+
+                self.assertTrue('http_status' in ret)
+                self.assertEqual(ret['http_status'], 404)
+                self.assertTrue('pk' not in ret)
+
+            delete_hw()
+
+            def delete_sreg_causing_hw_delete():
+                delete_command = _("{0} {1} delete --pk {2}".format(
+                    EXEC, DispatchSREG.dtype, sreg_pk)
+                )
+                ret, errors, rc = call_to_json(delete_command)
+                if errors:
+                    self.fail(errors)
+                self.assertEqual(0, rc)
+
+                # Make sure the SREG getting deleted caused a cascade delete
+                detail_command = _("{0} {1} detail --pk {2}".format(
+                    EXEC, DispatchHW.dtype, hw_pk)
+                )
+                local_ret, local_errors, local_rc = call_to_json(
+                    detail_command)
+
+                if local_errors:
+                    self.fail(local_errors)
+
+                self.assertEqual(1, local_rc)
+
+                self.assertTrue('http_status' in local_ret)
+                self.assertEqual(local_ret['http_status'], 404)
+                self.assertTrue('pk' not in local_ret)
+
+            delete_sreg_causing_hw_delete()
+
+    return [SREGHWTestCase]
+
 if __name__ == "__main__":
-    tcs = run_tests()
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
-    for test_class in tcs:
+
+    dns_tcs = run_dns_tests()
+    dhcp_tcs = run_dhcp_tests()
+    for test_class in chain(dns_tcs, dhcp_tcs):
         tests = loader.loadTestsFromTestCase(test_class)
         suite.addTests(tests)
 

@@ -116,8 +116,8 @@ class DispatchKV(Dispatch):
         )
 
 
-class StaticInterfaceKV(DispatchKV):
-    kv_class = 'staticintr'
+class StaticRegistrationKV(DispatchKV):
+    kv_class = 'sreg'
     dtype = kv_class + 'kv'
     dgroup = 'kv'
     create_args = [
@@ -141,8 +141,8 @@ class StaticInterfaceKV(DispatchKV):
     kvlist_args = [kvlist_pk_argument('obj_pk', dtype)]
 
 
-class BondedInterfaceKV(DispatchKV):
-    kv_class = 'bondedintr'
+class HWAdapterKV(DispatchKV):
+    kv_class = 'hwadapter'
     dtype = kv_class + 'kv'
     dgroup = 'kv'
     create_args = [
@@ -165,5 +165,5 @@ class BondedInterfaceKV(DispatchKV):
     kvlist_args = [kvlist_pk_argument('obj_pk', dtype)]
 
 
-registrar.register(StaticInterfaceKV())
-registrar.register(BondedInterfaceKV())
+registrar.register(StaticRegistrationKV())
+registrar.register(HWAdapterKV())
