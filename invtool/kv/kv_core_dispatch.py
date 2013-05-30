@@ -53,3 +53,16 @@ class SiteKV(CoreDispatchKV):
 
 
 registrar.register(SiteKV())
+
+
+class VlanKV(CoreDispatchKV):
+    kv_class = 'vlankeyvalue'
+    dtype = 'VLAN_kv'
+    dgroup = 'kv'
+
+    detail_args = [detail_pk_argument('kv_pk', dtype)]
+
+    kvlist_args = [kvlist_pk_argument('obj_pk', dtype)]
+
+
+registrar.register(VlanKV())
