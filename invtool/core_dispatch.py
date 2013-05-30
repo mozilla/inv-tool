@@ -38,3 +38,25 @@ class DispatchNetwork(CoreDispatch):
 
 
 registrar.register(DispatchNetwork())
+
+
+class DispatchSite(CoreDispatch):
+    resource_name = 'site'
+    dtype = 'SITE'
+    dgroup = 'core'
+
+    detail_args = [detail_pk_argument('pk', dtype)]
+
+
+registrar.register(DispatchSite())
+
+
+class DispatchVlan(CoreDispatch):
+    resource_name = 'vlan'
+    dtype = 'VLAN'
+    dgroup = 'core'
+
+    detail_args = [detail_pk_argument('pk', dtype)]
+
+
+registrar.register(DispatchVlan())
