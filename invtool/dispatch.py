@@ -28,7 +28,10 @@ class Dispatch(object):
         return resp_list
 
     def handle_resp(self, nas, data, resp):
-        resp_msg = self.get_resp_dict(resp)
+        try:
+            resp_msg = self.get_resp_dict(resp)
+        except json.decoder.JSONDecodeError:
+            resp_msg = {}
 
         if resp.status_code == 404:
             return 1, self.format_response(

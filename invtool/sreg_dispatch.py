@@ -63,9 +63,6 @@ class DispatchHW(ObjectDispatch):
         return resp_list
 
 
-registrar.register(DispatchHW())
-
-
 class DispatchSREG(DNSDispatch):
     resource_name = 'staticreg'
     dtype = 'SREG'
@@ -122,8 +119,6 @@ class DispatchSREG(DNSDispatch):
                 resp_list.append("\t{0} | {1}: {2}".format(i, k, v))
         return resp_list
 
-
-
     def format_response(self, nas, resp_msg, user_msg):
         # Override this so we can display hwadapters better
         resp_list = []
@@ -143,4 +138,6 @@ class DispatchSREG(DNSDispatch):
         return resp_list
 
 
-registrar.register(DispatchSREG())
+# Uncomment when dhcp is rolled out
+#registrar.register(DispatchSREG())
+#registrar.register(DispatchHW())

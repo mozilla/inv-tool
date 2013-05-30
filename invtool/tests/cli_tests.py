@@ -1,51 +1,14 @@
-import subprocess
-import shlex
 import unittest
 from itertools import chain
-
-try:
-    import simplejson as json
-except ImportError:
-    import json
 
 from gettext import gettext as _
 
 import sys
 sys.path.insert(0, '')
 
+from invtool.tests.utils import call_to_json, test_method_to_params, EXEC
 from invtool.dns_dispatch import registrar
 from invtool.sreg_dispatch import DispatchHW, DispatchSREG
-
-EXEC = "./inv --json"
-
-
-def test_method_to_params(test_case):
-    if not test_case:
-        return ''
-    elif not test_case[0]:
-        return test_case[1]
-    else:
-        return "--{0} {1}".format(*test_case)
-
-
-def call_to_json(command_str):
-    """
-    Given a string, this function will shell out, execute the command
-    and parse the json returned by that command
-    """
-    p = subprocess.Popen(shlex.split(command_str),
-                         stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-    stdout, stderr = p.communicate()
-    if stderr:
-        return None, stderr, p.returncode
-
-    stdout = stdout.replace('u\'', '"').replace('\'', '"').strip('\n')
-    try:
-        return json.loads(stdout, 'unicode'), None, p.returncode
-    except json.decoder.JSONDecodeError, e:
-        return (None,
-                "Ret was: {0}. Got error: {1}".format(stdout, str(e)),
-                p.returncode)
 
 
 def run_dns_tests():
@@ -203,7 +166,7 @@ def run_dhcp_tests():
             hw_ret, hw_errors, hw_rc = call_to_json(command_str)
 
             if hw_errors:
-                self.fail(sreg_errors)
+                self.fail(hw_errors)
 
             self.assertEqual(0, hw_rc)
             self.assertTrue('http_status' in hw_ret)
@@ -260,7 +223,7 @@ def run_dhcp_tests():
                 local_ret, local_errors, local_rc = call_to_json(command_str)
 
                 if local_errors:
-                    self.fail(sreg_errors)
+                    self.fail(local_errors)
 
                 self.assertTrue('http_status' in local_ret)
                 self.assertEqual(local_ret['http_status'], 201)
@@ -326,7 +289,8 @@ if __name__ == "__main__":
     suite = unittest.TestSuite()
 
     dns_tcs = run_dns_tests()
-    dhcp_tcs = run_dhcp_tests()
+    #dhcp_tcs = run_dhcp_tests()
+    dhcp_tcs = []
     for test_class in chain(dns_tcs, dhcp_tcs):
         tests = loader.loadTestsFromTestCase(test_class)
         suite.addTests(tests)

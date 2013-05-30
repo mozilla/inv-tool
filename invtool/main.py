@@ -1,13 +1,20 @@
 import argparse
 
-from invtool.dispatch import dispatch
+enabled_dispatches = [
+    'invtool.dns_dispatch',
+    'invtool.search_dispatch',
+    'invtool.status_dispatch',
+    'invtool.core_dispatch',
+    'invtool.kv.kv_dispatch',
+    'invtool.kv.kv_core_dispatch',
+    #'invtool.sreg_dispatch'
+]
 
-import invtool.dns_dispatch
-import invtool.search_dispatch
-import invtool.status_dispatch
-import invtool.kv_dispatch
-import invtool.sreg_dispatch
-from  invtool.lib.registrar import registrar
+for d in enabled_dispatches:
+    __import__(d)
+
+from invtool.lib.registrar import registrar
+from invtool.dispatch import dispatch
 
 
 def main(args):

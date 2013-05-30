@@ -2,16 +2,12 @@ try:
     import simplejson as json
 except ImportError:
     import json
+import sys
 import requests
 
 from invtool.dispatch import Dispatch
-from invtool.lib.registrar import registrar
 from invtool.lib.config import REMOTE, auth
 
-from invtool.lib.kv_options import (
-    key_argument, value_argument, update_pk_argument,
-    delete_pk_argument, detail_pk_argument, kvlist_pk_argument
-)
 
 from invtool.lib.parser import (
     build_create_parser, build_update_parser, build_delete_parser,
@@ -21,7 +17,7 @@ from invtool.lib.parser import (
 
 def build_kvlist_parser(dispatch, action_parser):
     kvlist_parser = action_parser.add_parser(
-        'kvlist', help="List a object's KV pairs"
+        'list', help="List a object's KV pairs"
     )
     for add_arg, extract_arg, test_method in dispatch.kvlist_args:
         add_arg(kvlist_parser)
@@ -57,10 +53,13 @@ class DispatchKV(Dispatch):
         )
         build_kvlist_parser(self, action_parser)
 
-    def action(self, nas, url, method, data):
-        headers = {'content-type': 'application/json'}
-        resp = method(url, headers=headers, data=data, auth=auth)
-        return self.handle_resp(nas, data, resp)
+    def update(self, nas):
+        # We have to override this because the default update uses PATCH, we
+        # need to use POST because this dispatch isn't for a tastypie endpoint
+        # and doesn't support PATCH yet.
+        data = self.get_update_data(nas)  # Dispatch defined Hook
+        url = "{0}{1}".format(REMOTE, self.update_url(nas))
+        return self.action(nas, url, requests.post, data)
 
     def format_response(self, nas, resp_msg, user_msg):
         resp_list = []
@@ -69,101 +68,49 @@ class DispatchKV(Dispatch):
         else:
             resp_list.append(user_msg)
             for k, v in resp_msg.iteritems():
-                if k == 'kvs':
-                    self.format_kvs(v, resp_list)
+                if k == 'kvs':  # process these last
                     continue
                 resp_list.append("{0}: {1}".format(k, v))
+
+            if 'kvs' in resp_msg:
+                resp_list += self.format_kvs(resp_msg['kvs'], resp_list)
+
         return resp_list
 
     def format_kvs(self, bundles, resp_list):
+        resp_list = []
         for i, bundle in enumerate(bundles):
             for ikey, ivalue in bundle.iteritems():
-                resp_list.append(
-                    "{0} {1}: {2}".format(
-                        (i % 2 + 1) * '|', ikey, ivalue
-                    )
-                )
+                resp_list.append("{0} {1}: {2}".format(
+                    '-' if i % 2 else '=', ikey, ivalue
+                ))
+        return resp_list
 
-    def kvlist(self, nas):
+    def list(self, nas):
         url = "{0}{1}?format=json".format(REMOTE, self.kvlist_url(nas))
-        headers = {'content-type': 'application/json'}
-        resp = requests.get(url, headers=headers, auth=auth)
-        return self.handle_resp(nas, {}, resp)
+        return self.action(nas, url, requests.get, {})
 
     def create_url(self, nas):
         return '/en-US/core/keyvalue/api/{kv_class}/{obj_pk}/create/'.format(
-            **{'kv_class': self.kv_class + 'keyvalue', 'obj_pk': nas.obj_pk}
+            **{'kv_class': self.kv_class, 'obj_pk': nas.obj_pk}
         )
 
     def detail_url(self, nas):
         return '/en-US/core/keyvalue/api/{kv_class}/{kv_pk}/detail/'.format(
-            **{'kv_class': self.kv_class + 'keyvalue', 'kv_pk': nas.kv_pk}
+            **{'kv_class': self.kv_class, 'kv_pk': nas.kv_pk}
         )
 
     def kvlist_url(self, nas):
         return '/en-US/core/keyvalue/api/{kv_class}/{obj_pk}/list/'.format(
-            **{'kv_class': self.kv_class + 'keyvalue', 'obj_pk': nas.obj_pk}
+            **{'kv_class': self.kv_class, 'obj_pk': nas.obj_pk}
         )
 
     def update_url(self, nas):
         return '/en-US/core/keyvalue/api/{kv_class}/{kv_pk}/update/'.format(
-            **{'kv_class': self.kv_class + 'keyvalue', 'kv_pk': nas.kv_pk}
+            **{'kv_class': self.kv_class, 'kv_pk': nas.kv_pk}
         )
 
     def delete_url(self, nas):
         return '/en-US/core/keyvalue/api/{kv_class}/{kv_pk}/delete/'.format(
-            **{'kv_class': self.kv_class + 'keyvalue', 'kv_pk': nas.kv_pk}
+            **{'kv_class': self.kv_class, 'kv_pk': nas.kv_pk}
         )
-
-
-class StaticRegistrationKV(DispatchKV):
-    kv_class = 'sreg'
-    dtype = kv_class + 'kv'
-    dgroup = 'kv'
-    create_args = [
-        key_argument('key'),
-        value_argument('value'),
-        update_pk_argument('obj_pk', dtype)
-    ]
-
-    update_args = [
-        key_argument('key'),
-        value_argument('value'),
-        update_pk_argument('kv_pk', dtype)
-    ]
-
-    delete_args = [
-        delete_pk_argument('kv_pk', dtype)
-    ]
-
-    detail_args = [detail_pk_argument('kv_pk', dtype)]
-
-    kvlist_args = [kvlist_pk_argument('obj_pk', dtype)]
-
-
-class HWAdapterKV(DispatchKV):
-    kv_class = 'hwadapter'
-    dtype = kv_class + 'kv'
-    dgroup = 'kv'
-    create_args = [
-        key_argument('key'),
-        value_argument('value'),
-        update_pk_argument('obj_pk', dtype)
-    ]
-    update_args = [
-        key_argument('key'),
-        value_argument('value'),
-        update_pk_argument('kv_pk', dtype)
-    ]
-
-    delete_args = [
-        delete_pk_argument('kv_pk', dtype)
-    ]
-
-    detail_args = [detail_pk_argument('kv_pk', dtype)]
-
-    kvlist_args = [kvlist_pk_argument('obj_pk', dtype)]
-
-
-registrar.register(StaticRegistrationKV())
-registrar.register(HWAdapterKV())

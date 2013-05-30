@@ -9,6 +9,7 @@ SHELL_CONFIG=~/.zshrc
 do_tests:
 	python $(INVTOOLPATH)/tests/cli_tests.py
 	python $(INVTOOLPATH)/tests/search_tests.py
+	python $(INVTOOLPATH)/tests/kv_tests.py
 
 view-docs:
 	rst2man $(OPTIONS) $(RSTMAN) > $(MANTARGET).1

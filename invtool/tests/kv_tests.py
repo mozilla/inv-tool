@@ -1,49 +1,13 @@
-import subprocess
-import shlex
 import unittest
-
-try:
-    import simplejson as json
-except ImportError:
-    import json
 
 from gettext import gettext as _
 
 import sys
 sys.path.insert(0, '')
 
-from invtool.kv_dispatch import registrar
-
-EXEC = "./inv --json"
-
-
-def test_method_to_params(test_case):
-    if not test_case:
-        return ''
-    elif not test_case[0]:
-        return test_case[1]
-    else:
-        return "--{0} {1}".format(*test_case)
-
-
-def call_to_json(command_str):
-    """
-    Given a string, this function will shell out, execute the command
-    and parse the json returned by that command
-    """
-    p = subprocess.Popen(shlex.split(command_str),
-                         stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-    stdout, stderr = p.communicate()
-    if stderr:
-        return None, stderr, p.returncode
-
-    stdout = stdout.replace('u\'', '"').replace('\'', '"').strip('\n')
-    try:
-        return json.loads(stdout, 'unicode'), None, p.returncode
-    except json.decoder.JSONDecodeError, e:
-        return (None,
-                "Ret was: {0}. Got error: {1}".format(stdout, str(e)),
-                p.returncode)
+__import__('invtool.main')
+from invtool.main import registrar
+from invtool.tests.utils import call_to_json, test_method_to_params, EXEC
 
 
 def run_tests():
@@ -58,91 +22,108 @@ def run_tests():
             pass
 
         def place_holder(self):
-            # Create the object
-            # This should create the appropriate object
-            obj_pk = dispatch.doTestSetUp()
+            # This should create an object that we can use to associate KV's to
+            obj_pk = dispatch.do_test_setup(self)
+
+            # List the object's KV store and remember the count
+            def list_kv():
+                list_command = _("{0} {1} list --obj-pk {2}".format(
+                    EXEC, dispatch.dtype, obj_pk)
+                )
+                ret, errors, rc = call_to_json(list_command)
+
+                if errors:
+                    self.fail(errors)
+
+                self.assertEqual(0, rc)
+
+                self.assertTrue('http_status' in ret)
+                self.assertEqual(ret['http_status'], 200)
+                self.assertTrue('kvs' in ret)
+                return len(ret['kvs'])
+
+            num_kvs_before = list_kv()
+
             expected_status, command = commands[0]
-            ret, errors, rc = call_to_json(command)
+            # Create a Keyvalue
 
-            if errors:
-                self.fail(errors)
+            def create_kv():
+                command_str = command.replace('{{ obj_pk }}', str(obj_pk))
+                ret, errors, rc = call_to_json(command_str)
 
-            self.assertEqual(0, rc)
+                if errors:
+                    self.fail(errors)
 
-            self.assertTrue('http_status' in ret)
-            self.assertEqual(ret['http_status'], expected_status)
-            self.assertTrue('pk' in ret)
-            obj_pk = ret['pk']
+                self.assertEqual(0, rc)
+
+                self.assertTrue('http_status' in ret)
+                self.assertEqual(ret['http_status'], expected_status)
+                self.assertTrue('kv_pk' in ret)
+                return ret['kv_pk']
+
+            kv_pk = create_kv()
+
+            num_kvs_after = list_kv()
+
+            self.assertEqual(num_kvs_before + 1, num_kvs_after)
+
+            detail_command = _("{0} {1} detail --kv-pk {2}".format(
+                EXEC, dispatch.dtype, kv_pk)
+            )
 
             # Look up the object
-            detail_command = _("{0} {1} detail --pk {2}".format(
-                EXEC, dispatch.dtype, obj_pk)
-            )
-            ret, errors, rc = call_to_json(detail_command)
-            if errors:
-                self.fail(errors)
-            self.assertEqual(0, rc)
+            def lookup_kv():
+                ret, errors, rc = call_to_json(detail_command)
+                if errors:
+                    self.fail(errors)
+                self.assertEqual(0, rc)
 
-            self.assertTrue('http_status' in ret)
-            self.assertEqual(ret['http_status'], 200)
-            self.assertTrue('pk' in ret)
-            self.assertEqual(ret['pk'], obj_pk)
+                self.assertTrue('http_status' in ret)
+                self.assertEqual(ret['http_status'], 200)
+                self.assertTrue('kv_pk' in ret)
+                self.assertEqual(ret['kv_pk'], kv_pk)
+
+            lookup_kv()
 
             # The Update call
-            expected_status, command = commands[1]
-            command = "{0} --pk {1}".format(command, obj_pk)
-            ret, errors, rc = call_to_json(command)
-            self.assertEqual(0, rc)
+            def update_kv():
+                expected_status, command = commands[1]
+                update_command_str = command.replace('{{ kv_pk }}', str(kv_pk))
+                ret, errors, rc = call_to_json(update_command_str)
 
-            if errors:
-                self.fail(errors)
+                if errors:
+                    self.fail(errors)
 
-            self.assertTrue('http_status' in ret)
-            self.assertEqual(ret['http_status'], expected_status)
+                self.assertEqual(0, rc)
 
-            # Look up the object using the calculated detail command
-            ret, errors, rc = call_to_json(detail_command)
-            if errors:
-                self.fail(errors)
-            self.assertEqual(0, rc)
+                self.assertTrue('http_status' in ret)
+                self.assertEqual(ret['http_status'], 200)
 
-            self.assertTrue('http_status' in ret)
-            self.assertEqual(ret['http_status'], 200)
-            self.assertTrue('pk' in ret)
-            self.assertEqual(ret['pk'], obj_pk)
-
-            # Make sure an update doesn't require all the fields to be
-            # specified
-            blank_update_command = _("{0} {1} update --pk {2}".format(
-                EXEC, dispatch.dtype, obj_pk)
-            )
-            ret, errors, rc = call_to_json(blank_update_command)
-            if errors:
-                self.fail(errors)
-            self.assertEqual(0, rc)
-            self.assertTrue('http_status' in ret)
-            self.assertEqual(ret['http_status'], 202)
+            update_kv()
 
             # Delete the object
-            delete_command = _("{0} {1} delete --pk {2}".format(
-                EXEC, dispatch.dtype, obj_pk)
-            )
-            ret, errors, rc = call_to_json(delete_command)
-            if errors:
-                self.fail(errors)
-            self.assertEqual(0, rc)
-            self.assertTrue('http_status' in ret)
-            self.assertEqual(ret['http_status'], 204)
+            def delete_kv():
+                delete_command = _("{0} {1} delete --kv-pk {2}".format(
+                    EXEC, dispatch.dtype, kv_pk)
+                )
+                ret, errors, rc = call_to_json(delete_command)
+                if errors:
+                    self.fail(errors)
+                self.assertEqual(0, rc)
+                self.assertTrue('http_status' in ret)
+                self.assertEqual(ret['http_status'], 204)
 
-            # Detail the object (expect a 404)
-            ret, errors, rc = call_to_json(detail_command)
-            if errors:
-                self.fail(errors)
-            self.assertEqual(1, rc)
+                # Detail the object (expect a 404)
+                ret, errors, rc = call_to_json(detail_command)
+                if errors:
+                    self.fail(errors)
+                self.assertEqual(1, rc)
 
-            self.assertTrue('http_status' in ret)
-            self.assertEqual(ret['http_status'], 404)
-            self.assertFalse('pk' in ret)
+                self.assertTrue('http_status' in ret)
+                self.assertEqual(ret['http_status'], 404)
+                self.assertFalse('kv_pk' in ret)
+
+            delete_kv()
 
         test_name = "test_{0}".format(dispatch.dtype)
         place_holder.__name__ = test_name
@@ -167,7 +148,7 @@ def run_tests():
     test_cases = []
     # Build KV test cases
     for dispatch in registrar.dispatches:
-        if dispatch.dgroup == 'kv':
+        if dispatch.dgroup == 'kv' and not dispatch.NO_TEST:
             tc = build_testcases(dispatch)
             test_cases.append(tc)
 
