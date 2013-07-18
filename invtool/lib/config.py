@@ -39,15 +39,18 @@ try:
 except ImportError:
     KEYRING_PRESENT = False
 
+# No auth required for dev
 if dev == 'True':
     auth = None
     AUTH_TYPE = None
+# Can't use keyring and a password in the config at the same time.
 elif (config.has_option('authorization', 'ldap_password') and
       config.has_option('authorization', 'keyring')):
     raise Exception(
         "ldap_password and keyring are mutually exclusive "
         "in config file '{0}'".format(CONFIG_FILE)
     )
+# If there's an existing keyring, let's use it!
 elif (config.has_option('authorization', 'ldap_username') and
       config.get('authorization', 'ldap_username') != '' and
       config.has_option('authorization', 'keyring') and
@@ -77,14 +80,8 @@ elif (config.has_option('authorization', 'ldap_username') and
         print("Saved password to keyring")
     auth = tuple(auth)
     AUTH_TYPE = 'keyring'
-elif (config.has_option('authorization', 'ldap_username') and
-      config.has_option('authorization', 'ldap_password')):
-    # use plaintext
-    auth = (
-        config.get('authorization', 'ldap_username'),
-        config.get('authorization', 'ldap_password')
-    )
-    AUTH_TYPE = 'plaintext'
+# If there's no existing keyring and we have keyring support
+#  let's try to be nice and create a keyring.
 elif KEYRING_PRESENT:
     # configure credentials
     auth = (
@@ -103,9 +100,17 @@ elif KEYRING_PRESENT:
     keyring.set_password(config.get('authorization', 'keyring'), *auth)
     print("Saved password to keyring")
     AUTH_TYPE = 'keyring'
+# If there's no keyring support, let's try to get the username and password
+# from the config or command line
 else:
-    raise Exception(
-        "Unable to get or set ldap password."
-        "Install the keyring module or set ldap_password"
-        "in config file '{0}'".format(CONFIG_FILE)
-    )
+    if config.has_option('authorization', 'ldap_username'):
+        username = config.get('authorization', 'ldap_username')
+    else:
+        username = raw_input('ldap username: ')
+    if config.has_option('authorization', 'ldap_password'):
+        password = config.get('authorization', 'ldap_password')
+    else:
+        password = getpass.getpass('ldap password: ')
+    # use plaintext
+    auth = (username, password)
+    AUTH_TYPE = 'plaintext'
