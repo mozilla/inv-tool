@@ -189,8 +189,11 @@ def write_num_argument(parser, name, dest, help_text, required=False):
 
 def ttl_argument(field_name):
     def add_ttl_argument(parser, **kwargs):
-        write_num_argument(
-            parser, 'ttl', 'ttl', "The ttl of a record.", required=False
+        parser.add_argument(
+            '--{0}'.format('ttl'), default=None,
+            dest='ttl', required=False,
+            help="The ttl of a record. Setting the ttl to None will set it to "
+            "the default zone TTL"
         )
 
     def extract_ttl(nas):
