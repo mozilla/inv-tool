@@ -1,4 +1,5 @@
 import requests
+import sys
 
 try:
     import simplejson as json
@@ -25,14 +26,15 @@ class SearchDispatch(Dispatch):
         )
 
         search.add_argument(
-            '--range', '-r', dest='irange', type=str, help="Get information and "
-            "statistics about an IP range. Specify the range using: "
-            "<ip-start>,<ip-end> format (no spaces)", default=None, required=False
+            '--range', '-r', dest='irange', type=str, help="Get information "
+            "and statistics about an IP range. Specify the range using: "
+            "<ip-start>,<ip-end> format (no spaces)", default=None,
+            required=False
         )
 
         search.add_argument(
-            '--display-integers', dest='d_integers', help="Return integers when "
-            "showing free ip ranges.", action='store_true', default=False,
+            '--display-integers', dest='d_integers', help="Return integers "
+            "when showing free ip ranges.", action='store_true', default=False,
             required=False
         )
 
@@ -57,15 +59,16 @@ class SearchDispatch(Dispatch):
         search = {'start': start, 'end': end}
         if nas.d_integers:
             search['format'] = 'integers'
-        resp = requests.get(url, params=search, headers=headers,
-                            auth=auth())
-        if resp.status_code == 500:
-            resp_list = [
-                "CLIENT ERROR! (Please email this output to a code monkey)"
-            ]
-            self.error_out(nas, search, resp, resp_list=resp_list)
-            return
-        results = self.get_resp_dict(resp)
+        resp = requests.get(url, params=search, headers=headers, auth=auth)
+        if nas.DEBUG:
+            sys.stderr.write('method: {0}\nurl: {1}\nparams:{2}\n'.format(
+                'get', url, search
+            ))
+        was_json = nas.p_json
+        nas.p_json = True  # Do this so we can play with the response
+        ret_code, raw_results = self.handle_resp(nas, search, resp)
+        if ret_code:
+            return (ret_code, raw_results)  # repack and go home
 
         def display_ranges(free_ranges):
             ret_list = []
@@ -73,11 +76,12 @@ class SearchDispatch(Dispatch):
                 ret_list.append("{0} to {1}".format(fstart, fend))
             return ret_list
 
+        results = json.loads(raw_results[0], 'unicode')
         if not results:
             return 1, []
         else:
-            if nas.p_json:
-                return 0, [json.dumps(results, indent=2)]
+            if was_json:
+                return 0, raw_results
             resp_list = ["# of Used IPs: {0}".format(results['used']),
                          "# of Unused IPs: {0}".format(results['unused']),
                          "------ Vacant IP ranges ------"]
@@ -89,20 +93,22 @@ class SearchDispatch(Dispatch):
         url = "{0}{1}".format(REMOTE, tmp_url)
         headers = {'content-type': 'application/json'}
         search = {'search': nas.query}
-        resp = requests.get(url, params=search, headers=headers,
-                            auth=auth())
-        if resp.status_code == 500:
-            resp_list = [
-                "CLIENT ERROR! (Please email this output to a code monkey)"
-            ]
-            self.error_out(nas, search, resp, resp_list=resp_list)
-            return
-        results = self.get_resp_dict(resp)
+        resp = requests.get(url, params=search, headers=headers, auth=auth)
+        if nas.DEBUG:
+            sys.stderr.write('method: {0}\nurl: {1}\nparams:{2}\n'.format(
+                'get', url, search
+            ))
+        was_json = nas.p_json
+        nas.p_json = True  # Do this so we can play with the response
+        ret_code, raw_results = self.handle_resp(nas, search, resp)
+        if ret_code:
+            return (ret_code, raw_results)  # repack and go home
+        results = json.loads(raw_results[0], 'unicode')
         if 'text_response' not in results:
             return 1, []
         else:
-            if nas.p_json:
-                return 0, [json.dumps(results, indent=2)]
+            if was_json:
+                return 0, raw_results
             return 0, [results['text_response']]
 
 

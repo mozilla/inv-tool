@@ -23,6 +23,7 @@ def run_tests():
 
         def place_holder(self):
             # This should create an object that we can use to associate KV's to
+            print "testing {0} ...".format(dispatch.dtype)
             obj_pk = dispatch.do_test_setup(self)
 
             # List the object's KV store and remember the count
