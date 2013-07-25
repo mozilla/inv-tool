@@ -34,6 +34,9 @@ Here is a quick tip for a non-root install::
 
     git clone git@github.com:uberj/inv-tool.git invtool
     cd invtool
+    cp etc/invtool.conf-dist etc/invtool.conf
+    # Set host and port
+    $EDITOR etc/invtool.conf
     export PYTHONPATH=.:$PYTHONPATH
     ln -s ./bin/invtool ./devinvtool
     ./devinvtool status
