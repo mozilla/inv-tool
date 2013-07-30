@@ -58,7 +58,8 @@ class SearchDispatch(Dispatch):
         search = {'start': start, 'end': end}
         if nas.d_integers:
             search['format'] = 'integers'
-        resp = requests.get(url, params=search, headers=headers, auth=auth)
+        resp = requests.get(url, params=search, headers=headers,
+                            auth=auth())
         if resp.status_code == 500:
             resp_list = [
                 "CLIENT ERROR! (Please email this output to a code monkey)"
@@ -89,7 +90,8 @@ class SearchDispatch(Dispatch):
         url = "{0}{1}".format(REMOTE, tmp_url)
         headers = {'content-type': 'application/json'}
         search = {'search': nas.query}
-        resp = requests.get(url, params=search, headers=headers, auth=auth)
+        resp = requests.get(url, params=search, headers=headers,
+                            auth=auth())
         if resp.status_code == 500:
             resp_list = [
                 "CLIENT ERROR! (Please email this output to a code monkey)"

@@ -39,70 +39,60 @@ try:
 except ImportError:
     KEYRING_PRESENT = False
 
-# No auth required for dev
-if dev == 'True':
-    auth = None
-    AUTH_TYPE = None
-# Can't use keyring and a password in the config at the same time.
-elif (config.has_option('authorization', 'ldap_password') and
-      config.has_option('authorization', 'keyring')):
-    raise Exception(
-        "ldap_password and keyring are mutually exclusive "
-        "in config file '{0}'".format(CONFIG_FILE)
-    )
-# If there's an existing keyring, let's use it!
-elif (config.has_option('authorization', 'ldap_username') and
-      config.get('authorization', 'ldap_username') != '' and
-      config.has_option('authorization', 'keyring') and
-      config.get('authorization', 'keyring') != '' and
-      KEYRING_PRESENT):
-    # use keyring
-    auth = [
-        config.get('authorization', 'ldap_username'),
-        keyring.get_password(
-            config.get('authorization', 'keyring'),
-            config.get('authorization', 'ldap_username')
-        )
-    ]
-    if auth[1] is None:
-        keyring.get_keyring()
-        print("Can't retrieve ldap password from keyring '{0}'"
-              .format(config.get('authorization', 'keyring')))
-        auth[1] = getpass.getpass(
-            'ldap username: {0}\npassword: '
-            .format(config.get('authorization', 'ldap_username'))
-        )
-        keyring.set_password(
-            config.get('authorization', 'keyring'),
+
+def _keyring():
+    # If there's an existing keyring, let's use it!
+    if (config.has_option('authorization', 'ldap_username') and
+            config.get('authorization', 'ldap_username') != '' and
+            config.has_option('authorization', 'keyring') and
+            config.get('authorization', 'keyring') != '' and KEYRING_PRESENT):
+
+        # use keyring
+        auth = [
             config.get('authorization', 'ldap_username'),
-            auth[1]
+            keyring.get_password(
+                config.get('authorization', 'keyring'),
+                config.get('authorization', 'ldap_username')
+            )
+        ]
+        if auth[1] is None:
+            keyring.get_keyring()
+            print("Can't retrieve ldap password from keyring '{0}'"
+                  .format(config.get('authorization', 'keyring')))
+            auth[1] = getpass.getpass(
+                'ldap username: {0}\npassword: '
+                .format(config.get('authorization', 'ldap_username'))
+            )
+            keyring.set_password(
+                config.get('authorization', 'keyring'),
+                config.get('authorization', 'ldap_username'),
+                auth[1]
+            )
+            print("Saved password to keyring")
+        return tuple(auth)
+    # If there's no existing keyring and we have keyring support
+    #  let's try to be nice and create a keyring.
+    else:
+        # configure credentials
+        auth = (
+            raw_input('ldap username: '),
+            getpass.getpass('password: ')
         )
+
+        # store the username and service name
+        config.set('authorization', 'ldap_username', auth[0])
+        if (not config.has_option('authorization', 'keyring') or
+                config.get('authorization', 'keyring') == ''):
+            config.set('authorization', 'keyring', 'invtool-ldap')
+        config.write(open(CONFIG_FILE, 'w'))
+
+        # store the password
+        keyring.set_password(config.get('authorization', 'keyring'), *auth)
         print("Saved password to keyring")
-    auth = tuple(auth)
-    AUTH_TYPE = 'keyring'
-# If there's no existing keyring and we have keyring support
-#  let's try to be nice and create a keyring.
-elif KEYRING_PRESENT:
-    # configure credentials
-    auth = (
-        raw_input('ldap username: '),
-        getpass.getpass('password: ')
-    )
+        return auth
 
-    # store the username and service name
-    config.set('authorization', 'ldap_username', auth[0])
-    if (not config.has_option('authorization', 'keyring') or
-            config.get('authorization', 'keyring') == ''):
-        config.set('authorization', 'keyring', 'invtool-ldap')
-    config.write(open(CONFIG_FILE, 'w'))
 
-    # store the password
-    keyring.set_password(config.get('authorization', 'keyring'), *auth)
-    print("Saved password to keyring")
-    AUTH_TYPE = 'keyring'
-# If there's no keyring support, let's try to get the username and password
-# from the config or command line
-else:
+def _plaintext():
     if config.has_option('authorization', 'ldap_username'):
         username = config.get('authorization', 'ldap_username')
     else:
@@ -112,5 +102,36 @@ else:
     else:
         password = getpass.getpass('ldap password: ')
     # use plaintext
-    auth = (username, password)
+    return (username, password)
+
+
+# No auth required for dev
+if dev == 'True':
+    AUTH_TYPE = None
+    _realauth = lambda: None
+# Can't use keyring and a password in the config at the same time.
+elif (config.has_option('authorization', 'ldap_password') and
+      config.has_option('authorization', 'keyring')):
+    raise Exception(
+        "ldap_password and keyring are mutually exclusive "
+        "in config file '{0}'".format(CONFIG_FILE)
+    )
+elif KEYRING_PRESENT:
+    AUTH_TYPE = 'keyring'
+    _realauth = _keyring
+# If there's no keyring support, let's try to get the username and password
+# from the config or command line
+else:
     AUTH_TYPE = 'plaintext'
+    _realauth = _plaintext
+
+
+authcache = False
+
+
+def auth():
+    global authcache
+    if authcache is False:
+        authcache = _realauth()
+
+    return authcache

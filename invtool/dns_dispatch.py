@@ -26,7 +26,7 @@ class DNSDispatch(Dispatch):
                                      nas.pk)
         url = "{0}{1}?format=json".format(REMOTE, url)
         headers = {'content-type': 'application/json'}
-        resp = requests.delete(url, headers=headers, auth=auth)
+        resp = requests.delete(url, headers=headers, auth=auth())
         return self.handle_resp(nas, {}, resp)
 
     def detail(self, nas):
@@ -34,7 +34,7 @@ class DNSDispatch(Dispatch):
                                      nas.pk)
         url = "{0}{1}?format=json".format(REMOTE, url)
         headers = {'content-type': 'application/json'}
-        resp = requests.get(url, headers=headers, auth=auth)
+        resp = requests.get(url, headers=headers, auth=auth())
         return self.handle_resp(nas, {}, resp)
 
     def update(self, nas):
@@ -54,7 +54,7 @@ class DNSDispatch(Dispatch):
     def action(self, nas, url, method, data):
         headers = {'content-type': 'application/json'}
         data = json.dumps(data, indent=2)
-        resp = method(url, headers=headers, data=data, auth=auth)
+        resp = method(url, headers=headers, data=data, auth=auth())
         return self.handle_resp(nas, data, resp)
 
     def get_create_data(self, nas):
