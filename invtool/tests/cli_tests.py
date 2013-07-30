@@ -18,12 +18,13 @@ def run_dns_tests():
         command to update the object. The object is then deleted and finally
         the object is looked up again to ensure a 404."""
         class _TestCase(unittest.TestCase):
-            pass
+            def modify_command(self, command_str):
+                return command_str
 
         def place_holder(self):
             # Create the object
             expected_status, command = commands[0]
-            ret, errors, rc = call_to_json(command)
+            ret, errors, rc = call_to_json(self.modify_command(command))
 
             if errors:
                 self.fail(errors)
@@ -51,7 +52,9 @@ def run_dns_tests():
 
             # The Update call
             expected_status, command = commands[1]
-            command = "{0} --pk {1}".format(command, obj_pk)
+            command = "{0} --pk {1}".format(
+                self.modify_command(command), obj_pk
+            )
             ret, errors, rc = call_to_json(command)
             self.assertEqual(0, rc)
 
@@ -108,6 +111,10 @@ def run_dns_tests():
         test_name = "test_{0}".format(dispatch.dtype)
         place_holder.__name__ = test_name
         setattr(_TestCase, test_name, place_holder)
+        if hasattr(dispatch, 'test_setup'):
+            setattr(_TestCase, 'setUp', dispatch.test_setup())
+        if hasattr(dispatch, 'test_teardown'):
+            setattr(_TestCase, 'tearDown', dispatch.test_teardown())
         return _TestCase
 
     def build_testcases(dispatch):
@@ -128,7 +135,7 @@ def run_dns_tests():
     test_cases = []
     # Build DNS test cases
     for dispatch in registrar.dispatches:
-        if dispatch.dgroup == 'dns':
+        if dispatch.dgroup in ('dns', 'core'):
             tc = build_testcases(dispatch)
             test_cases.append(tc)
 
@@ -283,6 +290,7 @@ def run_dhcp_tests():
             delete_sreg_causing_hw_delete()
 
     return [SREGHWTestCase]
+
 
 if __name__ == "__main__":
     loader = unittest.TestLoader()

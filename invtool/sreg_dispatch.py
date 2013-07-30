@@ -6,6 +6,7 @@ except ImportError:
 from invtool.lib.registrar import registrar
 from invtool.dispatch import ObjectDispatch
 from invtool.dns_dispatch import DNSDispatch
+from invtool.core_dispatch import set_ip_type
 
 from invtool.lib.dns_options import (
     fqdn_argument, ttl_argument, ip_argument, view_arguments,
@@ -95,21 +96,11 @@ class DispatchSREG(DNSDispatch):
 
     def get_create_data(self, nas):
         data = super(DispatchSREG, self).get_create_data(nas)
-        if 'ip_str' in data:
-            if data['ip_str'].find(':') < 0:
-                data['ip_type'] = '4'
-            else:
-                data['ip_type'] = '4'
-        return data
+        return set_ip_type('ip_str', data)
 
     def get_update_data(self, nas):
         data = super(DispatchSREG, self).get_update_data(nas)
-        if 'ip_str' in data:
-            if data['ip_str'].find(':') < 0:
-                data['ip_type'] = '4'
-            else:
-                data['ip_type'] = '4'
-        return data
+        return set_ip_type('ip_str', data)
 
     def format_hwadapters(self, hws):
         # This is never called if p_json is true

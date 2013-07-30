@@ -23,6 +23,7 @@ def call_to_json(command_str):
     Given a string, this function will shell out, execute the command
     and parse the json returned by that command
     """
+    print command_str
     p = subprocess.Popen(shlex.split(command_str),
                          stderr=subprocess.PIPE, stdout=subprocess.PIPE)
     stdout, stderr = p.communicate()

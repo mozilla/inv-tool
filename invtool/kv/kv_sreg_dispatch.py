@@ -3,7 +3,6 @@ from invtool.sreg_dispatch import DispatchSREG, DispatchHW
 from invtool.tests.utils import call_to_json, test_method_to_params, EXEC
 
 from invtool.kv.kv_dispatch import DispatchKV
-from invtool.lib.dns_options import detail_pk_argument
 from invtool.lib.kv_options import (
     key_argument, value_argument, update_pk_argument,
     delete_pk_argument, detail_pk_argument, kvlist_pk_argument,

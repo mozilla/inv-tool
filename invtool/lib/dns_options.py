@@ -1,4 +1,4 @@
-from invtool.lib.options import build_extractor
+from invtool.lib.options import build_extractor, write_num_argument
 from invtool.tests.test_data import (
     TEST_DOMAIN, TEST_FQDN, TEST_IPv4, TEST_IPv6, TEST_DESCRIPTION,
     TEST_TTL, TEST_PORT, TEST_WEIGHT, TEST_PRIORITY, TEST_TEXT, TEST_INAME
@@ -194,14 +194,6 @@ def text_argument(field_name):
         return 'text', TEST_TEXT
 
     return add_text_argument, build_extractor(field_name, 'text'), test_data
-
-
-def write_num_argument(parser, name, dest, help_text, required=False):
-    parser.add_argument(
-        '--{0}'.format(name), default=None, type=int,
-        dest=dest, help=help_text, required=required
-    )
-    return parser
 
 
 def ttl_argument(field_name):

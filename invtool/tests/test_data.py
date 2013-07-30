@@ -26,3 +26,9 @@ TEST_MAC = lambda: '{0}{0}:{1}{1}:{2}{2}:{3}{3}:{4}{4}:{5}{5}'.format(
     random.randint(0, 9),
     random.randint(0, 9)
 )
+TEST_NAME = lambda: 'whap{0}{1}foo'.format(
+    random.randint(0, 255), random.randint(0, 255)
+)
+TEST_NETWORK = '10.0.{0}.{1}/27'.format(
+    random.randint(0, 255), random.randint(0, 255)
+)
