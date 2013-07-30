@@ -50,6 +50,8 @@ class SearchDispatch(Dispatch):
             return self.query(nas)
         elif nas.irange:
             return self.irange(nas)
+        else:
+            return (0, ['What do you want?'])
 
     def irange(self, nas):
         tmp_url = "/core/range/usage_text/"
