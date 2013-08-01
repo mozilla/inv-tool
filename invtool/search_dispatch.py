@@ -78,7 +78,7 @@ class SearchDispatch(Dispatch):
                 ret_list.append("{0} to {1}".format(fstart, fend))
             return ret_list
 
-        results = json.loads(raw_results[0], 'unicode')
+        results = json.loads(raw_results[0])
         if not results:
             return 1, []
         else:
@@ -105,7 +105,7 @@ class SearchDispatch(Dispatch):
         ret_code, raw_results = self.handle_resp(nas, search, resp)
         if ret_code:
             return (ret_code, raw_results)  # repack and go home
-        results = json.loads(raw_results[0], 'unicode')
+        results = json.loads(raw_results[0])
         if 'text_response' not in results:
             return 1, []
         else:
