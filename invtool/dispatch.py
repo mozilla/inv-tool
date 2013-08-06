@@ -123,14 +123,18 @@ class Dispatch(object):
         url = "{0}{1}".format(REMOTE, self.create_url(nas))
         return self.action(nas, url, requests.post, data)
 
-    def action(self, nas, url, method, data):
+    def action(self, nas, url, method, data, form_encode=True):
         headers = {'content-type': 'application/json'}
-        data = json.dumps(data, indent=2)
+        if form_encode:
+            wire_data = json.dumps(data, indent=2)
+        else:
+            wire_data = data
+
         if nas.DEBUG:
             sys.stderr.write('method: {0}\nurl: {1}\nparams:{2}\n'.format(
-                method.__name__, url, data
+                method.__name__, url, json.dumps(data, indent=2)
             ))
-        resp = method(url, headers=headers, data=data, auth=auth)
+        resp = method(url, headers=headers, data=wire_data, auth=auth)
         return self.handle_resp(nas, data, resp)
 
     def get_create_data(self, nas):

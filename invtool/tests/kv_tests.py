@@ -149,7 +149,7 @@ def run_tests():
     test_cases = []
     # Build KV test cases
     for dispatch in registrar.dispatches:
-        if dispatch.dgroup == 'kv' and not dispatch.NO_TEST:
+        if dispatch.dgroup == 'kv':
             tc = build_testcases(dispatch)
             test_cases.append(tc)
 

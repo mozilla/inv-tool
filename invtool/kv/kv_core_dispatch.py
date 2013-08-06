@@ -1,68 +1,116 @@
 from invtool.lib.registrar import registrar
 
-from invtool.lib.kv_options import kvlist_pk_argument
-from invtool.kv.kv_dispatch import DispatchKV, build_kvlist_parser
-from invtool.lib.dns_options import detail_pk_argument
-from invtool.lib.parser import build_detail_parser
+from invtool.tests.utils import (
+    call_to_json, test_method_to_params, EXEC, TestKVSetupMixin
+)
+from invtool.kv.kv_dispatch import DispatchKV
+from invtool.lib.kv_options import (
+    key_argument, value_argument, update_pk_argument,
+    delete_pk_argument, detail_pk_argument, kvlist_pk_argument,
+    create_pk_argument
+)
+from invtool.core_dispatch import DispatchNetwork, DispatchVlan, DispatchSite
 
 
-class CoreDispatchKV(DispatchKV):
-    NO_TEST = True
-
-    def build_parser(self, base_parser):
-        record_base_parser = base_parser.add_parser(
-            self.dtype,
-            help="The interface for CRUDing {0} Key Value "
-            "pairs".format(self.dtype),
-            add_help=True
-        )
-        action_parser = record_base_parser.add_subparsers(
-            help="{0} record actions".format(self.dtype),
-            dest='action'
-        )
-        build_detail_parser(
-            self, action_parser, help="Detail a {0} KV pair".format(self.dtype)
-        )
-        build_kvlist_parser(self, action_parser)
-
-    def do_test_setup(self, test_case):
-        return False
-
-
-class NetworkKV(CoreDispatchKV):
+class NetworkKV(DispatchKV, TestKVSetupMixin):
     kv_class = 'networkkeyvalue'
     dtype = 'NET_kv'
     dgroup = 'kv'
+    create_args = [
+        key_argument('key'),
+        value_argument('value'),
+        create_pk_argument('obj_pk', dtype)
+    ]
+
+    update_args = [
+        key_argument('key'),
+        value_argument('value'),
+        update_pk_argument('kv_pk', dtype)
+    ]
+
+    delete_args = [
+        delete_pk_argument('kv_pk', dtype)
+    ]
 
     detail_args = [detail_pk_argument('kv_pk', dtype)]
 
     kvlist_args = [kvlist_pk_argument('obj_pk', dtype)]
+
+    def do_test_setup(self, test_case):
+        command = [EXEC, DispatchNetwork.dtype, 'create']
+        for add_arg, extract_arg, tm in DispatchNetwork.create_args:
+            if tm()[0] in ('site-pk', 'vlan-pk'):
+                continue
+            command.append(test_method_to_params(tm()))
+        command_str = ' '.join(command)
+        ret, errors, rc = call_to_json(command_str)
+        if errors:
+            test_case.fail(errors)
+        return ret['pk']
 
 
 registrar.register(NetworkKV())
 
 
-class SiteKV(CoreDispatchKV):
+class SiteKV(DispatchKV, TestKVSetupMixin):
     kv_class = 'sitekeyvalue'
     dtype = 'SITE_kv'
     dgroup = 'kv'
 
+    create_args = [
+        key_argument('key'),
+        value_argument('value'),
+        create_pk_argument('obj_pk', dtype)
+    ]
+
+    update_args = [
+        key_argument('key'),
+        value_argument('value'),
+        update_pk_argument('kv_pk', dtype)
+    ]
+
+    delete_args = [
+        delete_pk_argument('kv_pk', dtype)
+    ]
+
     detail_args = [detail_pk_argument('kv_pk', dtype)]
 
     kvlist_args = [kvlist_pk_argument('obj_pk', dtype)]
+
+    def do_test_setup(self, test_case):
+        return self.do_setup(DispatchSite, test_case)
 
 
 registrar.register(SiteKV())
 
 
-class VlanKV(CoreDispatchKV):
+class VlanKV(DispatchKV, TestKVSetupMixin):
     kv_class = 'vlankeyvalue'
     dtype = 'VLAN_kv'
     dgroup = 'kv'
 
+    create_args = [
+        key_argument('key'),
+        value_argument('value'),
+        create_pk_argument('obj_pk', dtype)
+    ]
+
+    update_args = [
+        key_argument('key'),
+        value_argument('value'),
+        update_pk_argument('kv_pk', dtype)
+    ]
+
+    delete_args = [
+        delete_pk_argument('kv_pk', dtype)
+    ]
+
     detail_args = [detail_pk_argument('kv_pk', dtype)]
 
     kvlist_args = [kvlist_pk_argument('obj_pk', dtype)]
+
+    def do_test_setup(self, test_case):
+        return self.do_setup(DispatchVlan, test_case)
 
 
 registrar.register(VlanKV())

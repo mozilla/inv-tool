@@ -3,6 +3,7 @@ from invtool.sreg_dispatch import DispatchSREG, DispatchHW
 from invtool.tests.utils import call_to_json, test_method_to_params, EXEC
 
 from invtool.kv.kv_dispatch import DispatchKV
+from invtool.tests.utils import TestKVSetupMixin
 from invtool.lib.kv_options import (
     key_argument, value_argument, update_pk_argument,
     delete_pk_argument, detail_pk_argument, kvlist_pk_argument,
@@ -10,20 +11,7 @@ from invtool.lib.kv_options import (
 )
 
 
-class TestSetupMixin(object):
-    def do_setup(self, DispatchType, test_case):
-        """Create an object and return it's pk so the KV api can test itself"""
-        command = [EXEC, DispatchType.dtype, 'create']
-        for add_arg, extract_arg, tm in DispatchType.create_args:
-            command.append(test_method_to_params(tm()))
-        command_str = ' '.join(command)
-        ret, errors, rc = call_to_json(command_str)
-        if errors:
-            test_case.fail(errors)
-        return ret['pk']
-
-
-class StaticRegKV(DispatchKV, TestSetupMixin):
+class StaticRegKV(DispatchKV, TestKVSetupMixin):
     kv_class = 'staticregkeyvalue'
     dtype = 'SREG_kv'
     dgroup = 'kv'
@@ -51,7 +39,7 @@ class StaticRegKV(DispatchKV, TestSetupMixin):
         return self.do_setup(DispatchSREG, test_case)
 
 
-class HWAdapterKV(DispatchKV, TestSetupMixin):
+class HWAdapterKV(DispatchKV, TestKVSetupMixin):
     kv_class = 'hwadapterkeyvalue'
     dtype = 'HW_kv'
     dgroup = 'kv'

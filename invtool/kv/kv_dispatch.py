@@ -2,12 +2,10 @@ try:
     import simplejson as json
 except ImportError:
     import json
-import sys
 import requests
 
 from invtool.dispatch import Dispatch
-from invtool.lib.config import REMOTE, auth
-
+from invtool.lib.config import REMOTE
 
 from invtool.lib.parser import (
     build_create_parser, build_update_parser, build_delete_parser,
@@ -52,6 +50,10 @@ class DispatchKV(Dispatch):
             self, action_parser, help="Detail a {0} KV pair".format(self.dtype)
         )
         build_kvlist_parser(self, action_parser)
+
+    def action(self, nas, url, method, data, **kwargs):
+        kwargs.update(**{'form_encode': False})
+        return super(DispatchKV, self).action(nas, url, method, data, **kwargs)
 
     def update(self, nas):
         # We have to override this because the default update uses PATCH, we
