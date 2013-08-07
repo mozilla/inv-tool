@@ -104,13 +104,13 @@ class Dispatch(object):
     def delete(self, nas):
         url = "{0}{1}?format=json".format(REMOTE, self.delete_url(nas))
         headers = {'content-type': 'application/json'}
-        resp = requests.delete(url, headers=headers, auth=auth)
+        resp = requests.delete(url, headers=headers, auth=auth())
         return self.handle_resp(nas, {}, resp)
 
     def detail(self, nas):
         url = "{0}{1}?format=json".format(REMOTE, self.detail_url(nas))
         headers = {'content-type': 'application/json'}
-        resp = requests.get(url, headers=headers, auth=auth)
+        resp = requests.get(url, headers=headers, auth=auth())
         return self.handle_resp(nas, {}, resp)
 
     def update(self, nas):
@@ -134,7 +134,7 @@ class Dispatch(object):
             sys.stderr.write('method: {0}\nurl: {1}\nparams:{2}\n'.format(
                 method.__name__, url, json.dumps(data, indent=2)
             ))
-        resp = method(url, headers=headers, data=wire_data, auth=auth)
+        resp = method(url, headers=headers, data=wire_data, auth=auth())
         return self.handle_resp(nas, data, resp)
 
     def get_create_data(self, nas):

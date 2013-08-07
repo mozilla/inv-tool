@@ -61,7 +61,7 @@ class SearchDispatch(Dispatch):
         search = {'start': start, 'end': end}
         if nas.d_integers:
             search['format'] = 'integers'
-        resp = requests.get(url, params=search, headers=headers, auth=auth)
+        resp = requests.get(url, params=search, headers=headers, auth=auth())
         if nas.DEBUG:
             sys.stderr.write('method: {0}\nurl: {1}\nparams:{2}\n'.format(
                 'get', url, search
@@ -95,7 +95,7 @@ class SearchDispatch(Dispatch):
         url = "{0}{1}".format(REMOTE, tmp_url)
         headers = {'content-type': 'application/json'}
         search = {'search': nas.query}
-        resp = requests.get(url, params=search, headers=headers, auth=auth)
+        resp = requests.get(url, params=search, headers=headers, auth=auth())
         if nas.DEBUG:
             sys.stderr.write('method: {0}\nurl: {1}\nparams:{2}\n'.format(
                 'get', url, search
