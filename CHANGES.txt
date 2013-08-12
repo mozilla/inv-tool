@@ -1,1 +1,5 @@
-v, 11-27-2012 -- 0.1.0
+Version 2.1
+-------------
+(bugfix release)
+
+- setup.py was not installing the invtool.kv package
