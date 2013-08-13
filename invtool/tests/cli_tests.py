@@ -1,5 +1,4 @@
 import unittest
-from itertools import chain
 
 from gettext import gettext as _
 
@@ -8,6 +7,7 @@ sys.path.insert(0, '')
 
 from invtool.tests.utils import call_to_json, test_method_to_params, EXEC
 from invtool.dns_dispatch import registrar
+__import__('invtool.system_dispatch')
 from invtool.sreg_dispatch import DispatchHW, DispatchSREG
 
 
@@ -296,10 +296,10 @@ if __name__ == "__main__":
     loader = unittest.TestLoader()
     suite = unittest.TestSuite()
 
-    dns_tcs = run_dns_tests()
-    #dhcp_tcs = run_dhcp_tests()
-    dhcp_tcs = []
-    for test_class in chain(dns_tcs, dhcp_tcs):
+    tcs = []
+    tcs += run_dns_tests()
+    #tcs += run_dhcp_tests()
+    for test_class in tcs:
         tests = loader.loadTestsFromTestCase(test_class)
         suite.addTests(tests)
 

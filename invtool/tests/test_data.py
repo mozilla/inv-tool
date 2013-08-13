@@ -1,12 +1,20 @@
-from gettext import gettext as _
 import random
 import time
 import string
+
+
+def random_str(length=10):
+    return ''.join(
+        random.choice(string.ascii_uppercase) for i in range(length)
+    )
+
+
 random.seed(time.time())
 N = 32
-TEST_DOMAIN = _(
-    ''.join(random.choice(string.ascii_uppercase + string.digits)
-            for x in range(N)) + ".foo.bar.test_domain.lab1.mozilla.net"
+TEST_DOMAIN = (
+    ''.join(
+        random.choice(string.ascii_uppercase + string.digits)
+        for x in range(N)) + ".foo.bar.test_domain.lab1.mozilla.net"
 )
 TEST_FQDN = "testfqdn." + TEST_DOMAIN
 TEST_IPv4 = lambda: "10.1.2." + str(random.randint(0, 255))
@@ -32,3 +40,5 @@ TEST_NAME = lambda: 'whap{0}{1}foo'.format(
 TEST_NETWORK = '10.0.{0}.{1}/27'.format(
     random.randint(0, 255), random.randint(0, 255)
 )
+
+TEST_STR = lambda: random_str()

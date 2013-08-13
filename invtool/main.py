@@ -7,6 +7,9 @@ enabled_dispatches = [
     'invtool.core_dispatch',
     'invtool.kv.kv_dispatch',
     'invtool.kv.kv_core_dispatch',
+    'invtool.kv.kv_system_dispatch',
+    'invtool.system_dispatch',
+    'invtool.csv_dispatch',
     #'invtool.sreg_dispatch'
 ]
 

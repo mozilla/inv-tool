@@ -110,6 +110,10 @@ class Dispatch(object):
     def detail(self, nas):
         url = "{0}{1}?format=json".format(REMOTE, self.detail_url(nas))
         headers = {'content-type': 'application/json'}
+        if nas.DEBUG:
+            sys.stderr.write('method: {0}\nurl: {1}\nparams:{2}\n'.format(
+                'get', url, {}
+            ))
         resp = requests.get(url, headers=headers, auth=auth())
         return self.handle_resp(nas, {}, resp)
 

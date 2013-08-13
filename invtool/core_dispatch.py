@@ -7,11 +7,11 @@ from invtool.dispatch import ObjectDispatch
 from invtool.tests.utils import call_to_json, test_method_to_params, EXEC
 
 from invtool.lib.registrar import registrar
-from invtool.lib.parser import build_detail_parser
-from invtool.lib.dns_options import (
+from invtool.lib.options import (
     description_argument, comment_argument, update_pk_argument,
     delete_pk_argument, detail_pk_argument
 )
+
 from invtool.lib.core_options import (
     name_argument, number_argument, site_argument, vlan_argument,
     network_str_argument
@@ -20,26 +20,10 @@ from invtool.lib.core_options import (
 
 # TODO, make a core_dispatch.py with CoreDispatch base class
 
+
 class CoreDispatch(ObjectDispatch):
     object_url = "/en-US/core/api/v1_core/{1}/{2}/"
     object_list_url = "/en-US/core/api/v1_core/{1}/"
-
-
-class ROCoreDispatch(ObjectDispatch):
-    object_url = "/en-US/core/api/v1_core/{1}/{2}/"
-    object_list_url = "/en-US/core/api/v1_core/{1}/"
-
-    def build_parser(self, base_parser):
-        record_base_parser = base_parser.add_parser(
-            self.dtype,
-            help="Interface for {0} records".format(self.dtype),
-            add_help=True
-        )
-        action_parser = record_base_parser.add_subparsers(
-            help="{0} record actions".format(self.dtype),
-            dest='action'
-        )
-        build_detail_parser(self, action_parser)
 
 
 class DispatchNetwork(CoreDispatch):

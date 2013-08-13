@@ -8,11 +8,14 @@ from invtool.dispatch import ObjectDispatch
 from invtool.dns_dispatch import DNSDispatch
 from invtool.core_dispatch import set_ip_type
 
+from invtool.lib.options import (
+    description_argument, comment_argument, update_pk_argument,
+    delete_pk_argument, detail_pk_argument
+)
+
 from invtool.lib.dns_options import (
     fqdn_argument, ttl_argument, ip_argument, view_arguments,
-    description_argument, comment_argument, update_pk_argument,
-    delete_pk_argument, detail_pk_argument, system_argument,
-    name_argument
+    system_argument, name_argument
 )
 
 from invtool.lib.hw_options import (
@@ -65,6 +68,8 @@ class DispatchHW(ObjectDispatch):
 
 
 class DispatchSREG(DNSDispatch):
+    object_url = "/en-US/core/api/v1_core/{1}/{2}/"
+    object_list_url = "/en-US/core/api/v1_core/{1}/"
     resource_name = 'staticreg'
     dtype = 'SREG'
     dgroup = 'dns'
