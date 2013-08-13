@@ -1,7 +1,7 @@
 from invtool.lib.options import build_extractor, write_num_argument
 from invtool.tests.test_data import (
-    TEST_DOMAIN, TEST_FQDN, TEST_IPv4, TEST_IPv6, TEST_DESCRIPTION,
-    TEST_TTL, TEST_PORT, TEST_WEIGHT, TEST_PRIORITY, TEST_TEXT, TEST_INAME
+    TEST_DOMAIN, TEST_FQDN, TEST_IPv4, TEST_IPv6, TEST_TTL, TEST_PORT,
+    TEST_WEIGHT, TEST_PRIORITY, TEST_TEXT, TEST_INAME
 )
 
 
@@ -142,33 +142,6 @@ def target_argument(field_name):
     return add_target_arg, build_extractor(field_name, 'target'), test_data
 
 
-def description_argument(field_name):
-    def add_desc_arg(parser, **kwargs):
-        parser.add_argument(
-            '--description', default="", type=str, dest='description',
-            help="Tell us a little about this record", required=False
-        )
-
-    def test_data():
-        return 'description', TEST_DESCRIPTION
-
-    return add_desc_arg, build_extractor(field_name, 'description'), test_data
-
-
-def comment_argument(field_name):
-    def add_com_arg(parser, **kwargs):
-        parser.add_argument(
-            '--comment', default="", type=str,
-            dest='comment', help="Use this to record why a change is "
-            "being made", required=False
-        )
-
-    def test_data():
-        return 'comment', TEST_DESCRIPTION  # Reuse this test data
-
-    return add_com_arg, build_extractor(field_name, 'comment'), test_data
-
-
 def name_argument(field_name):
     def add_com_arg(parser, required=True, **kwargs):
         parser.add_argument(
@@ -279,53 +252,3 @@ def weight_argument(field_name):
         return 'weight', TEST_WEIGHT
 
     return add_weight_arg, build_extractor(field_name, 'weight'), test_data
-
-
-def _extract_pk(nas, field_name):
-    return {field_name: nas.pk}
-
-
-def update_pk_argument(field_name, rdtype):
-    def add_update_pk_argument(parser, **kwargs):
-        parser.add_argument(
-            '--{0}'.format("pk"), required=True, default=None, type=int,
-            dest='pk', help="The database integer primary key (id) of the "
-            "{0} you are updating.".format(rdtype)
-        )
-        return parser
-
-    def extract_pk(nas):
-        return _extract_pk(nas, field_name)
-
-    return add_update_pk_argument, extract_pk, lambda: None
-
-
-def detail_pk_argument(field_name, rdtype):
-    def add_detail_pk_argument(parser, **kwargs):
-        parser.add_argument(
-            '--{0}'.format("pk"), required=True, default=None, type=int,
-            dest='pk', help="The database integer primary key (id) of the "
-            "{0} you are getting detail about.".format(rdtype)
-        )
-        return parser
-
-    def extract_pk(nas):
-        return _extract_pk(nas, field_name)
-
-    return add_detail_pk_argument, extract_pk, lambda: None
-
-
-def delete_pk_argument(field_name, rdtype):
-    # Required has no affect.
-    def add_delete_pk_argument(parser, **kwargs):
-        parser.add_argument(
-            '--{0}'.format("pk"), default=None, type=int, dest='pk',
-            help="Delete the {0} record with the database primary key of "
-            "'pk'".format(rdtype), required=True
-        )
-        return parser
-
-    def extract_pk(nas):
-        return _extract_pk(nas, field_name)
-
-    return add_delete_pk_argument, extract_pk, lambda: None

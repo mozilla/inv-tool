@@ -7,9 +7,12 @@ from invtool.dispatch import ObjectDispatch
 from invtool.lib.registrar import registrar
 from invtool.lib.dns_options import (
     fqdn_argument, ttl_argument, ip_argument, view_arguments,
-    description_argument, comment_argument, update_pk_argument,
-    delete_pk_argument, target_argument, detail_pk_argument, priority_argument,
+    target_argument, priority_argument,
     port_argument, weight_argument,
+)
+from invtool.lib.options import (
+    description_argument, comment_argument, update_pk_argument,
+    delete_pk_argument, detail_pk_argument
 )
 from invtool.lib.parser import (
     build_create_parser, build_update_parser, build_delete_parser,
