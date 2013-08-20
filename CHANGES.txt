@@ -7,3 +7,4 @@
   the keyvalue's of those system objects. csv is a csv exporter for systems. The csv importer is
   likely to change to include more verbose header values.
 * Bumped version to 3.0
+* Added scripts/ directory
