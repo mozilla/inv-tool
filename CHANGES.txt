@@ -6,3 +6,4 @@
 * Added SYS, SYS_kv, and csv. SYS is an interface to system objects and SYS_kv is the interface to
   the keyvalue's of those system objects. csv is a csv exporter for systems. The csv importer is
   likely to change to include more verbose header values.
+* Bumped version to 3.0
