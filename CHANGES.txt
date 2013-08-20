@@ -1,1 +1,8 @@
-v, 11-27-2012 -- 0.1.0
+8/20/2013
+
+* New line after all results
+* Introduce the --pk-only global flag. This flag will print only the pk of an object that was just
+  detailed/created/updated.
+* Added SYS, SYS_kv, and csv. SYS is an interface to system objects and SYS_kv is the interface to
+  the keyvalue's of those system objects. csv is a csv exporter for systems. The csv importer is
+  likely to change to include more verbose header values.
