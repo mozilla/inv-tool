@@ -12,7 +12,7 @@ Here is how you update your invtool.
 
 The git method (recommended)
 ----------------------------
-See which ``INVTOOL_VERIONS`` you are running::
+See which ``INVTOOL_VERSION`` you are running::
 
     invtool status | grep INVTOOL_VERSION
 
