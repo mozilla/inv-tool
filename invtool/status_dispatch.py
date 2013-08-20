@@ -26,7 +26,7 @@ class StatusDispatch(Dispatch):
         # Items of interest
         items = (
             'API_MAJOR_VERSION',
-            'INVTOOL_VESION',
+            'INVTOOL_VERSION',
             'CONFIG_FILE',
             'GLOBAL_CONFIG_FILE',
             'LOCAL_CONFIG_FILE',
