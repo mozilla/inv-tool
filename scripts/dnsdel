@@ -1,0 +1,56 @@
+#!/bin/bash
+
+if [ $# -lt 1 ]; then
+   echo "Usage: $0 <hostname> [<...>]"
+   exit 1
+fi
+
+for i in $@; do
+   ipv4=$(dig +short $i)
+   if [ -z "$ipv4" ]; then
+      echo "WARNING: $i doesn't resolve, skipping"
+      continue
+   fi
+
+   search=$(invtool search --query "/^$i (type=:A OR type=:CNAME)" | awk "\$2 ~ /$i\.+/ {print \$0}")
+   count=$(echo "$search" | wc -l)
+   IFS=$'\n'
+
+   if [ -z "$search" ]; then
+      echo "WARNING: $i resolves in DNS, but it wasn't found in inventory!"
+      continue
+   fi
+
+   if [ -z "${DNSDEL_YES:-}" ]; then
+      echo "$search"
+      echo
+      if [ $count -gt 1 ]; then
+         echo -n "Are these the records you want to delete? [y/N] "
+      else
+         echo -n "Is this the record you want to delete? [y/N] "
+      fi
+
+      read yes
+
+      if [ ! "$yes" = "y" ]; then
+         echo "Skipping $i"
+         continue
+      fi
+   fi
+
+   for pk in $search; do
+      type=$(echo "$pk" | awk '{print $5}')
+      if [ -z "$type" ]; then
+         echo "WARNING: Unknown record type. Raw data: $pk"
+         continue
+      fi
+
+      output=$(invtool "$type" delete --pk $(echo "$pk" | awk '{print $1}'))
+      if [ $? -eq 0 ]; then
+         echo Removed: "$pk"
+      else
+         echo "ERROR removing $i: $output"
+      fi
+   done
+   echo
+done
