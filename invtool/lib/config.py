@@ -5,21 +5,15 @@ import getpass
 API_MAJOR_VERSION = 1
 INVTOOL_VERSION = 4.0
 GLOBAL_CONFIG_FILE = "/etc/invtool.conf"
+HOME_CONFIG_FILE = os.path.expanduser("~/.invtool.conf")
 LOCAL_CONFIG_FILE = "./etc/invtool.conf"
+CONFIG_FILES = [GLOBAL_CONFIG_FILE, HOME_CONFIG_FILE, LOCAL_CONFIG_FILE]
 
-if os.path.isfile(LOCAL_CONFIG_FILE):
-    CONFIG_FILE = LOCAL_CONFIG_FILE
-else:
-    if os.path.isfile(GLOBAL_CONFIG_FILE):
-        CONFIG_FILE = GLOBAL_CONFIG_FILE
-    else:
-        raise Exception(
-            "Can't find global config file '{0}'"
-            .format(GLOBAL_CONFIG_FILE)
-        )
+if not any(os.path.exists(f) for f in CONFIG_FILES):
+    raise Exception("No configuration files (%s) found." % (', '.join(map(repr, CONFIG_FILES)),))
 
 config = ConfigParser.ConfigParser()
-config.read(CONFIG_FILE)
+config.read(CONFIG_FILES)
 
 if not config.has_section('authorization'):
     config.add_section('authorization')
@@ -129,8 +123,7 @@ if dev == 'True':
 elif (config.has_option('authorization', 'ldap_password') and
       config.has_option('authorization', 'keyring')):
     raise Exception(
-        "ldap_password and keyring are mutually exclusive "
-        "in config file '{0}'".format(CONFIG_FILE)
+        "ldap_password and keyring cannot both be set in the configuration"
     )
 
 # Always take keyring first
