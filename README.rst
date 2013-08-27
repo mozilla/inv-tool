@@ -59,8 +59,11 @@ or passed on the command line. If you do not want to store your credentials
 on disk at all, you must remove the ldap_username AND ldap_password entries
 from the configuration file.
 
-``invtool`` will look for a configuration file at ``./etc/invtool.conf`` and
-if it can't find anything there, ``/etc/invtool.conf``.
+``invtool`` will read its configuration from
+
+ * ``/etc/invtool.conf``
+ * ``~/.invtool.conf`` and
+ * ``./etc/invtool.conf``
 
 Here is a quick tip for a non-root install::
 
