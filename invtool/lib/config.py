@@ -106,10 +106,25 @@ def _plaintext():
     return (username, password)
 
 
+def ldap_username_and_password_configured():
+    return (
+        config.has_option('authorization', 'ldap_password') and
+        config.has_option('authorization', 'ldap_username')
+    )
+
+
+def keyring_configured():
+    return (
+        config.has_option('authorization', 'keyring') and
+        config.has_option('authorization', 'ldap_username') and
+        KEYRING_PRESENT
+    )
+
 # No auth required for dev
 if dev == 'True':
     AUTH_TYPE = None
     _realauth = lambda: None
+
 # Can't use keyring and a password in the config at the same time.
 elif (config.has_option('authorization', 'ldap_password') and
       config.has_option('authorization', 'keyring')):
@@ -117,11 +132,25 @@ elif (config.has_option('authorization', 'ldap_password') and
         "ldap_password and keyring are mutually exclusive "
         "in config file '{0}'".format(CONFIG_FILE)
     )
-elif KEYRING_PRESENT:
+
+# Always take keyring first
+elif keyring_configured():
     AUTH_TYPE = 'keyring'
     _realauth = _keyring
-# If there's no keyring support, let's try to get the username and password
-# from the config or command line
+
+# If keyring isn't configured, see if ldap username and password are configured
+elif ldap_username_and_password_configured():
+    AUTH_TYPE = 'plaintext'
+    _realauth = _plaintext
+
+# Nothing is configured
+# If keyring is present and there is a keyring name, use keyring. invtool will
+# configure it.
+elif KEYRING_PRESENT and config.has_option('authorization', 'keyring'):
+    AUTH_TYPE = 'keyring'
+    _realauth = _keyring
+
+# The user wants to specify everything via stdin
 else:
     AUTH_TYPE = 'plaintext'
     _realauth = _plaintext
