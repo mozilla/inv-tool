@@ -79,7 +79,11 @@ def _keyring():
         if (not config.has_option('authorization', 'keyring') or
                 config.get('authorization', 'keyring') == ''):
             config.set('authorization', 'keyring', 'invtool-ldap')
-        config.write(open(CONFIG_FILE, 'w'))
+        try:
+            config.write(open(LOCAL_CONFIG_FILE, 'w'))
+            print("Wrote new configuration to {0}".format(LOCAL_CONFIG_FILE))
+        except OSError:
+            print("could not write keyring configuration to {0}".format(LOCAL_CONFIG_FILE))
 
         # store the password
         keyring.set_password(config.get('authorization', 'keyring'), *auth)
