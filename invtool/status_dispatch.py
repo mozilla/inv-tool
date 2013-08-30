@@ -27,8 +27,8 @@ class StatusDispatch(Dispatch):
         items = (
             'API_MAJOR_VERSION',
             'INVTOOL_VERSION',
-            'CONFIG_FILE',
             'GLOBAL_CONFIG_FILE',
+            'HOME_CONFIG_FILE',
             'LOCAL_CONFIG_FILE',
             'AUTH_TYPE',
             'REMOTE',
