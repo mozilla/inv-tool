@@ -298,7 +298,7 @@ if __name__ == "__main__":
 
     tcs = []
     tcs += run_dns_tests()
-    #tcs += run_dhcp_tests()
+    tcs += run_dhcp_tests()
     for test_class in tcs:
         tests = loader.loadTestsFromTestCase(test_class)
         suite.addTests(tests)
