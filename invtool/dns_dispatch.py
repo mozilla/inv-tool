@@ -1,7 +1,7 @@
 try:
     import simplejson as json
 except ImportError:
-    import json
+    import json  # noqa
 
 from invtool.dispatch import ObjectDispatch
 from invtool.lib.registrar import registrar
@@ -58,11 +58,14 @@ class DispatchA(DNSDispatch):
 
     def get_create_data(self, nas):
         data = super(DispatchA, self).get_create_data(nas)
-        data['ip_type'] = self.determine_ip_type(data.get('ip_str', ''))
+        if 'ip_str' in data:
+            data['ip_type'] = self.determine_ip_type(data.get('ip_str', ''))
         return data
 
     def get_update_data(self, nas):
         data = super(DispatchA, self).get_update_data(nas)
+        if 'ip_str' in data:
+            data['ip_type'] = self.determine_ip_type(data.get('ip_str', ''))
         return data
 
 

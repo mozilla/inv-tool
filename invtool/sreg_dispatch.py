@@ -135,5 +135,5 @@ class DispatchSREG(DNSDispatch):
 
 
 # Uncomment when dhcp is rolled out
-#registrar.register(DispatchSREG())
-#registrar.register(DispatchHW())
+registrar.register(DispatchSREG())
+registrar.register(DispatchHW())
