@@ -1,5 +1,6 @@
 import argparse
 import simplejson as json
+import sys
 
 enabled_dispatches = [
     'invtool.dns_dispatch',
@@ -11,6 +12,7 @@ enabled_dispatches = [
     'invtool.kv.kv_system_dispatch',
     'invtool.system_dispatch',
     'invtool.csv_dispatch',
+    'invtool.ba_dispatch',
     #'invtool.sreg_dispatch'
 ]
 
@@ -21,7 +23,7 @@ from invtool.lib.registrar import registrar
 from invtool.dispatch import dispatch
 
 
-def main(args):
+def do_dispatch(args, IN=sys.stdin):
     inv_parser = argparse.ArgumentParser(prog='invtool')
     format_group = inv_parser.add_mutually_exclusive_group()
     format_group.add_argument(
@@ -47,16 +49,20 @@ def main(args):
     for d in registrar.dispatches:
         d.build_parser(base_parser)
 
-    nas = inv_parser.parse_args(args[1:])
+    nas = inv_parser.parse_args(args)
+    nas.IN = IN  # Where invtool reads its input from
     if nas.p_pk_only:
         nas.p_json = True
-    resp_code, resp_list = dispatch(nas)
+    return nas, dispatch(nas)
+
+
+def main(args):
+    nas, (resp_code, resp_list) = do_dispatch(args[1:])
     if not nas.p_silent and resp_list:
         if nas.p_pk_only:
             ret_json = json.loads('\n'.join(resp_list))
             if 'pk' in ret_json:
                 print ret_json['pk'],
         else:
-            print '\n'.join(resp_list)
-            print
+            print '\n'.join(resp_list) + '\n'
     return resp_code
