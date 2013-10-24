@@ -1,0 +1,266 @@
+#!/usr/bin/env python
+import StringIO
+import argparse
+import csv
+from copy import deepcopy
+import simplejson as json
+import sys
+
+from invtool.lib.ba import (  # noqa
+    ba_export_systems_hostname_list, ba_export_system_template, ba_import,
+    ba_gather_vlan_pools
+)
+
+
+def fqdn(**kwargs):
+    return "{hostname}.{vlan_name}.{site_name}.mozilla.com".format(**kwargs)
+
+
+def mgmt_hostname(**kwargs):
+    return "{hostname}-mgmt.{mgmt_vlan_name}.{site_name}.mozilla.com".format(
+        **kwargs
+    )
+
+
+def mgmt_cname_fqdn(**kwargs):
+    return "{hostname}-mgmt.{mgmt_vlan_name}.{site_name}.build.mozilla.org".format(  # noqa
+        **kwargs
+    )
+
+
+def cname_fqdn(**kwargs):
+    return "{hostname}.{vlan_name}.{site_name}.build.mozilla.org".format(
+        **kwargs
+    )
+
+
+FIELDS = {
+    'hostname': fqdn,  # set the systems hostname
+    'srs.nic0.cname.target': fqdn,
+    'srs.nic0.cname.fqdn': cname_fqdn,
+    'srs.nic0.fqdn': fqdn,
+    'srs.nic0.ip_str': '{{ FREE_IP }}',  # Use an IP from main ip pool
+
+    'srs.mgmt0.cname.target': mgmt_hostname,
+    'srs.mgmt0.cname.fqdn': mgmt_cname_fqdn,
+    'srs.mgmt0.fqdn': mgmt_hostname,
+    'srs.mgmt0.ip_str': '{{ MGMT_FREE_IP }}',  # Use an IP from mgmt ip pool
+}
+
+
+class IPPool(object):
+    def __init__(self, free_ranges, ip_type):
+        self.free_ranges = free_ranges
+        self.ip_type = ip_type
+        if not self.free_ranges:
+            self.cur_range = None
+        else:
+            self.cur_range = self.free_ranges[0]
+
+    def __next__(self):
+        return self.next()
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        if not self.cur_range or self.cur_range[0] >= self.cur_range[1]:
+            if not self.free_ranges:
+                raise StopIteration("No more free ip addresses!")
+            else:
+                self.cur_range = self.free_ranges.pop(0)
+        free_ip = self.int_to_ip(self.cur_range[0])
+        self.cur_range[0] += 1  # move the slider
+        return free_ip
+
+    def determine_ip_type(self, ip):
+        if '.' in ip:
+            return '4'
+        else:
+            return '6'
+
+    def int_to_ip(self, ip):
+        if self.ip_type == '4':
+            return "{o1}.{o2}.{o3}.{o4}".format(
+                o1=int(ip / 16777216) % 256,
+                o2=int(ip / 65536) % 256,
+                o3=int(ip / 256) % 256,
+                o4=int(ip) % 256
+            )
+        else:
+            raise NotImplemented("IPv6 support needs to be added")
+
+
+class CSVCreator(object):
+    def __init__(self, fd, verbose=False, site=None, suffix=None,
+                 vlan_name=None, vlan_number=None, mgmt_suffix=None,
+                 mgmt_vlan_name=None, mgmt_vlan_number=None, ip_type='4'):
+        self.fd = fd
+        self.csvreader = self.parse_csv(fd)
+        self.ip_type = ip_type
+        self.action = lambda reader: (
+            self.ba_update(reader, template=self.template)
+        )
+        self.csvlines = [l for l in self.csvreader]  # Eval the csv
+
+        self.verbose = verbose
+        self.site_name = site
+        self.suffix = suffix
+        self.vlan_name = vlan_name
+        self.vlan_number = vlan_number
+        self.ip_pool = self.gather_ip_pool(
+            self.site_name, self.vlan_name, self.vlan_number
+        )
+
+        self.mgmt_suffix = mgmt_suffix
+        self.mgmt_vlan_name = mgmt_vlan_name
+        self.mgmt_vlan_number = mgmt_vlan_number
+        self.mgmt_ip_pool = self.gather_ip_pool(
+            self.site_name, self.mgmt_vlan_name, self.mgmt_vlan_number
+        )
+
+        self.fields = FIELDS
+        self.output = StringIO.StringIO()
+
+    def gather_ip_pool(self, site_name, vlan_name, vlan_number):
+        ip_ranges, errors = ba_gather_vlan_pools(
+            site_name, vlan_name, vlan_number
+        )
+        # sniff the ip_ranges and see if we can determine ip_type
+        assert not errors, str(errors)
+
+        return IPPool(ip_ranges, self.ip_type)
+
+    def get_hostnames(self, csvlines, key='hostname'):
+        return [line[key] for line in csvlines]
+
+    def create_csv(self):
+        new_lines = []
+        for i, line in enumerate(self.csvlines):
+            new_line = {}
+            for attr, value in line.items():
+                new_line[attr] = value
+            hostname = new_line['hostname']
+
+            for field, gvalue in self.fields.items():
+                new_line[field] = self.process_value(
+                    hostname, field, gvalue
+                )
+            new_lines.append(new_line)
+        return self.build_csv(new_lines)
+
+    def build_csv(self, lines):
+        assert len(lines) > 1, "Your initial csv isn't long enough"
+        headers = lines[0].keys()
+        csvwriter = csv.DictWriter(self.output, headers)
+        for line in lines:
+            csvwriter.writerow(line)
+        return csvwriter, self.output
+
+    def process_value(self, hostname, attr, value):
+        """
+        In this function we introspect value to see if it needs to be replaced
+        with something.
+        """
+        if attr in self.fields:
+            f_value = self.fields[attr]
+            if callable(f_value):
+                return f_value(
+                    hostname=hostname,
+                    vlan_name=self.vlan_name,
+                    vlan_number=self.vlan_number,
+                    mgmt_vlan_name=self.mgmt_vlan_name,
+                    mgmt_vlan_number=self.mgmt_vlan_name,
+                    site_name=self.site_name
+                )
+            else:
+                if value.strip(' ') == '{{ FREE_IP }}':
+                    assert self.ip_pool is not None, (
+                        "You must specify --vlan-name and --site when using "
+                        "{{ FREE_IP }} in your CSV file."
+                    )
+                    return self.ip_pool.next()
+                elif value.strip(' ') == '{{ MGMT_FREE_IP }}':
+                    assert self.mgmt_ip_pool is not None, (
+                        "You must specify --mgmt-vlan-name and --site when "
+                        "using {{ MGMT_FREE_IP }} in your CSV file."
+                    )
+                    return self.mgmt_ip_pool.next()
+                else:
+                    return value
+
+    def parse_csv(self, fd):
+        # Generally stage the parsing of the CSV
+        csv_lines = fd.readlines()
+        fd.seek(0)
+        assert len(csv_lines) >= 2, "Your CSV didn't have enough data"
+        return csv.DictReader(fd)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        prog='ba_create_csv', description='Bulk Action CSV creator.'
+    )
+    parser.add_argument(
+        '--csv-path', type=str, help='Path to a csv file with hostnames in it',
+        required=True
+    )
+    parser.add_argument(
+        '--verbose', action='store_true',
+        help='Print more things than usual'
+    )
+    parser.add_argument(
+        '--site', type=str, help='This is used to fine free ip addresses'
+    )
+    parser.add_argument(
+        '--build-suffix', type=str, default='build.mozilla.org',
+        help='Used for calculating cname names'
+    )
+    parser.add_argument(
+        '--vlan-name', type=str, required=True,
+        help='This is used to find free ip addresses'
+    )
+    parser.add_argument(
+        '--vlan-number', type=str,
+        help='This is used to find free ip addresses'
+    )
+    parser.add_argument(
+        '--suffix', type=str, required=True,
+        help='Used for calculating hostnames'
+    )
+
+    parser.add_argument(
+        '--mgmt-vlan-name', type=str, required=True,
+        help='This is used to find free ip addresses'
+    )
+    parser.add_argument(
+        '--mgmt-vlan-number', type=str,
+        help='This is used to find free ip addresses'
+    )
+    parser.add_argument(
+        '--mgmt-suffix', type=str, required=True,
+        help='Used for calculating cname names'
+    )
+    nas = parser.parse_args(sys.argv[1:])
+    if nas.vlan_name == nas.mgmt_vlan_name:
+        print "--vlan-name and --mgmt-vlan cannot be the same"
+        sys.exit(1)
+
+    try:
+        with open(nas.csv_path, 'r') as fd:
+            csv_writer, csv_out = CSVCreator(
+                fd,
+                verbose=nas.verbose,
+                site=nas.site,
+                suffix=nas.suffix,
+                vlan_name=nas.vlan_name,
+                vlan_number=nas.vlan_number,
+
+                mgmt_suffix=nas.mgmt_suffix,
+                mgmt_vlan_name=nas.mgmt_vlan_name,
+                mgmt_vlan_number=nas.mgmt_vlan_number,
+            ).create_csv()
+            csv_out.seek(0)
+            print ','.join(csv_writer.fieldnames)
+            print csv_out.read()
+    except IOError:
+        print nas.csv_path + " wasn't a csv file?"

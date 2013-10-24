@@ -28,9 +28,13 @@ class BAImportDispatch(BA):
 
     def build_parser(self, base_parser):
         # BA is a top level command.
-        base_parser.add_parser(
+        p = base_parser.add_parser(
             'ba_import', help="Bulk Action Import. To use, send a JSON blob "
             "into STDIN.", add_help=True
+        )
+        p.add_argument(
+            '--commit', action='store_true', default=False,
+            help="Commit changes to the db."
         )
 
     def route(self, nas):

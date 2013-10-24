@@ -2,14 +2,50 @@
 import simplejson as json
 import shlex
 import io
+import requests
 
 from invtool.main import do_dispatch
+from invtool.lib.config import REMOTE, auth
 
 
 class BAError(Exception):
     def __init__(self, error=None):
         self.error = error
         return super(BAError, self).__init__()
+
+
+def ba_gather_vlan_pools(site, vlan_name, vlan_number, ip_type='4'):
+    """
+    This function should phone home to inventory and pull down a list of ip
+    ranges.
+    """
+    tmp_url = "/en-US/bulk_action/gather_vlan_pools/"
+    url = "{0}{1}".format(REMOTE, tmp_url)
+    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+    data = {
+        'vlan_name': vlan_name,
+        'vlan_number': vlan_number,
+        'site_name': site,
+        'ip_type': ip_type
+    }
+
+    resp = requests.get(url, params=data, headers=headers, auth=auth())
+    json_resp = json.loads(resp.content)
+    if 'errors' in json_resp:
+        return None, json_resp['errors']
+    assert 'free_ranges' in json_resp, (
+        "Something is broken. 'free_ranges' was not returen by Inventory"
+    )
+    return json_resp['free_ranges'], None
+
+
+def ba_gather_ip_pool(ip_range):
+    command = '--json search --display-integers --range {0}'.format(ip_range)
+    nas, (resp_code, resp_list) = do_dispatch(shlex.split(command))
+    raw_json = '\n'.join(resp_list)
+    if 'error_messages' in raw_json:
+        return None, raw_json
+    return json.loads(raw_json), None
 
 
 def ba_export_systems_raw(search):
@@ -45,7 +81,7 @@ def ba_export_systems_hostname_list(hostnames):
     return ba_export_systems_raw(search)
 
 
-def ba_import(dict_blob):
+def ba_import(dict_blob, commit=False):
     """
     Import a blob of data. The data you pass in should have been originally
     exported via one of the ``ba_export`` functions.
@@ -60,11 +96,14 @@ def ba_import(dict_blob):
     :type dict_blob: dict
 
     """
+    if commit:
+        dict_blob['commit'] = True
     json_blob = json.dumps(dict_blob)
+    command = ['ba_import']
+    if commit:
+        command.append('--commit')
     with io.BytesIO(json_blob) as json_blob_fd:
-        nas, (resp_code, resp_list) = do_dispatch(
-            ['ba_import'], IN=json_blob_fd
-        )
+        nas, (resp_code, resp_list) = do_dispatch(command, IN=json_blob_fd)
         raw_json = '\n'.join(resp_list)
         if 'errors' in raw_json:
             return None, raw_json
@@ -80,19 +119,21 @@ def removes_pk_attrs(blobs):
             remove_pk_attrs(blob)
     except TypeError:
         remove_pk_attrs(blobs)
-    return
 
 
 def remove_pk_attrs(blob):
-    if not isinstance(blob, dict):
-        return
-    blob.pop('pk', None)
-    for attr, value in blob.iteritems():
-        if isinstance(value, list):
-            removes_pk_attrs(value)
+    if isinstance(blob, dict):
+        for s_blob in blob.values():
+            s_blob.pop('pk', None)
+            for attr, value in s_blob.iteritems():
+                if attr == 'cname':  # CNAMEs are special
+                    for i_blob in value:
+                        i_blob.pop('pk', None)
+                if isinstance(value, dict):
+                    remove_pk_attrs(value)
 
 
-def export_system_template(hostname):
+def ba_export_system_template(hostname):
     template, error = ba_export_systems_hostname_list([hostname])
     if error:
         raise BAError(error=error)
@@ -102,5 +143,5 @@ def export_system_template(hostname):
             'not correspond to a single system'
         })
     system_template = template['systems']
-    removes_pk_attrs(system_template)
+    remove_pk_attrs(system_template)
     return system_template
