@@ -32,3 +32,6 @@ inv
 devinvtool
 bug_*
 *.sh  # top level scripts
+
+test.csv
+test_filled_out.csv
