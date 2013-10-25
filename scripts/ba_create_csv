@@ -23,13 +23,13 @@ def mgmt_hostname(**kwargs):
 
 
 def mgmt_cname_fqdn(**kwargs):
-    return "{hostname}-mgmt.{mgmt_vlan_name}.{site_name}.build.mozilla.org".format(  # noqa
+    return "{hostname}-mgmt.build.mozilla.org".format(  # noqa
         **kwargs
     )
 
 
 def cname_fqdn(**kwargs):
-    return "{hostname}.{vlan_name}.{site_name}.build.mozilla.org".format(
+    return "{hostname}.build.mozilla.org".format(
         **kwargs
     )
 
