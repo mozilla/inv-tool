@@ -430,10 +430,67 @@ pattern ``node[0-9].mozilla.com``, you could run
 
 The first row of csv query results is always the CSV headers.
 
-The Bulk Action API
-===================
+The Bulk Action API (An annotated walk through)
+===============================================
 
-The bulk action API 
+The bulk action API allows you to export multiple JSON blobs from Inventory,
+update the blobs, and send the blobs back to Inventory. These blobs represent
+Inventory objects (i.e. system objects).
+
+The ``ba_export`` command takes a ``--query`` parameter that is used to find
+system objects to export. Try this now on a sample host (i.e. ``invtool
+ba_export --query 'some.host.that.exists.mozilla.com'``). Notice that the blob
+is made up of dictionaries that map to other dictionaries. This will come in
+handy later.
+
+Once you have exported a JSON blob you can make changes to it and send it back
+to Inventory. Inventory will then update the object to reflect your changes.
+
+For example, an extremely nieve way of renaming a host could be::
+
+    invtool ba_export --query 'oldhost.mozilla.com' |
+        sed 's/oldhost/newhost/' |
+        invtool ba_import --commit
+
+The first part of this command exports a JSON blob for all hosts matching
+'oldhost.mozilla.com'. Next, the sed command looks for any occurrence of the
+string 'oldhost' in the JSON blob and renames it to 'newhost'. The ``ba_import``
+command then reads in the modified JSON blob and sends it back to Inventory,
+which will process the blob and update the originally exported system.
+
+Using scripts/ba_import_csv
+---------------------------
+The process of exporting a host, updating its JSON blob, and sending back to
+Inventory can be done via a CSV import script: ``scripts/ba_import_csv``.
+
+In the previous section we renamed a host on the command line. Using the
+``ba_import_csv`` script we can achieve the same result with the following csv::
+
+    hostname,            new-hostname
+    oldhost.mozilla.com, newhost.mozilla.com
+
+To read in a CSV ``mycsvfile.csv``, you would do::
+
+    ``python scripts/ba_import_csv --csv-file mycsvfile.csv``
+
+
+Using lookup paths with scripts/ba_import_csv
+---------------------------------------------
+Certain attributes of a system, like a key value pair, are within nested
+dictionaries in system's JSON blob. For example, a key 'randomkey'
+would be accessed by::
+
+    ``main_blob['systems']['hostname.mozilla.com']['keyvalue_set']['randomkey']``
+
+These nested attributes can be accessed in a CSV by using the ``.`` operator to
+signify dictionary lookup. For example::
+
+    hostname,            keyvalue_set.randomkey
+    hostname.mozilla.com, randomvalue
+
+This would lookup be equivalent to doing::
+
+    main_blob['systems']['hostname.mozilla.com']['keyvalue_set']['randomkey'] = 'randomvalue'
 
 
 Cook Book
