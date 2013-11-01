@@ -19,16 +19,6 @@ SYNOPSIS
 ========
 
 ``invtool`` ``--help``
-``invtool`` [ --json | --silent ] status
-
-``invtool`` [ --json | --silent ] search [ ``--query`` | ``--range`` ] *query-string*
-
-``invtool`` [ --json | --silent ] ``rdtype`` ``action`` [ args | --help ]
-
-    ``rdtype`` [ A | AAAA | CNAME | MX | PTR | SRV | TXT | SYS | NET | VLAN | SITE ]
-
-    ``action``  [ create | update | delete | detail ]
-
 
 Formating Output
 ================
@@ -439,6 +429,11 @@ pattern ``node[0-9].mozilla.com``, you could run
         ...
 
 The first row of csv query results is always the CSV headers.
+
+The Bulk Action API
+===================
+
+The bulk action API 
 
 
 Cook Book
