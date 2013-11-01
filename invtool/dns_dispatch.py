@@ -63,7 +63,6 @@ class DispatchA(DNSDispatch):
 
     def get_update_data(self, nas):
         data = super(DispatchA, self).get_update_data(nas)
-        data['ip_type'] = self.determine_ip_type(data.get('ip_str', ''))
         return data
 
 
