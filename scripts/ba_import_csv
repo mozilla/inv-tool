@@ -4,6 +4,7 @@ import csv
 from copy import deepcopy
 import simplejson as json
 import sys
+import time
 
 from invtool.lib.ba import (  # noqa
     ba_export_systems_hostname_list, ba_export_system_template, ba_import,
@@ -144,7 +145,14 @@ class Importer(object):
                 print "++ Setting {lookup} to {value}".format(
                     lookup=lookup, value=s_value
                 )
-                self.set_blob_attr(s_blob, lookup, p_value)
+                try:
+                    self.set_blob_attr(s_blob, lookup, p_value)
+                except KeyError:
+                    raise Exception(
+                        "While processing {0} the key {1} didn't correspond "
+                        "to a valid lookup path in the following blob:\n{2}"
+                        .format(hostname, lookup, json.dumps(s_blob, indent=4))
+                    )
 
         return main_blob
 
@@ -254,54 +262,33 @@ class Importer(object):
             blob = self.action(self.csvlines)
             if self.verbose:
                 print json.dumps(blob, indent=4)
+            print "Sending updated JSON to Inventory..."
+            if commit:
+                print (
+                    "COMMIT=True if data validates Inventory will save all "
+                    "changes"
+                )
+            else:
+                print (
+                    "COMMIT=False This is a dry run. Inventory will not save "
+                    "these changes. Use --commit if you want to save these "
+                    "changes."
+                )
+            print "Please wait..."
+            start = time.time()
             return_blob, errors = ba_import(blob, commit=commit)
+            total_time = time.time() - start
+            print "Completed bulk action: {mins} Minutes {sec} Seconds".format(
+                mins=int(total_time) / 60,
+                sec="{0:.2f}".format(total_time % 60)
+            )
             return self.process_results(return_blob, errors)
         except AssertionError, e:
             print "Error!"
             print e
         except Exception, e:
-            #import pdb
-            #pdb.set_trace()
             print e
 
-
-"""
-Creating a lot of systems at the same time can be acheived by:
-
-    1. Exporting a single system
-
-    2. Removing the 'pk' attribute from every object in its JSON blob
-
-    3. Making a bunch of copies of the blob, one for each system you need to
-       create.
-
-    4. For each new host you are creating (which usually corresponds to a
-       single line in a CSV file) update a copied blob to contain the
-       information specific to that host.
-
-    5. Export the updated blob back to Inventory for saving
-
-
-In step (1) you are essentially using a system as a template.
-
-In step (2) you should remove the 'pk' attribute for every JSON blob so
-Inventory thinks you are creating, and not updating, objects when you send the
-JSON to be imported. For this you can use the ``remove_pk_attrs()`` function.
-
-Note::
-    Because the template system is already created, remember to remove it from
-    the list of objects you are sending to Invetory in step (5). If you forget
-    to do this Inventory will complain about a 'duplicate hostname'.
-
-In step (4) you should be using the data in the your CSV to update the JSON
-blob you created in step (3).
-
-Step (5) is sending the modified JSON blob to Inventory for processing. Make
-sure you pay attention to the results sent back from Invenotry after this step
--- if there are errors with the data you sumbited, this is where the errors
-will manifest.
-
-"""
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
