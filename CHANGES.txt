@@ -1,3 +1,7 @@
+11/11/2013
+* Bulk Action API is added via two scripts in scripts/
+* Fixed minor bug with updating AAAA records
+
 9/05/2013
 * Handle all different types of auth more gracefully
 
