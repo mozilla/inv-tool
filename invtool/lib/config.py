@@ -3,7 +3,7 @@ import ConfigParser
 import getpass
 
 API_MAJOR_VERSION = 1
-INVTOOL_VERSION = 3.0
+INVTOOL_VERSION = 4.0
 GLOBAL_CONFIG_FILE = "/etc/invtool.conf"
 LOCAL_CONFIG_FILE = "./etc/invtool.conf"
 
