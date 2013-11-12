@@ -64,5 +64,5 @@ def main(args):
             if 'pk' in ret_json:
                 print ret_json['pk'],
         else:
-            print '\n'.join(resp_list) + '\n'
+            print ''.join(resp_list).strip()
     return resp_code
