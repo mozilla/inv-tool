@@ -39,6 +39,13 @@ def ba_gather_vlan_pools(site, vlan_name, vlan_number, ip_type='4'):
     return json_resp['free_ranges'], None
 
 
+def ba_gather_range_pool(ip_range):
+    resp, errors = ba_gather_ip_pool(ip_range)
+    if errors:
+        return resp, errors
+    return resp['free_ranges'], None
+
+
 def ba_gather_ip_pool(ip_range):
     command = '--json search --display-integers --range {0}'.format(ip_range)
     nas, (resp_code, resp_list) = do_dispatch(shlex.split(command))

@@ -2,13 +2,13 @@
 import StringIO
 import argparse
 import csv
-from copy import deepcopy
-import simplejson as json
+from copy import deepcopy  # noqa
+import simplejson as json  # noqa
 import sys
 
 from invtool.lib.ba import (  # noqa
     ba_export_systems_hostname_list, ba_export_system_template, ba_import,
-    ba_gather_vlan_pools
+    ba_gather_vlan_pools, ba_gather_range_pool
 )
 
 
@@ -34,18 +34,41 @@ def cname_fqdn(**kwargs):
     )
 
 
-FIELDS = {
-    'hostname': fqdn,  # set the systems hostname
-    'srs.nic0.cname.target': fqdn,
-    'srs.nic0.cname.fqdn': cname_fqdn,
-    'srs.nic0.fqdn': fqdn,
-    'srs.nic0.ip_str': '{{ FREE_IP }}',  # Use an IP from main ip pool
+try:
+    from collections import OrderedDict, Counter
 
-    'srs.mgmt0.cname.target': mgmt_hostname,
-    'srs.mgmt0.cname.fqdn': mgmt_cname_fqdn,
-    'srs.mgmt0.fqdn': mgmt_hostname,
-    'srs.mgmt0.ip_str': '{{ MGMT_FREE_IP }}',  # Use an IP from mgmt ip pool
-}
+    class OrderedCounter(Counter, OrderedDict):
+        def __repr__(self):
+            return '%s(%r)' % (self.__class__.__name__, OrderedDict(self))
+
+        def __reduce__(self):
+            return self.__class__, (OrderedDict(self),)
+
+    order = OrderedCounter
+except ImportError:
+    order = lambda: {}
+
+fields = (
+    ('hostname', fqdn),  # set the systems hostname
+    ('staticreg_set.nic0.cname.target', fqdn),
+    ('staticreg_set.nic0.cname.fqdn', cname_fqdn),
+    ('staticreg_set.nic0.fqdn', fqdn),
+
+    # Use an IP from main ip pool
+    ('staticreg_set.nic0.ip_str', '{{ FREE_IP }}'),
+
+    ('staticreg_set.mgmt0.cname.target', mgmt_hostname),
+    ('staticreg_set.mgmt0.cname.fqdn', mgmt_cname_fqdn),
+    ('staticreg_set.mgmt0.fqdn', mgmt_hostname),
+
+    # Use an IP from mgmt ip pool
+    ('staticreg_set.mgmt0.ip_str', '{{ MGMT_FREE_IP }}'),
+)
+
+
+FIELDS = order()
+for key, value in fields:
+    FIELDS[key] = value
 
 
 class IPPool(object):
@@ -94,7 +117,8 @@ class IPPool(object):
 class CSVCreator(object):
     def __init__(self, fd, verbose=False, site=None, suffix=None,
                  vlan_name=None, vlan_number=None, mgmt_suffix=None,
-                 mgmt_vlan_name=None, mgmt_vlan_number=None, ip_type='4'):
+                 mgmt_vlan_name=None, mgmt_vlan_number=None,
+                 mgmt_ip_range=None, ip_range=None, ip_type='4'):
         self.fd = fd
         self.csvreader = self.parse_csv(fd)
         self.ip_type = ip_type
@@ -108,24 +132,37 @@ class CSVCreator(object):
         self.suffix = suffix
         self.vlan_name = vlan_name
         self.vlan_number = vlan_number
-        self.ip_pool = self.gather_ip_pool(
-            self.site_name, self.vlan_name, self.vlan_number
-        )
+        if ip_range:
+            self.ip_pool = self.range_gather_ip_pool(ip_range)
+        else:
+            self.ip_pool = self.vlan_gather_ip_pool(
+                self.site_name, self.vlan_name, self.vlan_number
+            )
 
         self.mgmt_suffix = mgmt_suffix
         self.mgmt_vlan_name = mgmt_vlan_name
         self.mgmt_vlan_number = mgmt_vlan_number
-        self.mgmt_ip_pool = self.gather_ip_pool(
-            self.site_name, self.mgmt_vlan_name, self.mgmt_vlan_number
-        )
+        if mgmt_ip_range:
+            self.mgmt_ip_pool = self.range_gather_ip_pool(mgmt_ip_range)
+        else:
+            self.mgmt_ip_pool = self.vlan_gather_ip_pool(
+                self.site_name, self.mgmt_vlan_name, self.mgmt_vlan_number
+            )
 
         self.fields = FIELDS
         self.output = StringIO.StringIO()
 
-    def gather_ip_pool(self, site_name, vlan_name, vlan_number):
+    def vlan_gather_ip_pool(self, site_name, vlan_name, vlan_number):
         ip_ranges, errors = ba_gather_vlan_pools(
             site_name, vlan_name, vlan_number
         )
+        # sniff the ip_ranges and see if we can determine ip_type
+        assert not errors, str(errors)
+
+        return IPPool(ip_ranges, self.ip_type)
+
+    def range_gather_ip_pool(self, ip_range):
+        ip_ranges, errors = ba_gather_range_pool(ip_range)
         # sniff the ip_ranges and see if we can determine ip_type
         assert not errors, str(errors)
 
@@ -143,15 +180,22 @@ class CSVCreator(object):
             hostname = new_line['hostname']
 
             for field, gvalue in self.fields.items():
-                new_line[field] = self.process_value(
-                    hostname, field, gvalue
-                )
+                new_line[field] = self.process_value(hostname, field, gvalue)
             new_lines.append(new_line)
         return self.build_csv(new_lines)
 
     def build_csv(self, lines):
         assert len(lines) > 1, "Your initial csv isn't long enough"
         headers = lines[0].keys()
+        field_keys = self.fields.keys()  # lets just cache this
+
+        def f(i):
+            if i not in field_keys:
+                return -1
+            else:
+                return field_keys.index(i)
+
+        headers = sorted(headers, key=f)
         csvwriter = csv.DictWriter(self.output, headers)
         for line in lines:
             csvwriter.writerow(line)
@@ -216,7 +260,7 @@ if __name__ == "__main__":
         help='Used for calculating cname names'
     )
     parser.add_argument(
-        '--vlan-name', type=str, required=True,
+        '--vlan-name', type=str,
         help='This is used to find free ip addresses'
     )
     parser.add_argument(
@@ -224,12 +268,22 @@ if __name__ == "__main__":
         help='This is used to find free ip addresses'
     )
     parser.add_argument(
+        '--ip-range', type=str,
+        help='This is used to find free ip addresses. Use either this flag or '
+        'the vlan flags, but not both'
+    )
+    parser.add_argument(
         '--suffix', type=str, required=True,
         help='Used for calculating hostnames'
     )
 
     parser.add_argument(
-        '--mgmt-vlan-name', type=str, required=True,
+        '--mgmt-ip-range', type=str,
+        help='This is used to find free ip addresses. Use either this flag or '
+        'the vlan flags, but not both'
+    )
+    parser.add_argument(
+        '--mgmt-vlan-name', type=str,
         help='This is used to find free ip addresses'
     )
     parser.add_argument(
@@ -241,9 +295,6 @@ if __name__ == "__main__":
         help='Used for calculating cname names'
     )
     nas = parser.parse_args(sys.argv[1:])
-    if nas.vlan_name == nas.mgmt_vlan_name:
-        print "--vlan-name and --mgmt-vlan cannot be the same"
-        sys.exit(1)
 
     try:
         with open(nas.csv_path, 'r') as fd:
@@ -254,10 +305,12 @@ if __name__ == "__main__":
                 suffix=nas.suffix,
                 vlan_name=nas.vlan_name,
                 vlan_number=nas.vlan_number,
+                ip_range=nas.ip_range,
 
                 mgmt_suffix=nas.mgmt_suffix,
                 mgmt_vlan_name=nas.mgmt_vlan_name,
                 mgmt_vlan_number=nas.mgmt_vlan_number,
+                mgmt_ip_range=nas.mgmt_ip_range,
             ).create_csv()
             csv_out.seek(0)
             print ','.join(csv_writer.fieldnames)

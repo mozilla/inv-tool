@@ -93,7 +93,17 @@ class Importer(object):
         return [line[key].strip(' ') for line in csvlines]
 
     def ba_update(self, reader, template=None):
-        hostnames = self.get_hostnames(self.csvlines)
+        # Figure out if we are renaming things. If the user has used the
+        # 'old-hostname' field (or something similar) we should look up the
+        # system with this hostname.
+        if 'old-hostname' in self.fieldnames:
+            hostname_key = 'old-hostname'
+        elif 'old_hostname' in self.fieldnames:
+            hostname_key = 'old_hostname'
+        else:
+            hostname_key = 'hostname'
+
+        hostnames = self.get_hostnames(self.csvlines, key=hostname_key)
         n = len(hostnames)
         if not template:
             print "Fetching JSON blobs for {n} systems...".format(n=n)
@@ -116,7 +126,7 @@ class Importer(object):
 
         print "Processing systems..."
         for i, change_line in enumerate(self.csvlines):
-            hostname = change_line['hostname'].strip(' ')
+            hostname = change_line[hostname_key].strip(' ')
             assert hostname in systems_blob, (
                 "Hostname '{hostname}' was not seen in exported system "
                 "blob.".format(hostname=hostname)
@@ -184,6 +194,10 @@ class Importer(object):
         # new-hostname is a special key
         if lookup == 'new-hostname' or lookup == 'new_hostname':
             lookup = 'hostname'
+
+        if lookup == 'old-hostname':
+            # We used this value to lookup the host, we no longer will use it.
+            return
 
         value = self.process_value(value)
 
