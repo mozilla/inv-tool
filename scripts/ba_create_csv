@@ -11,6 +11,20 @@ from invtool.lib.ba import (  # noqa
     ba_gather_vlan_pools, ba_gather_range_pool
 )
 
+try:
+    from collections import OrderedDict, Counter
+
+    class OrderedCounter(Counter, OrderedDict):
+        def __repr__(self):
+            return '%s(%r)' % (self.__class__.__name__, OrderedDict(self))
+
+        def __reduce__(self):
+            return self.__class__, (OrderedDict(self),)
+
+    order = OrderedCounter
+except ImportError:
+    order = lambda: {}
+
 
 def fqdn(**kwargs):
     return "{hostname}.{vlan_name}.{site_name}.mozilla.com".format(**kwargs)
@@ -32,21 +46,6 @@ def cname_fqdn(**kwargs):
     return "{hostname}.build.mozilla.org".format(
         **kwargs
     )
-
-
-try:
-    from collections import OrderedDict, Counter
-
-    class OrderedCounter(Counter, OrderedDict):
-        def __repr__(self):
-            return '%s(%r)' % (self.__class__.__name__, OrderedDict(self))
-
-        def __reduce__(self):
-            return self.__class__, (OrderedDict(self),)
-
-    order = OrderedCounter
-except ImportError:
-    order = lambda: {}
 
 fields = (
     ('hostname', fqdn),  # set the systems hostname
@@ -115,8 +114,8 @@ class IPPool(object):
 
 
 class CSVCreator(object):
-    def __init__(self, fd, verbose=False, site=None, suffix=None,
-                 vlan_name=None, vlan_number=None, mgmt_suffix=None,
+    def __init__(self, fd, verbose=False, site=None,
+                 vlan_name=None, vlan_number=None,
                  mgmt_vlan_name=None, mgmt_vlan_number=None,
                  mgmt_ip_range=None, ip_range=None, ip_type='4'):
         self.fd = fd
@@ -129,7 +128,6 @@ class CSVCreator(object):
 
         self.verbose = verbose
         self.site_name = site
-        self.suffix = suffix
         self.vlan_name = vlan_name
         self.vlan_number = vlan_number
         if ip_range:
@@ -139,7 +137,6 @@ class CSVCreator(object):
                 self.site_name, self.vlan_name, self.vlan_number
             )
 
-        self.mgmt_suffix = mgmt_suffix
         self.mgmt_vlan_name = mgmt_vlan_name
         self.mgmt_vlan_number = mgmt_vlan_number
         if mgmt_ip_range:
@@ -148,6 +145,7 @@ class CSVCreator(object):
             self.mgmt_ip_pool = self.vlan_gather_ip_pool(
                 self.site_name, self.mgmt_vlan_name, self.mgmt_vlan_number
             )
+
 
         self.fields = FIELDS
         self.output = StringIO.StringIO()
@@ -176,7 +174,13 @@ class CSVCreator(object):
         for i, line in enumerate(self.csvlines):
             new_line = {}
             for attr, value in line.items():
-                new_line[attr] = value
+                try:
+                    new_line[attr.strip()] = value.strip()
+                except KeyError:
+                    raise Exception(
+                        "Couldn't find the header '{0}' in the seed "
+                        "CSV".format(attr.strip())
+                    )
             hostname = new_line['hostname']
 
             for field, gvalue in self.fields.items():
@@ -191,7 +195,7 @@ class CSVCreator(object):
 
         def f(i):
             if i not in field_keys:
-                return -1
+                return 1
             else:
                 return field_keys.index(i)
 
@@ -238,7 +242,8 @@ class CSVCreator(object):
         csv_lines = fd.readlines()
         fd.seek(0)
         assert len(csv_lines) >= 2, "Your CSV didn't have enough data"
-        return csv.DictReader(fd)
+        reader = csv.DictReader(fd)
+        return reader
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -256,10 +261,6 @@ if __name__ == "__main__":
         '--site', type=str, help='This is used to fine free ip addresses'
     )
     parser.add_argument(
-        '--build-suffix', type=str, default='build.mozilla.org',
-        help='Used for calculating cname names'
-    )
-    parser.add_argument(
         '--vlan-name', type=str,
         help='This is used to find free ip addresses'
     )
@@ -271,10 +272,6 @@ if __name__ == "__main__":
         '--ip-range', type=str,
         help='This is used to find free ip addresses. Use either this flag or '
         'the vlan flags, but not both'
-    )
-    parser.add_argument(
-        '--suffix', type=str, required=True,
-        help='Used for calculating hostnames'
     )
 
     parser.add_argument(
@@ -290,10 +287,6 @@ if __name__ == "__main__":
         '--mgmt-vlan-number', type=str,
         help='This is used to find free ip addresses'
     )
-    parser.add_argument(
-        '--mgmt-suffix', type=str, required=True,
-        help='Used for calculating cname names'
-    )
     nas = parser.parse_args(sys.argv[1:])
 
     try:
@@ -302,12 +295,10 @@ if __name__ == "__main__":
                 fd,
                 verbose=nas.verbose,
                 site=nas.site,
-                suffix=nas.suffix,
                 vlan_name=nas.vlan_name,
                 vlan_number=nas.vlan_number,
                 ip_range=nas.ip_range,
 
-                mgmt_suffix=nas.mgmt_suffix,
                 mgmt_vlan_name=nas.mgmt_vlan_name,
                 mgmt_vlan_number=nas.mgmt_vlan_number,
                 mgmt_ip_range=nas.mgmt_ip_range,
