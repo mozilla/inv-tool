@@ -62,7 +62,7 @@ def main(args):
         if nas.p_pk_only:
             ret_json = json.loads('\n'.join(resp_list))
             if 'pk' in ret_json:
-                print ret_json['pk'],
+                print(ret_json['pk']),
         else:
-            print '\n'.join(resp_list).strip()
+            print('\n'.join(resp_list).strip())
     return resp_code
