@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-import StringIO
+try:
+    import StringIO
+except ImportError:
+    from io import StringIO
 import argparse
 import csv
 from copy import deepcopy  # noqa
