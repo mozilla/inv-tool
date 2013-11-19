@@ -148,6 +148,7 @@ class Importer(object):
             ]
             for lookup, value in changes:
                 p_value = self.process_value(value)
+                lookup = lookup.strip(' \n')
                 if p_value != value:
                     s_value = "{0} -> {1}".format(value, p_value)
                 else:

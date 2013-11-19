@@ -65,6 +65,7 @@ fields = (
 
     # Use an IP from mgmt ip pool
     ('staticreg_set.mgmt0.ip_str', '{{ MGMT_FREE_IP }}'),
+    ('oob_ip', '{{ MGMT_FREE_IP }}'),
 )
 
 
@@ -176,6 +177,10 @@ class CSVCreator(object):
         new_lines = []
         for i, line in enumerate(self.csvlines):
             new_line = {}
+            line_cache = {}
+            # Some things like {{ MGMT_FREE_IP }} need to be the same everytime
+            # they are used on a lone. line_cache keeps track of these sorts of
+            # things. porcess_value() knows when to use the cache.
             for attr, value in line.items():
                 try:
                     new_line[attr.strip()] = value.strip()
@@ -187,7 +192,9 @@ class CSVCreator(object):
             hostname = new_line['hostname']
 
             for field, gvalue in self.fields.items():
-                new_line[field] = self.process_value(hostname, field, gvalue)
+                new_line[field] = self.process_value(
+                    line_cache, hostname, field, gvalue
+                )
             new_lines.append(new_line)
         return self.build_csv(new_lines)
 
@@ -208,7 +215,7 @@ class CSVCreator(object):
             csvwriter.writerow(line)
         return csvwriter, self.output
 
-    def process_value(self, hostname, attr, value):
+    def process_value(self, line_cache, hostname, attr, value):
         """
         In this function we introspect value to see if it needs to be replaced
         with something.
@@ -225,18 +232,27 @@ class CSVCreator(object):
                     site_name=self.site_name
                 )
             else:
-                if value.strip(' ') == '{{ FREE_IP }}':
-                    assert self.ip_pool is not None, (
-                        "You must specify --vlan-name and --site when using "
-                        "{{ FREE_IP }} in your CSV file."
-                    )
-                    return self.ip_pool.next()
-                elif value.strip(' ') == '{{ MGMT_FREE_IP }}':
-                    assert self.mgmt_ip_pool is not None, (
-                        "You must specify --mgmt-vlan-name and --site when "
-                        "using {{ MGMT_FREE_IP }} in your CSV file."
-                    )
-                    return self.mgmt_ip_pool.next()
+                val = value.strip(' ')
+                if val == '{{ FREE_IP }}':
+                    if val in line_cache:
+                        return line_cache[val]
+                    else:
+                        assert self.ip_pool is not None, (
+                            "You must specify --vlan-name and --site when "
+                            "using {{ FREE_IP }} in your CSV file."
+                        )
+                        line_cache[val] = self.ip_pool.next()
+                        return line_cache[val]
+                elif val == '{{ MGMT_FREE_IP }}':
+                    if val in line_cache:
+                        return line_cache[val]
+                    else:
+                        assert self.mgmt_ip_pool is not None, (
+                            "You must specify --mgmt-vlan-name and --site "
+                            "when using {{ MGMT_FREE_IP }} in your CSV file."
+                        )
+                        line_cache[val] = self.mgmt_ip_pool.next()
+                        return line_cache[val]
                 else:
                     return value
 
