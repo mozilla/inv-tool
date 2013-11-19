@@ -304,7 +304,7 @@ if __name__ == "__main__":
                 mgmt_ip_range=nas.mgmt_ip_range,
             ).create_csv()
             csv_out.seek(0)
-            print ','.join(csv_writer.fieldnames)
-            print csv_out.read()
+            print(','.join(csv_writer.fieldnames))
+            print(csv_out.read())
     except IOError:
-        print nas.csv_path + " wasn't a csv file?"
+        print(nas.csv_path + " wasn't a csv file?")
