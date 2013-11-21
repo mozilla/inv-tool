@@ -1,0 +1,354 @@
+#!/usr/bin/env python
+import argparse
+import csv
+from copy import deepcopy
+import simplejson as json
+import sys
+import time
+
+from invtool.lib.ba import (  # noqa
+    ba_export_systems_hostname_list, ba_export_system_template, ba_import,
+    ba_gather_ip_pool
+)
+
+
+ATTRIBUTE_ALIASES = {
+    'srs': 'staticreg_set',
+}
+
+
+class IPPool(object):
+    def __init__(self, ip_range, free_ranges=None, **kwargs):
+        self.ip_range = ip_range
+        self.free_ranges = free_ranges
+        self.ip_type = self.determine_ip_type(ip_range)
+        if not self.free_ranges:
+            self.cur_range = None
+        else:
+            self.cur_range = self.free_ranges[0]
+
+    def __next__(self):
+        return self.next()
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        if not self.cur_range or self.cur_range[0] >= self.cur_range[1]:
+            if not self.free_ranges:
+                raise StopIteration(
+                    "No more free ip addresses in {0}".format(self.ip_range)
+                )
+            else:
+                self.cur_range = self.free_ranges.pop(0)
+        free_ip = self.int_to_ip(self.cur_range[0])
+        self.cur_range[0] += 1  # move the slider
+        return free_ip
+
+    def determine_ip_type(self, ip):
+        if '.' in ip:
+            return '4'
+        else:
+            return '6'
+
+    def int_to_ip(self, ip):
+        if self.ip_type == '4':
+            return "{o1}.{o2}.{o3}.{o4}".format(
+                o1=int(ip / 16777216) % 256,
+                o2=int(ip / 65536) % 256,
+                o3=int(ip / 256) % 256,
+                o4=int(ip) % 256
+            )
+        else:
+            raise NotImplemented("IPv6 support needs to be added")
+
+
+class Importer(object):
+    def __init__(self, fd, verbose=False, template_hostname=None,
+                 ip_range=None, mgmt_ip_range=False):
+        self.template = (
+            ba_export_system_template(template_hostname)
+            if template_hostname else None
+        )
+        self.ip_pool = self.gather_ip_pool(ip_range) if ip_range else None
+        self.mgmt_ip_pool = (
+            self.gather_ip_pool(mgmt_ip_range) if mgmt_ip_range else None
+        )
+        self.verbose = verbose
+        self.fd = fd
+        self.csvreader = self.parse_csv(fd)
+        self.action = lambda reader: (
+            self.ba_update(reader, template=self.template)
+        )
+        self.csvlines = [l for l in self.csvreader]  # Eval the csv
+        self.fieldnames = self.csvlines.pop(0)
+        self.aliases = ATTRIBUTE_ALIASES
+
+    def gather_ip_pool(self, ip_range):
+        pool_stats, errors = ba_gather_ip_pool(ip_range)
+        assert not errors, str(errors)
+        return IPPool(ip_range, **pool_stats)
+
+    def get_hostnames(self, csvlines, key='hostname'):
+        return [line[key].strip(' ') for line in csvlines]
+
+    def ba_update(self, reader, template=None):
+        # Figure out if we are renaming things. If the user has used the
+        # 'old-hostname' field (or something similar) we should look up the
+        # system with this hostname.
+        if 'old-hostname' in self.fieldnames:
+            hostname_key = 'old-hostname'
+        elif 'old_hostname' in self.fieldnames:
+            hostname_key = 'old_hostname'
+        else:
+            hostname_key = 'hostname'
+
+        hostnames = self.get_hostnames(self.csvlines, key=hostname_key)
+        n = len(hostnames)
+        if not template:
+            print "Fetching JSON blobs for {n} systems...".format(n=n)
+            main_blob, errors = ba_export_systems_hostname_list(hostnames)
+            systems_blob = main_blob['systems']
+            if errors:
+                print "Errors!"
+                print errors
+                return
+            else:
+                print "Successfuly fetched systems..."
+        else:
+            systems_blob = {}
+            main_blob = {}
+            main_blob['systems'] = systems_blob
+            for new_hostname in hostnames:
+                s_copy = deepcopy(template).values()[0]
+                systems_blob[new_hostname] = s_copy
+            print "Copied system template {n} times...".format(n=n)
+
+        print "Processing systems..."
+        for i, change_line in enumerate(self.csvlines):
+            hostname = change_line[hostname_key].strip(' ')
+            assert hostname in systems_blob, (
+                "Hostname '{hostname}' was not seen in exported system "
+                "blob.".format(hostname=hostname)
+            )
+            s_blob = systems_blob[hostname]
+            if not template:
+                # Template systems will all have the same hostnames.
+                assert s_blob['hostname'] == hostname, (
+                    "Hostname in blob was not hostname in csv line."
+                )
+            print "+ [{i}/{n}] {p} + Processing {0}".format(
+                hostname, i=i + 1, n=n,
+                p="{0:.0f}%".format((1.0 * i + 1) / n * 100)
+            )
+            # Strip white space off of everything
+            changes = [
+                map(lambda i: i.strip(' '), change)
+                for change in change_line.items()
+            ]
+            for lookup, value in changes:
+                p_value = self.process_value(value)
+                lookup = lookup.strip(' \n')
+                if p_value != value:
+                    s_value = "{0} -> {1}".format(value, p_value)
+                else:
+                    s_value = p_value
+                print "++ Setting {lookup} to {value}".format(
+                    lookup=lookup, value=s_value
+                )
+                try:
+                    self.set_blob_attr(s_blob, lookup, p_value)
+                except KeyError:
+                    raise Exception(
+                        "While processing {0} the key {1} didn't correspond "
+                        "to a valid lookup path in the following blob:\n{2}"
+                        .format(hostname, lookup, json.dumps(s_blob, indent=4))
+                    )
+
+        return main_blob
+
+    def process_value(self, value):
+        """
+        In this function we introspect value to see if it needs to be replaced
+        with something.
+        """
+        if value.strip(' ') == '{{ FREE_IP }}':
+            assert self.ip_pool is not None, (
+                "You must specify --ip-range when using "
+                "{{ FREE_IP }} in your CSV file."
+            )
+            return self.ip_pool.next()
+        elif value.strip(' ') == '{{ MGMT_FREE_IP }}':
+            assert self.mgmt_ip_pool is not None, (
+                "You must specify --mgmt-ip-range when using "
+                "{{ MGMT_FREE_IP }} in your CSV file."
+            )
+            return self.mgmt_ip_pool.next()
+        else:
+            return value.strip(' \n')
+
+    def set_blob_attr(self, blob, lookup, value):
+        cur_attr = blob
+        prev_link = None
+        path = lookup.split('.')
+
+        # new-hostname is a special key
+        if lookup == 'new-hostname' or lookup == 'new_hostname':
+            lookup = 'hostname'
+
+        if lookup == 'old-hostname':
+            # We used this value to lookup the host, we no longer will use it.
+            return
+
+        value = self.process_value(value)
+
+        for i, link in enumerate(path):
+            link = link.strip('\n')
+            if link in self.aliases:
+                try:
+                    link = self.aliases[link]
+                except KeyError:
+                    raise Exception(
+                        "'{link}' is not a valid header alias'".format(link)
+                    )
+            if prev_link == 'keyvalue_set':
+                key = '.'.join(path[i:])
+                cur_attr[key]['value'] = value
+                break
+            elif prev_link == 'cname':
+                # cname attribute is a special case. The cname attribute points
+                # to a list (not a dict) which is different than all the other
+                # attributes. For ease of use, the behavior here is to just
+                # pretend 'cname' is mapped to the 0th dict in the list. If the
+                # list is bigger than two elements, then raise an exception
+                # explaining that they need to implement a for loop to process
+                # the data. Multiple cnames would be a very rare case and this
+                # tool might not be the best one for the job.
+                if not isinstance(cur_attr, list) or not len(cur_attr) == 1:
+                    raise Exception(
+                        "The cname on this nic is misconfigured..."
+                    )
+                cur_attr = cur_attr[0]
+                cur_attr[link] = value
+            elif i == len(path) - 1:
+                # This is where we should set the value
+                assert link in cur_attr, (
+                    "The attribute '{link}' wasn't present in this blob. "
+                    "Inspect the blob for this system amd make sure your "
+                    "attribute path is correct."
+                ).format(link=link)
+                cur_attr[link] = value
+                break
+            else:
+                # Go deeper
+                cur_attr = cur_attr[link]
+                prev_link = link
+
+    def parse_csv(self, fd):
+        # Generally stage the parsing of the CSV
+        csv_lines = fd.readlines()
+        fd.seek(0)
+        assert len(csv_lines) >= 2, "Your CSV didn't have enough data"
+        return csv.DictReader(
+            fd, fieldnames=[h.strip(' ') for h in csv_lines[0].split(',')]
+        )
+
+    def process_errors(self, errors):
+        print "!" * 25
+        print "!" * 25
+        print "!" * 25
+        if 'errors' in errors:
+            print errors['errors']
+        if 'blob' in errors:
+            print (
+                "This is the blob that Inventory had issues processing:"
+            )
+            print json.dumps(errors['blob'], indent=4)
+
+    def process_results(self, return_blob, errors):
+        if errors:
+            return self.process_errors(json.loads(errors))
+
+    def ba_import(self, commit=False):
+        """
+        Returns the processed blob (with possible new pk attribtues) or errors
+        """
+        try:
+            blob = self.action(self.csvlines)
+            if self.verbose:
+                print json.dumps(blob, indent=4)
+            print "Sending updated JSON to Inventory..."
+            if commit:
+                print (
+                    "COMMIT=True if data validates Inventory will save all "
+                    "changes"
+                )
+            else:
+                print (
+                    "COMMIT=False This is a dry run. Inventory will not save "
+                    "these changes. Use --commit if you want to save these "
+                    "changes."
+                )
+            print "Please wait..."
+            start = time.time()
+            return_blob, errors = ba_import(blob, commit=commit)
+            total_time = time.time() - start
+            print "Completed bulk action: {mins} Minutes {sec} Seconds".format(
+                mins=int(total_time) / 60,
+                sec="{0:.2f}".format(total_time % 60)
+            )
+            return self.process_results(return_blob, errors)
+        except AssertionError, e:
+            print "Error!"
+            print e
+        except Exception, e:
+            print e
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        prog='ba_import_csv', description='Bulk Action CSV importer.'
+    )
+    parser.add_argument(
+        '--csv-path', type=str, help='Path to a csv file',
+        required=True
+    )
+    parser.add_argument(
+        '--verbose', action='store_true',
+        help='Print more things than usual'
+    )
+    parser.add_argument(
+        '--commit', action='store_true', default=False,
+        help="Commit changes to the db."
+    )
+    parser.add_argument(
+        '--template-hostname', type=str,
+        help="This option says to grab X number of copies of the system with "
+        "hostname TEMPLATE_HOSTNAME and use the data in the CSV to update "
+        "each copy (one copy for each line of the csv). Use this flag in "
+        "conjunction with --ip-range for maximum automation."
+    )
+    parser.add_argument(
+        '--ip-range', type=str,
+        help="Look at the '--range' option in 'invtool search --help' for ip "
+        "formating tips. Use {{ FREE_IP }} in your csv and a free ip address "
+        "from the range you provided will be inserted at import time."
+    )
+    parser.add_argument(
+        '--mgmt-ip-range', type=str,
+        help="Same as --ip-range but ips come from another pool of addresses. "
+        "Use {{ MGMT_FREE_IP }} in your csv and a free ip address from the "
+        "range you provided will be inserted at import time."
+    )
+    nas = parser.parse_args(sys.argv[1:])
+    try:
+        with open(nas.csv_path, 'r') as fd:
+            Importer(
+                fd,
+                verbose=nas.verbose,
+                template_hostname=nas.template_hostname,
+                ip_range=nas.ip_range,
+                mgmt_ip_range=nas.mgmt_ip_range
+            ).ba_import(commit=nas.commit)
+    except IOError:
+        print nas.csv_path + " wasn't a csv file?"

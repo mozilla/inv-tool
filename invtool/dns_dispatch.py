@@ -7,9 +7,12 @@ from invtool.dispatch import ObjectDispatch
 from invtool.lib.registrar import registrar
 from invtool.lib.dns_options import (
     fqdn_argument, ttl_argument, ip_argument, view_arguments,
-    description_argument, comment_argument, update_pk_argument,
-    delete_pk_argument, target_argument, detail_pk_argument, priority_argument,
+    target_argument, priority_argument,
     port_argument, weight_argument,
+)
+from invtool.lib.options import (
+    description_argument, comment_argument, update_pk_argument,
+    delete_pk_argument, detail_pk_argument
 )
 from invtool.lib.parser import (
     build_create_parser, build_update_parser, build_delete_parser,
@@ -26,12 +29,11 @@ class DispatchA(DNSDispatch):
     resource_name = 'addressrecord'
     dtype = 'A'
     dgroup = 'dns'
-    ip_type = '4'
 
     create_args = [
         fqdn_argument('fqdn', dtype),  # ~> (labmda, lambda)
         ttl_argument('ttl'),
-        ip_argument('ip_str', ip_type),
+        ip_argument('ip_str', '4'),
         view_arguments('views'),
         description_argument('description'),
         comment_argument('comment')
@@ -47,14 +49,20 @@ class DispatchA(DNSDispatch):
 
     detail_args = [detail_pk_argument('pk', dtype)]
 
+    def determine_ip_type(self, ip_str):
+        if ip_str.find(':') > -1:
+            ip_type = '6'
+        else:
+            ip_type = '4'  # Default to 4
+        return ip_type
+
     def get_create_data(self, nas):
         data = super(DispatchA, self).get_create_data(nas)
-        data['ip_type'] = self.ip_type
+        data['ip_type'] = self.determine_ip_type(data.get('ip_str', ''))
         return data
 
     def get_update_data(self, nas):
         data = super(DispatchA, self).get_update_data(nas)
-        data['ip_type'] = self.ip_type
         return data
 
 
@@ -103,12 +111,11 @@ class DispatchPTR(DNSDispatch):
 class DispatchAAAA(DispatchA):
     dtype = 'AAAA'
     dgroup = 'dns'
-    ip_type = '6'
 
     create_args = [
         fqdn_argument('fqdn', dtype),  # ~> (labmda, lambda)
         ttl_argument('ttl'),
-        ip_argument('ip_str', ip_type),
+        ip_argument('ip_str', '6'),
         view_arguments('views'),
         description_argument('description'),
         comment_argument('comment')

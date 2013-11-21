@@ -1,5 +1,17 @@
-Version 2.1
--------------
-(bugfix release)
+11/11/2013
+* Bulk Action API is added via two scripts in scripts/
+* Fixed minor bug with updating AAAA records
 
-- setup.py was not installing the invtool.kv package
+9/05/2013
+* Handle all different types of auth more gracefully
+
+8/20/2013
+
+* New line after all results
+* Introduce the --pk-only global flag. This flag will print only the pk of an object that was just
+  detailed/created/updated.
+* Added SYS, SYS_kv, and csv. SYS is an interface to system objects and SYS_kv is the interface to
+  the keyvalue's of those system objects. csv is a csv exporter for systems. The csv importer is
+  likely to change to include more verbose header values.
+* Bumped version to 3.0
+* Added scripts/ directory

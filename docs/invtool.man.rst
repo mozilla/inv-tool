@@ -19,16 +19,6 @@ SYNOPSIS
 ========
 
 ``invtool`` ``--help``
-``invtool`` [ --json | --silent ] status
-
-``invtool`` [ --json | --silent ] search [ ``--query`` | ``--range`` ] *query-string*
-
-``invtool`` [ --json | --silent ] ``rdtype`` ``action`` [ args | --help ]
-
-    ``rdtype`` [ A | AAAA | CNAME | MX | PTR | SRV | TXT ]
-
-    ``action``  [ create | update | delete | detail ]
-
 
 Formating Output
 ================
@@ -66,9 +56,6 @@ searching and filtering different types of objects.
     ::
 
         invtool search -q "<query string>"
-
-Currently, only DNS objects are displayed; to see Systems use the web
-interface's search page.
 
 The following sections are an overview of how to build a ``query string``.
 
@@ -178,6 +165,13 @@ Directives
 
             [ vlan=:db ]
 
+        You can specify a vlan number *and* a vlan name at the same time using
+        a ',' to delimit the two values.
+
+        ``Example``::
+
+            [ vlan=:db,3 ]
+
     network
         The ``network`` directive can be used to search for objects that have IP
         addresses within a network.
@@ -193,6 +187,14 @@ Directives
         ``Example``::
 
             [ range=:192.168.3.10,192.168.3.100 ]
+
+    ip
+        The ``ip`` directive can be used to gather site, vlan, network, range,
+        and dns information about a specific ip address.
+
+        ``Example``::
+
+            [ ip=:192.168.3.11 ]
 
 A search that returns no objects has an exit code of ``1``. A search
 returning objects has an exit code of ``0``.
@@ -338,6 +340,158 @@ To delete an object use a record class's ``delete`` command.
         ~/ » invtool A delete --pk 13033
         http_status: 204 (request fulfilled)
 
+Manipulating SYS (System) objects
+==================================
+
+The workflow for manipulating SYS objects is very similar to how one creates,
+updates, and deletes DNS records.
+
+Search results
+--------------
+
+The search results for systems are in the following format::
+
+    <hostname> <oob_ip_str> INV SYS <asset_tag_str> <serial_str>
+
+Looking up a system
+-------------------
+
+System objects can be specified using the ``--pk`` flag *or* the ``--hostname``
+flag. For example, say we have a system with the hostname
+``foobar.mozilla.com`` that has the primary key ``1992``. The following two
+commands are equivelent.
+
+    ::
+
+        ~/ » invtool SYS update --pk 1992 --switch-ports 'core1:2/10, core2:2/10'
+        ...
+        ...
+        ...
+
+        ~/ » invtool SYS update --hostname foobar.mozilla.com --switch-ports 'core1:2/10, core2:2/10'
+        ...
+        ...
+        ...
+
+System --(.*)-pk flags
+----------------------
+
+Certain fields on a system need to be assigned via their relational integer
+primary key. These objects include: OperatingSystem, ServerModel, Allocation,
+SystemRack, SystemType, and SystemStatus. These objects require that you know
+the integer ``pk`` value of the object you are assigning  *before* you update
+a SYS. Invtool doesn't expose these related objects via it's search so you
+will need to gather that info from another source, like Inventory's web UI.
+
+For example, if you know you want to assign a SystemRack to a system that has
+the ``pk`` value of ``77`` you can assign it via the ``--system-rack-pk``
+flag.
+
+    ::
+
+        ~/ » invtool SYS --hostname foo.baz.mozilla.com --system-rack-pk 77
+        ...
+        ...
+        ...
+
+Changing a system's hostname
+----------------------------
+
+It is common for an existing system to have it's hostname changed. To do this
+you can use the ``--new-hostname`` option along with the ``--hostname`` option.
+
+    ::
+
+        ~/ » invtool SYS update --hostname old-hostname.mozilla.com --new-hostname updated-hostname.mozilla.com
+        ...
+        ...
+        ...
+
+In the example above the system is looked up with the ``--hostname`` value
+(``old-hostname.mozilla.com``) and has its hostname attribute updated to
+the ``--new-hostname`` value (``updated-hostname.mozilla.com``). Note that this
+sort of update is not idempotent.
+
+Exporting System CSVs
+---------------------
+
+You can export csv records for system objects using the ``csv`` command. As of
+right now only exportation is supported. You can narrow which system objects
+you want to export by using the same search langauge supported by the
+``search --query`` command. For example, to export all systems that match the
+pattern ``node[0-9].mozilla.com``, you could run
+
+    ::
+
+        ~/ » invtool csv --query "/node[0-9].mozilla.com"
+        ...
+        ...
+        ...
+
+The first row of csv query results is always the CSV headers.
+
+The Bulk Action API (An annotated walk through)
+===============================================
+
+The bulk action API allows you to export multiple JSON blobs from Inventory,
+update the blobs, and send the blobs back to Inventory. These blobs represent
+Inventory objects (i.e. system objects).
+
+The ``ba_export`` command takes a ``--query`` parameter that is used to find
+system objects to export. Try this now on a sample host (i.e. ``invtool
+ba_export --query 'some.host.that.exists.mozilla.com'``). Notice that the blob
+is made up of dictionaries that map to other dictionaries. This will come in
+handy later.
+
+Once you have exported a JSON blob you can make changes to it and send it back
+to Inventory. Inventory will then update the object to reflect your changes.
+
+For example, an extremely nieve way of renaming a host could be::
+
+    invtool ba_export --query 'oldhost.mozilla.com' |
+        sed 's/oldhost/newhost/' |
+        invtool ba_import --commit
+
+The first part of this command exports a JSON blob for all hosts matching
+'oldhost.mozilla.com'. Next, the sed command looks for any occurrence of the
+string 'oldhost' in the JSON blob and renames it to 'newhost'. The ``ba_import``
+command then reads in the modified JSON blob and sends it back to Inventory,
+which will process the blob and update the originally exported system.
+
+Using scripts/ba_import_csv
+---------------------------
+The process of exporting a host, updating its JSON blob, and sending back to
+Inventory can be done via a CSV import script: ``scripts/ba_import_csv``.
+
+In the previous section we renamed a host on the command line. Using the
+``ba_import_csv`` script we can achieve the same result with the following csv::
+
+    hostname,            new-hostname
+    oldhost.mozilla.com, newhost.mozilla.com
+
+To read in a CSV ``mycsvfile.csv``, you would do::
+
+    ``python scripts/ba_import_csv --csv-file mycsvfile.csv``
+
+
+Using lookup paths with scripts/ba_import_csv
+---------------------------------------------
+Certain attributes of a system, like a key value pair, are within nested
+dictionaries in system's JSON blob. For example, a key 'randomkey'
+would be accessed by::
+
+    ``main_blob['systems']['hostname.mozilla.com']['keyvalue_set']['randomkey']``
+
+These nested attributes can be accessed in a CSV by using the ``.`` operator to
+signify dictionary lookup. For example::
+
+    hostname,            keyvalue_set.randomkey
+    hostname.mozilla.com, randomvalue
+
+This would lookup be equivalent to doing::
+
+    main_blob['systems']['hostname.mozilla.com']['keyvalue_set']['randomkey'] = 'randomvalue'
+
 
 Cook Book
 =========
@@ -360,7 +514,7 @@ their name to the private view and remove them from the public view:
 
     ::
 
-        ~/ » invtool search -q "testfqdn" | awk '{ print "invtool " $5  " update --pk " $1 " --private --no-public"}'
+        ~/ » invtool search -q "testfqdn view=:private" | awk '{ print "invtool " $5  " update --pk " $1 " --private --no-public"}'
 
         invtool SRV update --pk 134 --private --no-public
         invtool A update --pk 13052 --private --no-public

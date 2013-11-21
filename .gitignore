@@ -31,3 +31,6 @@ etc/invtool.conf.bak
 inv
 devinvtool
 bug_*
+*.sh  # top level scripts
+
+*.csv

@@ -6,6 +6,38 @@
 A Command Line Interface for poking at Mozilla's Inventory project.
 -------------------------------------------------------------------
 
+Notes On Updating
+=================
+Here is how you update your invtool.
+
+The git method (recommended)
+----------------------------
+See which ``INVTOOL_VERSION`` you are running::
+
+    invtool status | grep INVTOOL_VERSION
+
+Change directory to where you cloned this repository::
+
+    cd invtool
+
+Update the code to the latest version::
+
+    git pull
+
+Install the code you just pulled in (You don't need to do this if you are running a non-root install)::
+
+    sudo python setup.py install
+
+Confirm you are running a newer version::
+
+    invtool status | grep INVTOOL_VERSION
+
+
+The non-git method (not recommended)
+------------------------------------
+
+Go to https://github.com/uberj/inv-tool/releases and download the latest version.
+
 Notes On Installing
 ===================
 
