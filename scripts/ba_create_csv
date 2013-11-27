@@ -53,19 +53,19 @@ def cname_fqdn(**kwargs):
 fields = (
     ('hostname', fqdn),  # set the systems hostname
     ('staticreg_set.nic0.cname.target', fqdn),
-    ('staticreg_set.nic0.cname.fqdn', cname_fqdn),
+    #('staticreg_set.nic0.cname.fqdn', cname_fqdn),
     ('staticreg_set.nic0.fqdn', fqdn),
 
     # Use an IP from main ip pool
-    ('staticreg_set.nic0.ip_str', '{{ FREE_IP }}'),
+    #('staticreg_set.nic0.ip_str', '{{ FREE_IP }}'),
 
-    ('staticreg_set.mgmt0.cname.target', mgmt_hostname),
-    ('staticreg_set.mgmt0.cname.fqdn', mgmt_cname_fqdn),
-    ('staticreg_set.mgmt0.fqdn', mgmt_hostname),
+    #('staticreg_set.mgmt0.cname.target', mgmt_hostname),
+    #('staticreg_set.mgmt0.cname.fqdn', mgmt_cname_fqdn),
+    #('staticreg_set.mgmt0.fqdn', mgmt_hostname),
 
     # Use an IP from mgmt ip pool
-    ('staticreg_set.mgmt0.ip_str', '{{ MGMT_FREE_IP }}'),
-    ('oob_ip', '{{ MGMT_FREE_IP }}'),
+    #('staticreg_set.mgmt0.ip_str', '{{ MGMT_FREE_IP }}'),
+    #('oob_ip', '{{ MGMT_FREE_IP }}'),
 )
 
 
@@ -137,19 +137,20 @@ class CSVCreator(object):
         if ip_range:
             self.ip_pool = self.range_gather_ip_pool(ip_range)
         else:
-            self.ip_pool = self.vlan_gather_ip_pool(
-                self.site_name, self.vlan_name, self.vlan_number
-            )
+            if self.vlan_name or self.vlan_number:
+                self.ip_pool = self.vlan_gather_ip_pool(
+                    self.site_name, self.vlan_name, self.vlan_number
+                )
 
         self.mgmt_vlan_name = mgmt_vlan_name
         self.mgmt_vlan_number = mgmt_vlan_number
         if mgmt_ip_range:
             self.mgmt_ip_pool = self.range_gather_ip_pool(mgmt_ip_range)
         else:
-            self.mgmt_ip_pool = self.vlan_gather_ip_pool(
-                self.site_name, self.mgmt_vlan_name, self.mgmt_vlan_number
-            )
-
+            if self.mgmt_vlan_name or self.mgmt_vlan_number:
+                self.mgmt_ip_pool = self.vlan_gather_ip_pool(
+                    self.site_name, self.mgmt_vlan_name, self.mgmt_vlan_number
+                )
 
         self.fields = FIELDS
         self.output = StringIO.StringIO()
