@@ -3,7 +3,7 @@ import ConfigParser
 import getpass
 
 API_MAJOR_VERSION = 1
-INVTOOL_VERSION = 4.0
+INVTOOL_VERSION = 4.1
 GLOBAL_CONFIG_FILE = "/etc/invtool.conf"
 HOME_CONFIG_FILE = os.path.expanduser("~/.invtool.conf")
 LOCAL_CONFIG_FILE = "./etc/invtool.conf"
