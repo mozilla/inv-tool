@@ -14,6 +14,6 @@ setup(
     url='https://github.com/uberj/inv-tool',
     license='LICENSE.txt',
     description='An interface to inventory',
-    data_files=[('/etc', ['etc/invtool.conf']),
+    data_files=[('/etc', ['etc/invtool.conf-dist']),
                 ('/usr/local/share/man/man1/', ['docs/man1/invtool.1.gz'])]
 )
