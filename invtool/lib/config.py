@@ -3,23 +3,17 @@ import ConfigParser
 import getpass
 
 API_MAJOR_VERSION = 1
-INVTOOL_VERSION = 4.0
+INVTOOL_VERSION = 4.1
 GLOBAL_CONFIG_FILE = "/etc/invtool.conf"
+HOME_CONFIG_FILE = os.path.expanduser("~/.invtool.conf")
 LOCAL_CONFIG_FILE = "./etc/invtool.conf"
+CONFIG_FILES = [GLOBAL_CONFIG_FILE, HOME_CONFIG_FILE, LOCAL_CONFIG_FILE]
 
-if os.path.isfile(LOCAL_CONFIG_FILE):
-    CONFIG_FILE = LOCAL_CONFIG_FILE
-else:
-    if os.path.isfile(GLOBAL_CONFIG_FILE):
-        CONFIG_FILE = GLOBAL_CONFIG_FILE
-    else:
-        raise Exception(
-            "Can't find global config file '{0}'"
-            .format(GLOBAL_CONFIG_FILE)
-        )
+if not any(os.path.exists(f) for f in CONFIG_FILES):
+    raise Exception("No configuration files (%s) found." % (', '.join(map(repr, CONFIG_FILES)),))
 
 config = ConfigParser.ConfigParser()
-config.read(CONFIG_FILE)
+config.read(CONFIG_FILES)
 
 if not config.has_section('authorization'):
     config.add_section('authorization')
@@ -85,7 +79,11 @@ def _keyring():
         if (not config.has_option('authorization', 'keyring') or
                 config.get('authorization', 'keyring') == ''):
             config.set('authorization', 'keyring', 'invtool-ldap')
-        config.write(open(CONFIG_FILE, 'w'))
+        try:
+            config.write(open(HOME_CONFIG_FILE, 'w'))
+            print("Wrote new configuration to {0}".format(HOME_CONFIG_FILE))
+        except OSError:
+            print("could not write keyring configuration to {0}".format(HOME_CONFIG_FILE))
 
         # store the password
         keyring.set_password(config.get('authorization', 'keyring'), *auth)
@@ -129,8 +127,7 @@ if dev == 'True':
 elif (config.has_option('authorization', 'ldap_password') and
       config.has_option('authorization', 'keyring')):
     raise Exception(
-        "ldap_password and keyring are mutually exclusive "
-        "in config file '{0}'".format(CONFIG_FILE)
+        "ldap_password and keyring cannot both be set in the configuration"
     )
 
 # Always take keyring first
