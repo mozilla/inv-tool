@@ -80,10 +80,10 @@ def _keyring():
                 config.get('authorization', 'keyring') == ''):
             config.set('authorization', 'keyring', 'invtool-ldap')
         try:
-            config.write(open(LOCAL_CONFIG_FILE, 'w'))
-            print("Wrote new configuration to {0}".format(LOCAL_CONFIG_FILE))
+            config.write(open(HOME_CONFIG_FILE, 'w'))
+            print("Wrote new configuration to {0}".format(HOME_CONFIG_FILE))
         except OSError:
-            print("could not write keyring configuration to {0}".format(LOCAL_CONFIG_FILE))
+            print("could not write keyring configuration to {0}".format(HOME_CONFIG_FILE))
 
         # store the password
         keyring.set_password(config.get('authorization', 'keyring'), *auth)
