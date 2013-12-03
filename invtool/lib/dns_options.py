@@ -142,7 +142,7 @@ def target_argument(field_name):
     return add_target_arg, build_extractor(field_name, 'target'), test_data
 
 
-def name_argument(field_name):
+def name_argument(field_name, prefix='nic'):
     def add_com_arg(parser, required=True, **kwargs):
         parser.add_argument(
             '--{0}'.format('name'), type=str,
@@ -151,7 +151,7 @@ def name_argument(field_name):
         )
 
     def test_data():
-        return 'name', TEST_INAME()  # Reuse this test data
+        return 'name', TEST_INAME(prefix=prefix)  # Reuse this test data
 
     return add_com_arg, build_extractor(field_name, 'name'), test_data
 

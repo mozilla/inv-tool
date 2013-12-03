@@ -169,7 +169,7 @@ class ObjectDispatch(Dispatch):  # Handy base class
     def build_parser(self, base_parser):
         record_base_parser = base_parser.add_parser(
             self.dtype,
-            help="Interface for {0}'s".format(self.dtype),
+            help="Interface for {0}s".format(self.dtype),
             add_help=True
         )
         action_parser = record_base_parser.add_subparsers(
