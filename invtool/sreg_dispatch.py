@@ -34,7 +34,7 @@ class DispatchHW(ObjectDispatch):
     dgroup = 'dhcp'
 
     update_args = [
-        name_argument('name'),
+        name_argument('name', prefix='hw'),
         mac_argument('mac'),
         group_argument('group'),
         enable_dhcp_argument('enable_dhcp'),
@@ -77,7 +77,7 @@ class DispatchSREG(DNSDispatch):
 
     update_args = [
         fqdn_argument('fqdn', dtype),
-        name_argument('name'),
+        name_argument('name', prefix='nic'),
         ttl_argument('ttl'),
         ip_argument('ip_str', ip_type),
         view_arguments('views'),
