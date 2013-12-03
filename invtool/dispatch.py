@@ -13,8 +13,6 @@ from invtool.lib.parser import (
     build_detail_parser
 )
 
-# XXX API_MAJOR_VERSION is probably in the wrong place
-
 
 class Dispatch(object):
     def format_response(self, nas, resp_msg, user_msg):
@@ -49,14 +47,20 @@ class Dispatch(object):
         elif resp.status_code == 400:
              # Bad Request
             if nas.p_json:
-                return 1, [json.dumps(resp_msg, indent=2)]
+                if resp_msg:
+                    return 1, [json.dumps(resp_msg, indent=2)]
+                else:
+                    return 1, [json.dumps({'errors': resp.content}, indent=2)]
             else:
                 if 'error_messages' in resp_msg:
                     return self.get_errors(resp_msg['error_messages'])
                 elif 'message' in resp_msg:
                     return 1, [resp_msg['message']]
+                elif resp.content:
+                    return 1, ['errors: {0}'.format(resp.content)]
                 else:
                     return 1, ["http_status: 400 (bad request)"]
+
         elif resp.status_code == 201:
             return 0, self.format_response(
                 nas, resp_msg, "http_status: 201 (created)"
