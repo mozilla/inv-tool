@@ -3,14 +3,18 @@ import ConfigParser
 import getpass
 
 API_MAJOR_VERSION = 1
-INVTOOL_VERSION = 4.1
+INVTOOL_VERSION = 4.2
 GLOBAL_CONFIG_FILE = "/etc/invtool.conf"
 HOME_CONFIG_FILE = os.path.expanduser("~/.invtool.conf")
 LOCAL_CONFIG_FILE = "./etc/invtool.conf"
 CONFIG_FILES = [GLOBAL_CONFIG_FILE, HOME_CONFIG_FILE, LOCAL_CONFIG_FILE]
 
 if not any(os.path.exists(f) for f in CONFIG_FILES):
-    raise Exception("No configuration files (%s) found." % (', '.join(map(repr, CONFIG_FILES)),))
+    raise Exception(
+        "No configuration files (%s) found." % ', '.join(
+            map(repr, CONFIG_FILES)
+        )
+    )
 
 config = ConfigParser.ConfigParser()
 config.read(CONFIG_FILES)
@@ -83,7 +87,9 @@ def _keyring():
             config.write(open(HOME_CONFIG_FILE, 'w'))
             print("Wrote new configuration to {0}".format(HOME_CONFIG_FILE))
         except OSError:
-            print("could not write keyring configuration to {0}".format(HOME_CONFIG_FILE))
+            print("could not write keyring configuration to {0}".format(
+                HOME_CONFIG_FILE
+            ))
 
         # store the password
         keyring.set_password(config.get('authorization', 'keyring'), *auth)
