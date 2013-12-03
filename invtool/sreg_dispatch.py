@@ -33,8 +33,7 @@ class DispatchHW(ObjectDispatch):
     dtype = 'HW'
     dgroup = 'dhcp'
 
-    update_args = [
-        name_argument('name', prefix='hw'),
+    common_args = [
         mac_argument('mac'),
         group_argument('group'),
         enable_dhcp_argument('enable_dhcp'),
@@ -42,13 +41,14 @@ class DispatchHW(ObjectDispatch):
         comment_argument('comment')
     ]
 
-    create_args = update_args + [
-        sreg_argument('sreg'),
+    update_args = common_args + [
+        name_argument('name', prefix='hw'),
+        update_pk_argument('pk', dtype)
     ]
 
-    update_args = [
-        update_pk_argument('pk', dtype)
-    ] + update_args
+    create_args = common_args + [
+        sreg_argument('sreg'),
+    ]
 
     delete_args = [
         delete_pk_argument('pk', dtype)
@@ -75,9 +75,8 @@ class DispatchSREG(DNSDispatch):
     dgroup = 'dns'
     ip_type = '4'  # Used for testing
 
-    update_args = [
+    common_args = [
         fqdn_argument('fqdn', dtype),
-        name_argument('name', prefix='nic'),
         ttl_argument('ttl'),
         ip_argument('ip_str', ip_type),
         view_arguments('views'),
@@ -85,12 +84,13 @@ class DispatchSREG(DNSDispatch):
         comment_argument('comment')
     ]
 
-    create_args = update_args + [
-        system_argument('system_hostname'),
+    update_args = common_args + [
+        name_argument('name', prefix='nic'),
+        update_pk_argument('pk', dtype)
     ]
 
-    update_args = update_args + [
-        update_pk_argument('pk', dtype)
+    create_args = common_args + [
+        system_argument('system_hostname'),
     ]
 
     delete_args = [
@@ -128,7 +128,7 @@ class DispatchSREG(DNSDispatch):
                     # indent these
                 else:
                     resp_list.append("{0}: {1}".format(k, v))
-            if 'hwadapter_set' in resp_msg:
+            if resp_msg.get('hwadapter_set', None):
                 resp_list.append("Hardware Adapters: {0}".format('-' * 20))
                 resp_list += self.format_hwadapters(resp_msg['hwadapter_set'])
         return resp_list

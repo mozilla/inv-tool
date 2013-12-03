@@ -143,7 +143,7 @@ def target_argument(field_name):
 
 
 def name_argument(field_name, prefix='nic'):
-    def add_com_arg(parser, required=True, **kwargs):
+    def add_com_arg(parser, required=False, **kwargs):
         parser.add_argument(
             '--{0}'.format('name'), type=str,
             dest='name', help="A short name",
