@@ -1,8 +1,9 @@
 try:
     import simplejson as json
 except ImportError:
-    import json
+    import json  # noqa
 
+import invtool
 from invtool.dispatch import Dispatch
 from invtool.lib.registrar import registrar
 from invtool.lib import config
@@ -26,7 +27,6 @@ class StatusDispatch(Dispatch):
         # Items of interest
         items = (
             'API_MAJOR_VERSION',
-            'INVTOOL_VERSION',
             'GLOBAL_CONFIG_FILE',
             'HOME_CONFIG_FILE',
             'LOCAL_CONFIG_FILE',
@@ -39,6 +39,7 @@ class StatusDispatch(Dispatch):
         ret = {}
         for item in items:
             ret[item] = getattr(config, item)
+        ret['INVTOOL_VERSION'] = invtool.__version__
         return 0, self.format_response(nas, ret, 'Status Vars')
 
 
