@@ -1,4 +1,5 @@
 from distutils.core import setup
+import invtool
 from os import getuid
 
 if getuid() == 0:
@@ -10,7 +11,7 @@ else:
 
 setup(
     name='invtool',
-    version='0.1.0',
+    version=invtool.__version__,
     author='Jacques Uber',
     author_email='juber@mozilla.com',
     packages=['invtool', 'invtool.tests', 'invtool.lib', 'invtool.kv'],
