@@ -153,9 +153,10 @@ class Importer(object):
                     s_value = "{0} -> {1}".format(value, p_value)
                 else:
                     s_value = p_value
-                print "++ Setting {lookup} to {value}".format(
-                    lookup=lookup, value=s_value
-                )
+                if lookup != 'old-hostname':
+                    print "++ Setting {lookup} to {value}".format(
+                        lookup=lookup, value=s_value
+                    )
                 try:
                     self.set_blob_attr(s_blob, lookup, p_value)
                 except KeyError:
@@ -193,8 +194,8 @@ class Importer(object):
         path = lookup.split('.')
 
         # new-hostname is a special key
-        if lookup == 'new-hostname' or lookup == 'new_hostname':
-            lookup = 'hostname'
+        if path == 'new-hostname' or path == 'new_hostname':
+            path = 'hostname'
 
         if lookup == 'old-hostname':
             # We used this value to lookup the host, we no longer will use it.
@@ -246,11 +247,11 @@ class Importer(object):
 
     def parse_csv(self, fd):
         # Generally stage the parsing of the CSV
-        csv_lines = fd.readlines()
+        csv_lines = [line.strip('\n') for line in fd.readlines()]
         fd.seek(0)
         assert len(csv_lines) >= 2, "Your CSV didn't have enough data"
         return csv.DictReader(
-            fd, fieldnames=[h.strip(' ') for h in csv_lines[0].split(',')]
+            fd, fieldnames=[h.strip(' ') for h in csv_lines[0].split(',')],
         )
 
     def process_errors(self, errors):

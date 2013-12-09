@@ -1,4 +1,12 @@
 from distutils.core import setup
+from os import getuid
+
+if getuid() == 0:
+    # Require root privileges
+    data_files = [('/etc', ['etc/invtool.conf-dist']),
+                  ('/usr/local/share/man/man1/', ['docs/man1/invtool.1.gz'])]
+else:
+    data_files = None
 
 setup(
     name='invtool',
@@ -14,6 +22,5 @@ setup(
     url='https://github.com/uberj/inv-tool',
     license='LICENSE.txt',
     description='An interface to inventory',
-    data_files=[('/etc', ['etc/invtool.conf']),
-                ('/usr/local/share/man/man1/', ['docs/man1/invtool.1.gz'])]
+    data_files=data_files
 )
