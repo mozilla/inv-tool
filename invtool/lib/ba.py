@@ -82,10 +82,22 @@ def ba_export_systems_hostname_list(hostnames):
     :type hostnames: list
 
     """
-    search = '"{search}"'.format(
-        search=' OR '.join(map(lambda h: "/^{h}$".format(h=h), hostnames))
-    )
-    return ba_export_systems_raw(search)
+    # Process the list STEP at a time
+    def split_by_step(seq, STEP=150):
+        while seq:
+            yield seq[:STEP]
+            seq = seq[STEP:]
+
+    results = {'systems': {}}
+    for chunk in list(split_by_step(hostnames)):
+        search = '"{search}"'.format(
+            search=' OR '.join(map(lambda h: "/^{h}$".format(h=h), chunk))
+        )
+        result, errors = ba_export_systems_raw(search)
+        if errors:
+            return None, errors
+        results['systems'].update(result['systems'])
+    return results, None
 
 
 def ba_import(dict_blob, commit=False):
