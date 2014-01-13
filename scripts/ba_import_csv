@@ -92,6 +92,9 @@ class Importer(object):
     def get_hostnames(self, csvlines, key='hostname'):
         return [line[key].strip(' ') for line in csvlines]
 
+    def custom_modify(self, s_blob):
+        return s_blob
+
     def ba_update(self, reader, template=None):
         # Figure out if we are renaming things. If the user has used the
         # 'old-hostname' field (or something similar) we should look up the
@@ -141,11 +144,20 @@ class Importer(object):
                 hostname, i=i + 1, n=n,
                 p="{0:.0f}%".format((1.0 * i + 1) / n * 100)
             )
+
+            # Allow things to be shuffled around
+            s_blob = self.custom_modify(s_blob)
+
             # Strip white space off of everything
-            changes = [
-                map(lambda i: i.strip(' '), change)
-                for change in change_line.items()
-            ]
+            try:
+                changes = [
+                    map(lambda i: i.strip(' '), change)
+                    for change in change_line.items()
+                ]
+            except:
+                import pdb;pdb.set_trace()
+                pass
+
             for lookup, value in changes:
                 p_value = self.process_value(value)
                 lookup = lookup.strip(' \n')
@@ -213,8 +225,16 @@ class Importer(object):
                         "'{link}' is not a valid header alias'".format(link)
                     )
             if prev_link == 'keyvalue_set':
-                key = '.'.join(path[i:])
-                cur_attr[key]['value'] = value
+                try:
+                    key = '.'.join(path[i:])
+                    if key not in cur_attr:
+                        if value:
+                            cur_attr[key] = {'value': value, 'key': key}
+                    else:
+                        cur_attr[key]['value'] = value
+                except:
+                    import pdb;pdb.set_trace()
+                    pass
                 break
             elif prev_link == 'cname':
                 # cname attribute is a special case. The cname attribute points
