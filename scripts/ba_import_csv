@@ -129,6 +129,7 @@ class Importer(object):
 
         print "Processing systems..."
         for i, change_line in enumerate(self.csvlines):
+            line_cache = {}
             hostname = change_line[hostname_key].strip(' ')
             assert hostname in systems_blob, (
                 "Hostname '{hostname}' was not seen in exported system "
@@ -155,11 +156,11 @@ class Importer(object):
                     for change in change_line.items()
                 ]
             except:
-                import pdb;pdb.set_trace()
+                import pdb;pdb.set_trace()  # noqa
                 pass
 
             for lookup, value in changes:
-                p_value = self.process_value(value)
+                p_value = self.process_value(value, line_cache)
                 lookup = lookup.strip(' \n')
                 if p_value != value:
                     s_value = "{0} -> {1}".format(value, p_value)
@@ -180,25 +181,33 @@ class Importer(object):
 
         return main_blob
 
-    def process_value(self, value):
+    def process_value(self, value, line_cache):
         """
         In this function we introspect value to see if it needs to be replaced
         with something.
         """
-        if value.strip(' ') == '{{ FREE_IP }}':
-            assert self.ip_pool is not None, (
-                "You must specify --ip-range when using "
-                "{{ FREE_IP }} in your CSV file."
-            )
-            return self.ip_pool.next()
-        elif value.strip(' ') == '{{ MGMT_FREE_IP }}':
-            assert self.mgmt_ip_pool is not None, (
-                "You must specify --mgmt-ip-range when using "
-                "{{ MGMT_FREE_IP }} in your CSV file."
-            )
-            return self.mgmt_ip_pool.next()
+        if value == '{{ FREE_IP }}':
+            if value in line_cache:
+                return line_cache[value]
+            else:
+                assert self.ip_pool is not None, (
+                    "You must specify --vlan-name and --site when "
+                    "using {{ FREE_IP }} in your CSV file."
+                )
+                line_cache[value] = self.ip_pool.next()
+                return line_cache[value]
+        elif value == '{{ MGMT_FREE_IP }}':
+            if value in line_cache:
+                return line_cache[value]
+            else:
+                assert self.mgmt_ip_pool is not None, (
+                    "You must specify --mgmt-vlan-name and --site "
+                    "when using {{ MGMT_FREE_IP }} in your CSV file."
+                )
+                line_cache[value] = self.mgmt_ip_pool.next()
+                return line_cache[value]
         else:
-            return value.strip(' \n')
+            return value
 
     def set_blob_attr(self, blob, lookup, value):
         cur_attr = blob
@@ -212,8 +221,6 @@ class Importer(object):
         if lookup == 'old-hostname':
             # We used this value to lookup the host, we no longer will use it.
             return
-
-        value = self.process_value(value)
 
         for i, link in enumerate(path):
             link = link.strip('\n')
