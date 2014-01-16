@@ -1,0 +1,47 @@
+##decomm.sh
+#
+#!/bin/bash
+
+SERVER=$1
+BUG="https://bugzilla.mozilla.org/show_bug.cgi?id=960155"
+PTR=$(dig +short $SERVER)
+PK=$(invtool SYS detail --hostname $SERVER | grep pk: | awk '{print $2}')
+
+
+if [ $# -lt 1 ]; then
+echo "Usage: $0 <hostname>"
+   exit 1
+fi
+
+echo "setting comments with bug and IP, setting status to decommissioned"
+invtool --silent SYS update --pk $PK --notes "$BUG $PTR"
+invtool --silent SYS update --pk $PK --system-status-pk 6
+
+KV=$(invtool --json SYS_kv list --obj-pk $PK)
+
+PK_KVs=$(echo $KV | python -m json.tool | grep kv_pk | cut -d':' -f 2 | cut -d',' -f 1)
+
+echo "deleting KV items"
+for item in $PK_KVs
+do
+	echo "deleting $item"
+	invtool --silent SYS_kv delete --kv-pk $item
+done
+
+A_PK=$(invtool search --query "/^$SERVER (type=:A OR type=:CNAME)" | cut -d ' ' -f 1)
+if [ -n "$A_PK" ]
+then
+	echo "deleting host's A record"
+	invtool A delete --pk $A_PK
+else
+	echo "no A records exist"
+fi
+
+PTR_PK=$(invtool search --query "/^$PTR (type=:PTR)" | cut -d ' ' -f 1)
+if [ -n "$PTR_PK" ]
+then
+	echo "deleting host PTR record"
+	invtool --silent PTR delete --pk $PTR_PK
+else
+	echo "no PTR records exist"
+fi
