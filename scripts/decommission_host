@@ -1,0 +1,78 @@
+#!/bin/bash
+
+## decommission_host
+## bburton
+## v0.1.1
+
+if [ $# -lt 1 ]
+then
+echo "Usage: $0 <hostname> <bug number>"
+   exit 1
+fi
+
+if [ $# -lt 2 ]
+then
+echo "Usage: $0 <hostname> <bug number>"
+   exit 1
+fi
+
+SERVER=$1
+BUG="bug $2"
+PTR=$(dig +short $SERVER)
+PK=$(invtool SYS detail --hostname $SERVER | grep pk: | awk '{print $2}')
+IS_DECOMMISSIONED=$(invtool --json SYS detail --hostname $SERVER | python -c 'import sys, json; print json.load(sys.stdin)[sys.argv[1]]' system_status | grep -v decommissioned)
+
+if [ -z "$PK" ]
+then
+	echo "$SERVER is not in inventory"
+	exit 1
+
+elif [ -z "$IS_DECOMMISSIONED" ]
+then
+	echo "$SERVER is already decommissioned"
+	exit 1
+else
+	echo "updating $SERVER in inventory to be decommissioned"
+	echo "setting comments with bug and IP, setting status to decommissioned"
+	invtool --silent SYS update --pk $PK --notes "$BUG - IP was: $PTR"
+	invtool --silent SYS update --pk $PK --system-status-pk 6
+
+	KV=$(invtool --json SYS_kv list --obj-pk $PK)
+	PK_KVS=$(echo $KV | python -m json.tool | grep kv_pk | cut -d':' -f 2 | cut -d',' -f 1)
+
+	if [ -n "$PK_KVS" ]
+	then
+		echo "deleting KV items"
+		for item in $PK_KVS
+		do
+			echo "deleting $item"
+			invtool --silent SYS_kv delete --kv-pk $item
+		done
+	else
+		echo "no KV items exist"
+	fi
+
+	A_PK=$(invtool search --query "/^$SERVER (type=:A OR type=:CNAME)" | cut -d ' ' -f 1)
+	if [ -n "$A_PK" ]
+	then
+		echo "deleting host's A record"
+		invtool --silent A delete --pk $A_PK
+	else
+		echo "no A records exist"
+	fi
+
+	if [ -z "$PTR" ]
+	then
+		echo "No PTR records exist"
+	else
+		PTR_PK=$(invtool search --query "/^$PTR$ (type=:PTR)" | cut -d ' ' -f 1)
+		if [ -n "$PTR_PK" ]
+		then
+			echo "deleting host PTR record"
+			invtool --silent PTR delete --pk $PTR_PK
+		else
+			echo "no PTR records exist"
+		fi
+	fi
+
+fi
