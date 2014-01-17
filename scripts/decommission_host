@@ -52,13 +52,16 @@ else
 		echo "no KV items exist"
 	fi
 
-	A_PK=$(invtool search --query "/^$SERVER (type=:A OR type=:CNAME)" | cut -d ' ' -f 1)
-	if [ -n "$A_PK" ]
+	FDNS_PKS=$(invtool search --query "/^$SERVER (type=:A OR type=:CNAME)" | cut -d ' ' -f 1)
+	if [ -n "$FDNS_PKS" ]
 	then
-		echo "deleting host's A record"
-		invtool --silent A delete --pk $A_PK
+		for item in $FDNS_PKS;
+		do
+			echo "deleting host's A record"
+			invtool --silent A delete --pk $item
+		done
 	else
-		echo "no A records exist"
+		echo "no A/CNAME records exist"
 	fi
 
 	if [ -z "$PTR" ]
