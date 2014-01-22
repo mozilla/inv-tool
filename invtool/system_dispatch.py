@@ -1,20 +1,20 @@
 try:
     import simplejson as json
 except ImportError:
-    import json
+    import json  # noqa
 
 from invtool.lib.registrar import registrar
 from invtool.core_dispatch import CoreDispatch
 from invtool.lib.config import API_MAJOR_VERSION
 
 from invtool.lib.options import (
-    comment_argument, delete_pk_argument, general_argument,
+    comment_argument, general_argument,
     datetime_argument, date_argument
 )
 
 from invtool.lib.system_options import (
     foreign_key_argument, hostname_argument, notes_argument,
-    system_detail_pk_argument, system_update_pk_argument, new_hostname_argument
+    system_pk_argument, new_hostname_argument
 )
 
 
@@ -76,7 +76,7 @@ class DispatchSystem(CoreDispatch):
     # 'new-hostname' to specify a new hostname and use --pk <hostname> to
     # specify which host is getting the new hostname.
     update_args = [
-        system_update_pk_argument(),
+        system_pk_argument(),
         new_hostname_argument()
     ] + create_args
 
@@ -86,11 +86,11 @@ class DispatchSystem(CoreDispatch):
     ]
 
     delete_args = [
-        delete_pk_argument('pk', dtype),
+        system_pk_argument(action='deleting'),
         comment_argument('comment')
     ]
 
-    detail_args = [system_detail_pk_argument()]
+    detail_args = [system_pk_argument(action='detailing')]
 
     def update_url(self, nas):
         pk = nas.pk or nas.hostname

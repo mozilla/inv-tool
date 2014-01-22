@@ -68,37 +68,17 @@ def str_argument(field_name, help):
     return add_srt_arg, build_extractor(field_name, field_name), test_data
 
 
-def system_update_pk_argument():
+def system_pk_argument(action='updating'):
     def add_pk_arg(parser, **kwargs):
         arg_g = parser.add_mutually_exclusive_group(required=True)
         arg_g.add_argument(
             '--hostname', type=str, dest='pk',
-            help='The hostname of a system you are updating'
+            help='The hostname of a system you are {0}'.format(action)
         )
         arg_g.add_argument(
             '--pk', type=str, dest='pk',
-            help='The integer primary key of a system you are updating'
-        )
-
-    def extract_pk(nas):
-        if nas.hostname:
-            return {'pk': nas.hostname}
-        else:
-            return {'pk': nas.pk}
-
-    return add_pk_arg, build_extractor('hostname', 'hostname'), lambda: None
-
-
-def system_detail_pk_argument():
-    def add_pk_arg(parser, **kwargs):
-        arg_g = parser.add_mutually_exclusive_group(required=True)
-        arg_g.add_argument(
-            '--hostname', type=str, dest='pk',
-            help='The hostname of a system you are detailing'
-        )
-        arg_g.add_argument(
-            '--pk', type=str, dest='pk',
-            help='The integer primary key of a system you are detailing'
+            help='The integer primary key of a system you are '
+            '{0}'.format(action)
         )
 
     def extract_pk(nas):
