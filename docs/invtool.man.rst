@@ -361,13 +361,13 @@ to renable the HWAdapters if you want DHCP.
 
 An example of a decommission command follows::
 
-    ~/ » invtool decommission host1.mozilla.com --comment "BUG 12345" --commit
+    ~/ » invtool decommission --comment "BUG 12345" --commit host1.mozilla.com
     http_status: 200 (request fulfilled)
 
 Without the ``--commit`` flag the decommission operation is a noop. You can
 also specify mutliple hostnames in one decommission command::
 
-    ~/ » invtool decommission host2.mozilla.com host1.mozilla.com --comment "BUG 12345" --commit
+    ~/ » invtool decommission --comment "BUG 12345" --commit host2.mozilla.com host1.mozilla.com
     http_status: 200 (request fulfilled)
 
 See ``invtool decommission --help`` for more options.
