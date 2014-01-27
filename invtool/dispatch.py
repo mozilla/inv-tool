@@ -54,6 +54,8 @@ class Dispatch(object):
             else:
                 if 'error_messages' in resp_msg:
                     return self.get_errors(resp_msg['error_messages'])
+                elif 'errors' in resp_msg:
+                    return 1, [resp_msg['errors']]
                 elif 'message' in resp_msg:
                     return 1, [resp_msg['message']]
                 elif resp.content:
@@ -74,9 +76,10 @@ class Dispatch(object):
                 nas, resp_msg, "http_status: 200 (Success)"
             )
         elif resp.status_code == 401:
-            return 1, ["Auth Failure! Check your password, or update "
-                        "your keychain using "
-                        "inv-tool/scripts/reset_keychain.py"]
+            return 1, [
+                "Auth Failure! Check your password, or update your keychain "
+                "using inv-tool/scripts/reset_keychain.py"
+            ]
         else:
             resp_list = []
             resp_list.append("Client didn't understand the response.")

@@ -13,7 +13,8 @@ enabled_dispatches = [
     'invtool.system_dispatch',
     'invtool.csv_dispatch',
     'invtool.ba_dispatch',
-    'invtool.sreg_dispatch'
+    'invtool.sreg_dispatch',
+    'invtool.decommission_dispatch'
 ]
 
 for d in enabled_dispatches:
