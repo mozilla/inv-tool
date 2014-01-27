@@ -340,8 +340,41 @@ To delete an object use a record class's ``delete`` command.
         ~/ » invtool A delete --pk 13033
         http_status: 204 (request fulfilled)
 
+Decommissioning Systems
+=======================
+Invtool provides a few tools to help you decommission systems in Inventory. The
+decommission command is one of these tools:
+
+The by default the decommission command will do the following to a system:
+
+    * Set the system status to 'decommissioned'
+    * Look for any SREG objects and remove them from DNS
+      * Any HWAdapter (DHCP objects) will be removed from DHCP
+
+The decommision *DOES NOT*:
+    * Clean up non-SREG DNS records (use scripts/decommission_host for that)
+
+A decommissioned SREG *IS NOT DELETED*. It mearly has his fqdn and IP
+set to non-functional values. If ever the system becomes recommissioned setting
+the SREG FQDN/IP values to valid ones will renable the SREG -- you'll also need
+to renable the HWAdapters if you want DHCP.
+
+An example of a decommission command follows::
+
+    ~/ » invtool decommission host1.mozilla.com --comment "BUG 12345" --commit
+    http_status: 200 (request fulfilled)
+
+Without the ``--commit`` flag the decommission operation is a noop. You can
+also specify mutliple hostnames in one decommission command::
+
+    ~/ » invtool decommission host2.mozilla.com host1.mozilla.com --comment "BUG 12345" --commit
+    http_status: 200 (request fulfilled)
+
+See ``invtool decommission --help`` for more options.
+
+
 Manipulating SYS (System) objects
-==================================
+=================================
 
 The workflow for manipulating SYS objects is very similar to how one creates,
 updates, and deletes DNS records.
