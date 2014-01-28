@@ -21,21 +21,30 @@ class DecommissionDispatch(Dispatch):
             help="Decommision a host. This command only changes System, SREG, "
             "and HWAdapter objects",
         )
+
         p.add_argument(
             'hostnames', metavar='HOSTNAME', type=str, nargs='+',
             help='A list of hostnames of systems that should be decommissioned'
         )
+
         p.add_argument(
             '--commit', action='store_true', default=False,
             help="Commit changes to the db."
         )
+
         p.add_argument(
             '--comment', type=str, default='',
             help="A bug number would be nice"
         )
+
         p.add_argument(
             '--no-decommission-sreg', action='store_false', default=True,
             help="Don't decommission SREG objects (True by default)"
+        )
+
+        p.add_argument(
+            '--no-convert-to-sreg', action='store_false', default=True,
+            help="Don't try to convert a system to use SREG objects"
         )
 
         p.add_argument(
@@ -58,6 +67,7 @@ class DecommissionDispatch(Dispatch):
             'options': {
                 'decommission_sreg': nas.no_decommission_sreg,
                 'decommission_system_status': nas.decommission_system_status,
+                'convert_to_sreg': nas.no_convert_to_sreg
             },
             'commit': nas.commit,
             'comment': nas.comment

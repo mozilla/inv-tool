@@ -91,7 +91,7 @@ Operators
             [ hostname !hostname1 ]
 
     OR
-        The binary ``OR`` operator will return the results of two seperate
+        The binary ``OR`` operator will return the results of two separate
         queries.
 
         ``Example``::
@@ -121,7 +121,7 @@ Directives
     type
         The ``type`` directive can be used to target a type of object.
         Values used in the ``type`` directive are case insensitive. A search
-        query contaning the type directive with no other filter will return all
+        query containing the type directive with no other filter will return all
         objects of that type and might take a while to complete depending on
         how many objects of that type exist.
 
@@ -190,7 +190,7 @@ Directives
 
     ip
         The ``ip`` directive can be used to gather site, vlan, network, range,
-        and dns information about a specific ip address.
+        and DNS information about a specific ip address.
 
         ``Example``::
 
@@ -330,8 +330,8 @@ You can get a detailed description of an object by using a record class's
         ...
         ...
 
-Deleteing an object
--------------------
+Deleting an object
+------------------
 
 To delete an object use a record class's ``delete`` command.
 
@@ -345,27 +345,28 @@ Decommissioning Systems
 Invtool provides a few tools to help you decommission systems in Inventory. The
 decommission command is one of these tools:
 
-The by default the decommission command will do the following to a system:
+By default the decommission command will do the following to a system:
 
-    * Set the system status to 'decommissioned'
-    * Look for any SREG objects and remove them from DNS
-      * Any HWAdapter (DHCP objects) will be removed from DHCP
+    * Set the system status to 'decommissioned' (override with --decommission-system-status)
+    * Attempt to convert the system to use SREG objects (override with --no-convert-to-sreg)
+    * Look for any SREG objects and remove them from DNS (override with --no-decommission-sreg)
+        * Any HWAdapter objects attached to a decommissioned SREG will be be removed from DHCP
 
-The decommision *DOES NOT*:
+The decommission command *DOES NOT*:
     * Clean up non-SREG DNS records (use scripts/decommission_host for that)
 
-A decommissioned SREG *IS NOT DELETED*. It mearly has his fqdn and IP
-set to non-functional values. If ever the system becomes recommissioned setting
-the SREG FQDN/IP values to valid ones will renable the SREG -- you'll also need
-to renable the HWAdapters if you want DHCP.
+A decommissioned SREG *IS NOT DELETED*. It merely has its fqdn and IP
+set to non-functional values. If ever the system becomes recommissioned, setting
+the SREG FQDN/IP values to valid ones will re-enable the SREG -- you'll also need
+to re-enable the HWAdapters if you want DHCP.
 
 An example of a decommission command follows::
 
     ~/ » invtool decommission --comment "BUG 12345" --commit host1.mozilla.com
     http_status: 200 (request fulfilled)
 
-Without the ``--commit`` flag the decommission operation is a noop. You can
-also specify mutliple hostnames in one decommission command::
+Without the ``--commit`` flag the decommission operation is a no-op. You can
+also specify multiple hostnames in one decommission command::
 
     ~/ » invtool decommission --comment "BUG 12345" --commit host2.mozilla.com host1.mozilla.com
     http_status: 200 (request fulfilled)
@@ -376,7 +377,7 @@ See ``invtool decommission --help`` for more options.
 Manipulating SYS (System) objects
 =================================
 
-The workflow for manipulating SYS objects is very similar to how one creates,
+The work flow for manipulating SYS objects is very similar to how one creates,
 updates, and deletes DNS records.
 
 Search results
@@ -392,7 +393,7 @@ Looking up a system
 System objects can be specified using the ``--pk`` flag *or* the ``--hostname``
 flag. For example, say we have a system with the hostname
 ``foobar.mozilla.com`` that has the primary key ``1992``. The following two
-commands are equivelent.
+commands are equivalent.
 
     ::
 
@@ -450,7 +451,7 @@ Exporting System CSVs
 
 You can export csv records for system objects using the ``csv`` command. As of
 right now only exportation is supported. You can narrow which system objects
-you want to export by using the same search langauge supported by the
+you want to export by using the same search language supported by the
 ``search --query`` command. For example, to export all systems that match the
 pattern ``node[0-9].mozilla.com``, you could run
 
@@ -510,20 +511,20 @@ To read in a CSV ``mycsvfile.csv``, you would do::
 Using lookup paths with scripts/ba_import_csv
 ---------------------------------------------
 Certain attributes of a system, like a key value pair, are within nested
-dictionaries in system's JSON blob. For example, a key 'randomkey'
+dictionaries in system's JSON blob. For example, a key 'somekey'
 would be accessed by::
 
-    ``main_blob['systems']['hostname.mozilla.com']['keyvalue_set']['randomkey']``
+    ``main_blob['systems']['hostname.mozilla.com']['keyvalue_set']['somekey']``
 
 These nested attributes can be accessed in a CSV by using the ``.`` operator to
 signify dictionary lookup. For example::
 
-    hostname,            keyvalue_set.randomkey
-    hostname.mozilla.com, randomvalue
+    hostname,             keyvalue_set.somekey
+    hostname.mozilla.com, somevalue
 
 This would lookup be equivalent to doing::
 
-    main_blob['systems']['hostname.mozilla.com']['keyvalue_set']['randomkey'] = 'randomvalue'
+    main_blob['systems']['hostname.mozilla.com']['keyvalue_set']['somekey'] = 'somevalue'
 
 
 Cook Book
