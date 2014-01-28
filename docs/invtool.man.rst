@@ -347,10 +347,10 @@ decommission command is one of these tools:
 
 By default the decommission command will do the following to a system:
 
-    * Set the system status to 'decommissioned' (override with --decommission-system-status)
-    * Attempt to convert the system to use SREG objects (override with --no-convert-to-sreg)
-    * Look for any SREG objects and remove them from DNS (override with --no-decommission-sreg)
-        * Any HWAdapter objects attached to a decommissioned SREG will be be removed from DHCP
+- Set the system status to 'decommissioned' (override with --decommission-system-status)
+- Attempt to convert the system to use SREG objects (override with --no-convert-to-sreg)
+- Look for any SREG objects and remove them from DNS (override with --no-decommission-sreg)
+    - Any HWAdapter objects attached to a decommissioned SREG will be be removed from DHCP
 
 The decommission command *DOES NOT*:
     * Clean up non-SREG DNS records (use scripts/decommission_host for that)
