@@ -81,5 +81,21 @@ class DecommissionDispatch(Dispatch):
 
         return self.handle_resp(nas, main_json, resp)
 
+    def format_response(self, nas, resp_msg, user_msg):
+        resp_list = []
+        if nas.p_json:
+            resp_list.append(json.dumps(resp_msg, indent=2))
+        else:
+            resp_list.append(user_msg)
+            for k, v in resp_msg.iteritems():
+                if k == 'options':
+                    resp_list.append("Decommission options used:")
+                    for k_i, v_i in v.iteritems():
+                        resp_list.append("\t{0}: {1}".format(k_i, v_i))
+                elif k == 'systems':
+                    resp_list.append("systems: {0}".format(', '.join(v)))
+                else:
+                    resp_list.append("{0}: {1}".format(k, v))
+        return resp_list
 
 registrar.register(DecommissionDispatch())

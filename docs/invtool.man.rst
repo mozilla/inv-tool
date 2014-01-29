@@ -342,6 +342,10 @@ To delete an object use a record class's ``delete`` command.
 
 Decommissioning Systems
 =======================
+    Be aware that the decommission command is not a replacement for the
+    decommission *script* (scripts/decommission_host), which makes use of this API
+    command and many others as well.
+
 Invtool provides a few tools to help you decommission systems in Inventory. The
 decommission command is one of these tools:
 
@@ -349,27 +353,58 @@ By default the decommission command will do the following to a system:
 
 - Set the system status to 'decommissioned' (override with --decommission-system-status)
 - Attempt to convert the system to use SREG objects (override with --no-convert-to-sreg)
-- Look for any SREG objects and remove them from DNS (override with --no-decommission-sreg)
-    - Any HWAdapter objects attached to a decommissioned SREG will be be removed from DHCP
-
-The decommission command *DOES NOT*:
-    * Clean up non-SREG DNS records (use scripts/decommission_host for that)
+- Look for any SREG objects associated with a system and remove them
+    from DNS (override with --no-decommission-sreg)
+- Disables any HWAdapter objects attached to decommissioned SREG objects.
 
 A decommissioned SREG *IS NOT DELETED*. It merely has its fqdn and IP
-set to non-functional values. If ever the system becomes recommissioned, setting
-the SREG FQDN/IP values to valid ones will re-enable the SREG -- you'll also need
-to re-enable the HWAdapters if you want DHCP.
+set to disabled values, which are excluded from DNS, DHCP, etc. If ever the system
+becomes recommissioned, setting the SREG FQDN/IP values to valid ones will
+re-enable the SREG -- you'll also need to re-enable the HWAdapters if you want
+DHCP to be re-enabled.
 
 An example of a decommission command follows::
 
     ~/ » invtool decommission --comment "BUG 12345" --commit host1.mozilla.com
-    http_status: 200 (request fulfilled)
+    http_status: 200 (Success)
+    comment: BUG 12345
+    commit: True
+    systems: host1.mozilla.com
+    http_status: 200
+    Decommission options used:
+        decommission_system_status: decommissioned
+        convert_to_sreg: True
+        decommission_sreg: True
 
-Without the ``--commit`` flag the decommission operation is a no-op. You can
-also specify multiple hostnames in one decommission command::
+You can also specify multiple hostnames in one decommission command::
 
     ~/ » invtool decommission --comment "BUG 12345" --commit host2.mozilla.com host1.mozilla.com
-    http_status: 200 (request fulfilled)
+    http_status: 200 (Success)
+    comment: BUG 12345
+    commit: True
+    systems: host1.mozilla.com, host2.mozilla.com
+    http_status: 200
+    Decommission options used:
+        decommission_system_status: decommissioned
+        convert_to_sreg: True
+        decommission_sreg: True
+
+Without the ``--commit`` flag the decommission operation is a no-op. For
+example, if you leave off the ``--commit`` flag for the first example, the
+output would look like this::
+
+    ~/ » invtool decommission --comment "BUG 12345" host1.mozilla.com
+    http_status: 200 (Success)
+    comment: BUG 12345
+    commit: False
+    systems: host1.mozilla.com
+    http_status: 200
+    Decommission options used:
+        decommission_system_status: decommissioned
+        convert_to_sreg: True
+        decommission_sreg: True
+
+Note ``commit: False`` in the output -- no changes in Inventory were made.
 
 See ``invtool decommission --help`` for more options.
 
