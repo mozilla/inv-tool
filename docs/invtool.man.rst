@@ -343,7 +343,7 @@ To delete an object use a record class's ``delete`` command.
 Decommissioning Systems
 =======================
     Be aware that the decommission command is not a replacement for the
-    decommission *script* (scripts/decommission_host), which makes use of this API
+    decommission *script* (``scripts/decommission_host``), which makes use of this API
     command and many others as well.
 
 Invtool provides a few tools to help you decommission systems in Inventory. The
@@ -351,10 +351,9 @@ decommission command is one of these tools:
 
 By default the decommission command will do the following to a system:
 
-- Set the system status to 'decommissioned' (override with --decommission-system-status)
-- Attempt to convert the system to use SREG objects (override with --no-convert-to-sreg)
-- Look for any SREG objects associated with a system and remove them
-    from DNS (override with --no-decommission-sreg)
+- Set the system status to 'decommissioned' (override with ``--decommission-system-status``)
+- Attempt to convert the system to use SREG objects (override with ``--no-convert-to-sreg``)
+- Decommission any SREG by removing it from DNS and setting its IP/FQDN to decommissioned values (override with ``--no-decommission-sreg``)
 - Disables any HWAdapter objects attached to decommissioned SREG objects.
 
 A decommissioned SREG *IS NOT DELETED*. It merely has its fqdn and IP
