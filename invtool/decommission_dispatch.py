@@ -33,7 +33,7 @@ class DecommissionDispatch(Dispatch):
         )
 
         p.add_argument(
-            '--comment', type=str, default='',
+            '--comment', type=str, default='', required=True,
             help="A bug number would be nice"
         )
 
@@ -45,6 +45,12 @@ class DecommissionDispatch(Dispatch):
         p.add_argument(
             '--no-convert-to-sreg', action='store_false', default=True,
             help="Don't try to convert a system to use SREG objects"
+        )
+
+        p.add_argument(
+            '--no-remove-dns', action='store_false', default=True,
+            help="Don't remove CNAME and SRV records associated to this "
+            "system.  A/PTR records from SREG will still be removed"
         )
 
         p.add_argument(
@@ -67,7 +73,8 @@ class DecommissionDispatch(Dispatch):
             'options': {
                 'decommission_sreg': nas.no_decommission_sreg,
                 'decommission_system_status': nas.decommission_system_status,
-                'convert_to_sreg': nas.no_convert_to_sreg
+                'convert_to_sreg': nas.no_convert_to_sreg,
+                'remove_dns': nas.no_remove_dns
             },
             'commit': nas.commit,
             'comment': nas.comment
@@ -87,6 +94,7 @@ class DecommissionDispatch(Dispatch):
             resp_list.append(json.dumps(resp_msg, indent=2))
         else:
             resp_list.append(user_msg)
+            messages = None
             for k, v in resp_msg.iteritems():
                 if k == 'options':
                     resp_list.append("Decommission options used:")
@@ -94,8 +102,16 @@ class DecommissionDispatch(Dispatch):
                         resp_list.append("\t{0}: {1}".format(k_i, v_i))
                 elif k == 'systems':
                     resp_list.append("systems: {0}".format(', '.join(v)))
+                elif k == 'messages':
+                    messages = v
                 else:
                     resp_list.append("{0}: {1}".format(k, v))
+            if messages:
+                resp_list.append(
+                    "Additional information returned by Inventory:"
+                )
+                resp_list += messages
+
         return resp_list
 
 registrar.register(DecommissionDispatch())
