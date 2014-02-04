@@ -352,9 +352,15 @@ decommission command is one of these tools:
 By default the decommission command will do the following to a system:
 
 - Set the system status to 'decommissioned' (override with ``--decommission-system-status``)
+- Cleared values for operating_system, allocation, oob_ip, switch_ports, and oob_switch_port
 - Attempt to convert the system to use SREG objects (override with ``--no-convert-to-sreg``)
 - Decommission any SREG by removing it from DNS and setting its IP/FQDN to decommissioned values (override with ``--no-decommission-sreg``)
 - Disables any HWAdapter objects attached to decommissioned SREG objects.
+- Remove related DNS records
+
+*invtool will report what changes it's going to make (or has made if
+``--commit`` is used). Inspect the output to verify you are seeing the behavior
+you are expecting*
 
 A decommissioned SREG *IS NOT DELETED*. It merely has its fqdn and IP
 set to disabled values, which are excluded from DNS, DHCP, etc. If ever the system
@@ -374,6 +380,11 @@ An example of a decommission command follows::
         decommission_system_status: decommissioned
         convert_to_sreg: True
         decommission_sreg: True
+    Decommission actions for host1.mozilla.com
+        Cleared values for operating_system, allocation, oob_ip, switch_ports, and oob_switch_port
+        Set system status to decommissioned
+        ...
+
 
 You can also specify multiple hostnames in one decommission command::
 
@@ -387,6 +398,14 @@ You can also specify multiple hostnames in one decommission command::
         decommission_system_status: decommissioned
         convert_to_sreg: True
         decommission_sreg: True
+    Decommission actions for host1.mozilla.com
+        Cleared values for operating_system, allocation, oob_ip, switch_ports, and oob_switch_port
+        Set system status to decommissioned
+        ...
+    Decommission actions for host2.mozilla.com
+        Cleared values for operating_system, allocation, oob_ip, switch_ports, and oob_switch_port
+        Set system status to decommissioned
+        ...
 
 Without the ``--commit`` flag the decommission operation is a no-op. For
 example, if you leave off the ``--commit`` flag for the first example, the
@@ -402,6 +421,10 @@ output would look like this::
         decommission_system_status: decommissioned
         convert_to_sreg: True
         decommission_sreg: True
+    Decommission actions for host1.mozilla.com
+        Cleared values for operating_system, allocation, oob_ip, switch_ports, and oob_switch_port
+        Set system status to decommissioned
+        ...
 
 Note ``commit: False`` in the output -- no changes in Inventory were made.
 
