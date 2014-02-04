@@ -342,10 +342,6 @@ To delete an object use a record class's ``delete`` command.
 
 Decommissioning Systems
 =======================
-    Be aware that the decommission command is not a replacement for the
-    decommission *script* (``scripts/decommission_host``), which makes use of this API
-    command and many others as well.
-
 Invtool provides a few tools to help you decommission systems in Inventory. The
 decommission command is one of these tools:
 

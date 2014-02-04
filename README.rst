@@ -65,6 +65,8 @@ from the configuration file.
  * ``~/.invtool.conf`` and
  * ``./etc/invtool.conf``
 
+Quick Install
+-------------
 Here is a quick tip for a non-root install::
 
     git clone git@github.com:uberj/inv-tool.git invtool
