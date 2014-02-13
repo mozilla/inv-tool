@@ -81,7 +81,7 @@ def fqdn_argument(field_name, rdtype):
         parser.add_argument(
             '--fqdn', default="", type=str, dest='fqdn',
             help="The FQDN of the record being created. If you use this "
-            "option you cannot use label or domain", required=False
+            "option you cannot use label or domain", required=required
         )
 
     def test_data():
@@ -97,16 +97,17 @@ def fqdn_argument(field_name, rdtype):
 
 
 def system_argument(field_name):
-    # We need rdtype because SRV requires a '_' to prefix it's test data
+    display_name = field_name.replace('_', '-')
+
     def add_system_argument(parser, required=True):
         parser.add_argument(
-            '--{0}'.format(field_name), default="", type=str, dest=field_name,
-            help="The hostname of the system this registration is associated "
-            "with", required=True
+            '--{0}'.format(display_name), default="", type=str,
+            dest=field_name, help="The hostname of the system this "
+            "registration is associated with", required=True
         )
 
     def test_data():
-        return 'system_hostname', 'toolsdev1.dmz.scl3.mozilla.com'
+        return 'system-hostname', 'toolsdev1.dmz.scl3.mozilla.com'
 
     extractor = build_extractor(field_name, field_name)
     return add_system_argument, extractor, test_data

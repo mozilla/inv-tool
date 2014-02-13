@@ -94,7 +94,11 @@ class Dispatch(object):
         for error, msg in messages.iteritems():
             if error == '__all__':
                 error = "Object Error"
-            errors.append("Error: {0}  {1}".format(error, ', '.join(msg)))
+            if isinstance(msg, list):
+                errors.append("Error: {0}  {1}".format(error, ', '.join(msg)))
+            else:
+                errors.append("Error: {0}  {1}".format(error, msg))
+
         return 1, errors
 
     def get_resp_dict(self, resp):
