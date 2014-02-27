@@ -34,6 +34,6 @@ then
 else
 	echo "updating $SERVER in inventory to be decommissioned"
 	invtool decommission --commit --comment "$BUG" $SERVER
-	invtool --silent SYS update --hostname $SERVER --notes "$SERVER -- $BUG"
+	invtool --silent SYS update --hostname $SERVER --notes "$SERVER - IP was: $PTR -- $BUG"
 
 fi
