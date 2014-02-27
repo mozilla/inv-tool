@@ -2,7 +2,7 @@
 
 ## decommission_host
 ## bburton
-## v0.1.1
+## v0.1.5 - 2014-02-26
 
 if [ $# -lt 1 ]
 then
@@ -33,49 +33,7 @@ then
 	exit 1
 else
 	echo "updating $SERVER in inventory to be decommissioned"
-	echo "setting comments with bug and IP, setting status to decommissioned"
-	invtool --silent SYS update --pk $PK --notes "$BUG - IP was: $PTR"
-	invtool --silent SYS update --pk $PK --system-status-pk 6
-
-	KV=$(invtool --json SYS_kv list --obj-pk $PK)
-	PK_KVS=$(echo $KV | python -m json.tool | grep kv_pk | cut -d':' -f 2 | cut -d',' -f 1)
-
-	if [ -n "$PK_KVS" ]
-	then
-		echo "deleting KV items"
-		for item in $PK_KVS
-		do
-			echo "deleting $item"
-			invtool --silent SYS_kv delete --kv-pk $item
-		done
-	else
-		echo "no KV items exist"
-	fi
-
-	FDNS_PKS=$(invtool search --query "/^$SERVER (type=:A OR type=:CNAME)" | cut -d ' ' -f 1)
-	if [ -n "$FDNS_PKS" ]
-	then
-		for item in $FDNS_PKS;
-		do
-			echo "deleting host's A record"
-			invtool --silent A delete --pk $item
-		done
-	else
-		echo "no A/CNAME records exist"
-	fi
-
-	if [ -z "$PTR" ]
-	then
-		echo "No PTR records exist"
-	else
-		PTR_PK=$(invtool search --query "/^$PTR$ (type=:PTR)" | cut -d ' ' -f 1)
-		if [ -n "$PTR_PK" ]
-		then
-			echo "deleting host PTR record"
-			invtool --silent PTR delete --pk $PTR_PK
-		else
-			echo "no PTR records exist"
-		fi
-	fi
+	invtool decommission --commit --comment "$BUG" $SERVER
+	invtool --silent SYS update --hostname $SERVER --notes "$SERVER -- $BUG"
 
 fi
