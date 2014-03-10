@@ -95,5 +95,80 @@ class BAExportDispatch(BA):
         return self.handle_ba_resp(nas, query, resp)
 
 
-registrar.register(BAExportDispatch())
+class BAShowDispatch(BA):
+    dgroup = dtype = 'ba_show'
+
+    def build_parser(self, base_parser):
+        # BA is a top level command.
+        ba = base_parser.add_parser(
+            'ba_show', help="Show fields on a bulk action json blob.",
+            add_help=True
+        )
+        ba.add_argument(
+            '--query', '-q', dest='query', type=str, help="A query string "
+            "surrounded by quotes. I.E `search -q 'foo.bar.mozilla.com'`",
+            default=None, required=False
+        )
+
+    def route(self, nas):
+        return getattr(self, nas.dtype)(nas)
+
+    def ba_show(self, nas):
+        if nas.query:
+            return self.query(nas)
+        else:
+            return (0, ['What do you want?'])
+
+    def query(self, nas):
+        tmp_url = "/bulk_action/export/"
+        url = "{0}{1}".format(REMOTE, tmp_url)
+        headers = {'content-type': 'application/json'}
+        query = {'q': nas.query}
+        resp = requests.get(url, params=query, headers=headers, auth=auth())
+        if nas.DEBUG:
+            sys.stderr.write('method: {0}\nurl: {1}\nparams:{2}\n'.format(
+                'get', url, query
+            ))
+
+        nas.p_json = True  # Do this so we can play with the response
+
+        ret_code, raw_results = self.handle_resp(nas, query, resp)
+        if ret_code:
+            return (ret_code, raw_results)  # repack and go home
+        results = json.loads(raw_results[0])
+        return ret_code, self.show_lookup_paths(results)
+
+    def show_lookup_paths(self, blob):
+        prefix = ''
+        try:
+            blobs = blob['systems']
+        except KeyError:
+            raise KeyError(
+                "'systems' wasn't in the exported blob. The API changed"
+            )
+        result = []
+        for hostname, blob in blobs.iteritems():
+            result.append("--- Lookup values for {0}".format(hostname))
+            result += self._show_lookup_paths(prefix, blob)
+        return result
+
+    def _show_lookup_paths(self, prefix, blob):
+        result = []
+        more = []
+        for key, value in blob.iteritems():
+            if isinstance(value, dict):
+                more += self._show_lookup_paths(
+                    prefix + key + '.', value)
+            elif isinstance(value, list):  # CNAME exception
+                for cn in value:
+                    more += self._show_lookup_paths(
+                        prefix, {key: cn}
+                    )
+            else:
+                result.append("{0}{1} = {2}".format(prefix, key, value))
+        return result + more
+
+
 registrar.register(BAImportDispatch())
+registrar.register(BAExportDispatch())
+registrar.register(BAShowDispatch())
