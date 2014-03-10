@@ -155,7 +155,8 @@ class Importer(object):
                     map(lambda i: i.strip(' '), change)
                     for change in change_line.items()
                 ]
-            except:
+            except Exception, e:
+                print e
                 import pdb;pdb.set_trace()  # noqa
                 pass
 
