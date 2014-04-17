@@ -9,11 +9,15 @@ if getuid() == 0:
 else:
     data_files = None
 
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
+
 setup(
     name='invtool',
     version=invtool.__version__,
     author='Jacques Uber',
     author_email='juber@mozilla.com',
+    install_requires=required,
     packages=['invtool', 'invtool.tests', 'invtool.lib', 'invtool.kv'],
     package_dir={'invtool': 'invtool'},
     package_data={
