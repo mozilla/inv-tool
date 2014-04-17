@@ -8,7 +8,7 @@ import time
 
 from invtool.lib.ba import (  # noqa
     ba_export_systems_hostname_list, ba_export_system_template, ba_import,
-    ba_gather_ip_pool
+    ba_gather_ip_pool, remove_pk_attrs
 )
 
 
@@ -65,7 +65,8 @@ class IPPool(object):
 
 class Importer(object):
     def __init__(self, fd, verbose=False, template_hostname=None,
-                 ip_range=None, mgmt_ip_range=False):
+                 ip_range=None, mgmt_ip_range=False, skip_empty=False,
+                 clone=False):
         self.template = (
             ba_export_system_template(template_hostname)
             if template_hostname else None
@@ -83,6 +84,8 @@ class Importer(object):
         self.csvlines = [l for l in self.csvreader]  # Eval the csv
         self.fieldnames = self.csvlines.pop(0)
         self.aliases = ATTRIBUTE_ALIASES
+        self.skip_empty = skip_empty
+        self.clone = clone
 
     def gather_ip_pool(self, ip_range):
         pool_stats, errors = ba_gather_ip_pool(ip_range)
@@ -148,19 +151,22 @@ class Importer(object):
 
             # Allow things to be shuffled around
             s_blob = self.custom_modify(s_blob)
+            if self.clone:
+                print "Cloning system..."
+                print "Removing Primary keys"
+                remove_pk_attrs({'systems': s_blob})
 
             # Strip white space off of everything
-            try:
-                changes = [
-                    map(lambda i: i.strip(' '), change)
-                    for change in change_line.items()
-                ]
-            except Exception, e:
-                print e
-                import pdb;pdb.set_trace()  # noqa
-                pass
+            changes = [
+                map(lambda i: i.strip(' '), change)
+                for change in change_line.items()
+            ]
 
             for lookup, value in changes:
+                if self.skip_empty and value.strip() == "":
+                    # skip empty values
+                    continue
+
                 p_value = self.process_value(value, line_cache)
                 lookup = lookup.strip(' \n')
                 if p_value != value:
@@ -233,16 +239,13 @@ class Importer(object):
                         "'{link}' is not a valid header alias'".format(link)
                     )
             if prev_link == 'keyvalue_set':
-                try:
-                    key = '.'.join(path[i:])
-                    if key not in cur_attr:
-                        if value:
-                            cur_attr[key] = {'value': value, 'key': key}
-                    else:
-                        cur_attr[key]['value'] = value
-                except:
-                    import pdb;pdb.set_trace()
-                    pass
+                key = '.'.join(path[i:])
+                if key not in cur_attr:
+                    if value:
+                        cur_attr[key] = {'value': value, 'key': key}
+                else:
+                    cur_attr[key]['value'] = value
+
                 break
             elif prev_link == 'cname':
                 # cname attribute is a special case. The cname attribute points
@@ -347,6 +350,10 @@ if __name__ == "__main__":
         help='Print more things than usual'
     )
     parser.add_argument(
+        '--skip-empty', action='store_true', default=False,
+        help='Pass by and do not set attributes when a value is empty.'
+    )
+    parser.add_argument(
         '--commit', action='store_true', default=False,
         help="Commit changes to the db."
     )
@@ -369,6 +376,12 @@ if __name__ == "__main__":
         "Use {{ MGMT_FREE_IP }} in your csv and a free ip address from the "
         "range you provided will be inserted at import time."
     )
+    parser.add_argument(
+        '--clone', action='store_true', default=False,
+        help="Instead of updating objects, pull down existing JSON blobs, and "
+        "then save them as new objects. You will most likely need to change "
+        "unique attributes (i.e. hostname)"
+    )
     nas = parser.parse_args(sys.argv[1:])
     try:
         with open(nas.csv_path, 'r') as fd:
@@ -377,7 +390,9 @@ if __name__ == "__main__":
                 verbose=nas.verbose,
                 template_hostname=nas.template_hostname,
                 ip_range=nas.ip_range,
-                mgmt_ip_range=nas.mgmt_ip_range
+                mgmt_ip_range=nas.mgmt_ip_range,
+                skip_empty=nas.skip_empty,
+                clone=nas.clone
             ).ba_import(commit=nas.commit)
-    except IOError:
+    except IOError, e:
         print nas.csv_path + " wasn't a csv file?"
