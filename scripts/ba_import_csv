@@ -3,6 +3,7 @@ import argparse
 import csv
 from copy import deepcopy
 import simplejson as json
+import requests
 import sys
 import time
 
@@ -394,5 +395,7 @@ if __name__ == "__main__":
                 skip_empty=nas.skip_empty,
                 clone=nas.clone
             ).ba_import(commit=nas.commit)
-    except IOError, e:
+    except requests.exceptions.ConnectionError:
+        print "ConnectionError: Couldn't connetect to Inventory"
+    except IOError:
         print nas.csv_path + " wasn't a csv file?"
