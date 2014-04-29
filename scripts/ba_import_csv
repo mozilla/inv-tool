@@ -156,6 +156,13 @@ class Importer(object):
                 print "Cloning system..."
                 print "Removing Primary keys"
                 remove_pk_attrs({'systems': s_blob})
+                try:
+                    s_blob['clone'] = s_blob['old-hostname']
+                except KeyError:
+                    raise Exception(
+                        "When using --clone you must specify which system is "
+                        "being cloned via a 'old-hostname' header."
+                    )
 
             # Strip white space off of everything
             changes = [
@@ -257,9 +264,15 @@ class Importer(object):
                 # explaining that they need to implement a for loop to process
                 # the data. Multiple cnames would be a very rare case and this
                 # tool might not be the best one for the job.
-                if not isinstance(cur_attr, list) or not len(cur_attr) == 1:
+                if not isinstance(cur_attr, list):
                     raise Exception(
-                        "The cname on this nic is misconfigured..."
+                        "The cname on this nic is misconfigured. The 'cname' "
+                        "key did not map to a list."
+                    )
+                if not len(cur_attr) == 1:
+                    raise Exception(
+                        "The cname on this nic is misconfigured. Multiple "
+                        "cnames are mapped to this nic's FQDN"
                     )
                 cur_attr = cur_attr[0]
                 cur_attr[link] = value
@@ -343,8 +356,7 @@ if __name__ == "__main__":
         prog='ba_import_csv', description='Bulk Action CSV importer.'
     )
     parser.add_argument(
-        '--csv-path', type=str, help='Path to a csv file',
-        required=True
+        'csv_path', type=str, help='Path to a csv file',
     )
     parser.add_argument(
         '--verbose', action='store_true',
