@@ -13,15 +13,24 @@ from invtool.lib.config import REMOTE, auth
 
 class SearchDispatch(Dispatch):
     dgroup = dtype = 'search'
+    search_schema_url = "/en-US/core/search/search_schema/"
 
     def build_parser(self, base_parser):
         # Search is a top level command.
         search = base_parser.add_parser(
             'search', help="Search for stuff.", add_help=True
         )
+
         search.add_argument(
             '--query', '-q', dest='query', type=str, help="A query string "
             "surrounded by quotes. I.E `search -q 'foo.bar.mozilla.com'`",
+            default=None, required=False
+        )
+
+        search.add_argument(
+            '--schema', '-s', dest='schema', type=str, help="Show the "
+            "possible fields that can be searched for a given type. I.E. "
+            "`search -s sys`",
             default=None, required=False
         )
 
@@ -50,6 +59,8 @@ class SearchDispatch(Dispatch):
             return self.query(nas)
         elif nas.irange:
             return self.irange(nas)
+        elif nas.schema:
+            return self.schema(nas)
         else:
             return (0, ['What do you want?'])
 
@@ -112,6 +123,25 @@ class SearchDispatch(Dispatch):
             if was_json:
                 return 0, raw_results
             return 0, [results['text_response']]
+
+    def schema(self, nas):
+        url = "{0}{1}".format(REMOTE, self.search_schema_url)
+        schema = {'class': nas.schema}
+        resp = requests.get(url, params=schema, auth=auth())
+        ret_code, raw_results = self.handle_resp(nas, schema, resp)
+
+        if ret_code:
+            return (ret_code, raw_results)  # repack and go home
+
+        data = json.loads(resp.content)
+
+        if 'schema' not in data:
+            return 1, ["No schema for {0}".format(nas.schema)]
+
+        if nas.p_json:
+            return 0, [resp.content]
+
+        return 0, ['===== schema ======', '\n'.join(data['schema'])]
 
 
 registrar.register(SearchDispatch())
