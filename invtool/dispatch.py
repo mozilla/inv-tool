@@ -41,9 +41,7 @@ class Dispatch(object):
             else:
                 return 0, ["http_status: 204 (request fulfilled)"]
         elif resp.status_code == 500:
-            resp_list = [_("SERVER ERROR! (Please email this output to a "
-                         "code monkey)")]
-            return self.error_out(nas, data, resp, resp_list=resp_list)
+            return self.error_out(nas, data, resp, resp_list=[])
         elif resp.status_code == 400:
              # Bad Request
             if nas.p_json:
