@@ -580,6 +580,109 @@ This would lookup be equivalent to doing::
     main_blob['systems']['hostname.mozilla.com']['keyvalue_set']['somekey'] = 'somevalue'
 
 
+Service Import/Export API
+=========================
+Invtool exposes the state of a specific services via the ``invtool
+service_export`` command. For easy human consumption the export can be done via
+``YAML`` format. To specify a service to export you are to use standard IQL
+syntax. For example, to export a service with the name "dns" you would do::
+
+    ~/ » invtool service_export --yaml service.name=dns
+    - alias: "Domain Name Resolution"
+      business_owner: Wesley
+      category: Infrastructure Management
+      description: Serves name resolution to IP addresses
+      impact: high
+      name: dns
+      notes: !!python/unicode ''
+      parent_service: None
+      site: None
+      systems: []
+      tech_owner: Infra
+      usage_frequency: constantly
+      used_by: Anyone on the internet trying to resolve a Mozilla DNS name
+
+Once a service's stanza has been exported it can be updated and then imported
+via the ``invtool service_import`` command. For example, say you wanted to add
+the hosts ``ns1.mozilla.com`` and ``ns2.mozilla.com`` to the dns service
+previously exported. You would export into a local file for editing::
+
+    ~/ » invtool service_export --yaml service.name=dns > dns.serice
+
+And then modify the stored definition to be::
+
+    ~/ » invtool service_export --yaml service.name=dns
+    - alias: "Domain Name Resolution"
+      business_owner: Wesley
+      category: Infrastructure Management
+      description: Serves name resolution to IP addresses
+      impact: high
+      name: dns
+      notes: !!python/unicode ''
+      parent_service: None
+      site: None
+      systems:
+        - ns1.mozilla.com
+        - ns2.mozilla.com
+      tech_owner: Infra
+      usage_frequency: constantly
+      used_by: Anyone on the internet trying to resolve a Mozilla DNS name
+
+You can then import the updated ``dns.service`` file by either piping the
+contents of the file into ``invtool`` or specifying the file to ``invtool``::
+
+    ~/ » invtool service_import --file-path dns.service
+    OR
+    ~/ » cat dns.service | invtool service_import
+
+If any errors occur during the import process in Inventory the entire import is
+rolled back and the user must resolve any errors.
+
+Systems specified under the ``systems`` key must correspond to a system in
+Inventory with a matching hostname.
+
+Specifiying the parent service and dependancies
+-----------------------------------------------
+There are two special keys that can be used to specify when a service related to
+another service: the ``parent_service`` and ``depends_on``. Both use an IQL
+statement to specify which service is being listed. The IQL is always in the
+following syntax::
+
+    service.name='<service-name>' service.site='<service-site>'
+
+Taken together, the values of ``service-name`` and ``service-site`` can always
+be used to uniquely identify a service.
+
+An example of specifying a ``parent_service`` for our ``dns`` example would be::
+
+    - alias: "Domain Name Resolution"
+      name: dns
+      ...
+      ... (removed lines)
+      ...
+      parent_service: service.name='dns' service.site=null
+      ...
+      ... (removed lines)
+      ...
+      site: scl3
+
+An example of listing dependant services would be::
+
+    - alias: "Domain Name Resolution"
+      name: dns
+      ...
+      ... (removed lines)
+      ...
+      depends_on:
+        - service.name='ldap' service.site=scl3
+        - service.name='dhcp' service.site=scl3
+      ...
+      ... (removed lines)
+      ...
+      site: scl3
+
+
+
 Cook Book
 =========
 
