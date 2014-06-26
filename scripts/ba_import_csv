@@ -258,24 +258,35 @@ class Importer(object):
             elif prev_link == 'cname':
                 # cname attribute is a special case. The cname attribute points
                 # to a list (not a dict) which is different than all the other
-                # attributes. For ease of use, the behavior here is to just
-                # pretend 'cname' is mapped to the 0th dict in the list. If the
-                # list is bigger than two elements, then raise an exception
-                # explaining that they need to implement a for loop to process
-                # the data. Multiple cnames would be a very rare case and this
-                # tool might not be the best one for the job.
+                # attributes.
+
                 if not isinstance(cur_attr, list):
                     raise Exception(
                         "The cname on this nic is misconfigured. The 'cname' "
                         "key did not map to a list."
                     )
-                if not len(cur_attr) == 1:
-                    raise Exception(
-                        "The cname on this nic is misconfigured. Multiple "
-                        "cnames are mapped to this nic's FQDN"
-                    )
-                cur_attr = cur_attr[0]
-                cur_attr[link] = value
+                if len(cur_attr) > 1:
+                    # The lookup here is (hopefully) something like::
+                    #   staticreg_set.<nic>.cname.(target|fqdn)
+                    # We want to figure out what the value of nic is and then
+                    # find the 'fqdn' of that nic. We then will loop over the
+                    # CNAME blobs in cur_attr and update each one that has a
+                    # fqdn that maches the fqdn of the nic
+                    nic_name = lookup.split('.')[-3]
+                    nic = blob['staticreg_set'].get(nic_name, None)
+                    if not nic:
+                        raise Exception(
+                            "Trying to find nic '{0}' but couldn't find it. "
+                            "Lookup was {1}".format(nic_name, lookup)
+                        )
+                    for cname in cur_attr:
+                        if cname['target'] == nic['fqdn']:
+                            cname[link] = value
+
+                elif len(cur_attr):
+                    cur_attr = cur_attr[0]
+                    cur_attr[link] = value
+
             elif i == len(path) - 1:
                 # This is where we should set the value
                 assert link in cur_attr, (
