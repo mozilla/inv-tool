@@ -584,8 +584,8 @@ Service Import/Export API
 =========================
 Invtool exposes the state of a specific services via the ``invtool
 service_export`` command. For easy human consumption the export can be done via
-``YAML`` format. To specify a service to export you are to use standard IQL
-syntax. For example, to export a service with the name "dns" you would do::
+``YAML`` format. To specify a service to export, use the standard IQL syntax.
+For example, to export a service with the name "dns" you would do::
 
     ~/ » invtool service_export --yaml service.name=dns
     - alias: "Domain Name Resolution"
@@ -607,9 +607,10 @@ via the ``invtool service_import`` command. For example, say you wanted to add
 the hosts ``ns1.mozilla.com`` and ``ns2.mozilla.com`` to the dns service
 previously exported. You would export into a local file for editing::
 
-    ~/ » invtool service_export --yaml service.name=dns > dns.serice
+    ~/ » invtool service_export --yaml service.name=dns > dns.service
 
-And then modify the stored definition to be::
+And then add the two hosts to the 'systems' array in the locally-stored
+definition::
 
     ~/ » invtool service_export --yaml service.name=dns
     - alias: "Domain Name Resolution"
@@ -628,15 +629,15 @@ And then modify the stored definition to be::
       usage_frequency: constantly
       used_by: Anyone on the internet trying to resolve a Mozilla DNS name
 
-You can then import the updated ``dns.service`` file by either piping the
-contents of the file into ``invtool`` or specifying the file to ``invtool``::
+And then import the updated ``dns.service`` by either piping the contents of the
+file into ``invtool`` or specifying the file to ``invtool``::
 
     ~/ » invtool service_import --file-path dns.service
     OR
     ~/ » cat dns.service | invtool service_import
 
-If any errors occur during the import process in Inventory the entire import is
-rolled back and the user must resolve any errors.
+If any errors occur during an import process in Inventory the entire import is
+rolled back and the user must resolve the errors and rerun the entire import.
 
 Systems specified under the ``systems`` key must correspond to a system in
 Inventory with a matching hostname.
@@ -650,10 +651,14 @@ following syntax::
 
     service.name='<service-name>' service.site='<service-site>'
 
+Services may have one ``parent_service`` relationship and many ``depends_on``
+relationships.
+
 Taken together, the values of ``service-name`` and ``service-site`` can always
 be used to uniquely identify a service.
 
-An example of specifying a ``parent_service`` for our ``dns`` example would be::
+An example of specifying a ``parent_service`` relationship for our ``dns``
+example would be::
 
     - alias: "Domain Name Resolution"
       name: dns
@@ -666,7 +671,8 @@ An example of specifying a ``parent_service`` for our ``dns`` example would be::
       ...
       site: scl3
 
-An example of listing dependant services would be::
+An example of specifying many ``depends_on`` relationships for our ``dns``
+example would be::
 
     - alias: "Domain Name Resolution"
       name: dns
