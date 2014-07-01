@@ -324,7 +324,12 @@ class Importer(object):
 
     def process_results(self, return_blob, errors):
         if errors:
-            return self.process_errors(json.loads(errors))
+            try:
+                return self.process_errors(json.loads(errors))
+            except:
+                print "Bad error. Setting break point so you can investigate."
+                import pdb
+                pdb.set_trace()
 
     def ba_import(self, commit=False):
         """
