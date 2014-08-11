@@ -649,7 +649,7 @@ another service: the ``parent_service`` and ``depends_on``. Both use an IQL
 statement to specify which service is being listed. The IQL is always in the
 following syntax::
 
-    service.name='<service-name>' service.site='<service-site>'
+    service.name='<service-name>' service.site__full_name='<service-site>'
 
 Services may have one ``parent_service`` relationship and many ``depends_on``
 relationships.
@@ -671,6 +671,11 @@ example would be::
       ...
       site: scl3
 
+.. note::
+    When specifying a service that has no site, you must use ``service.site=null``.
+    If you want to specify a service that does have a site you must specify the
+    site's full name, for example ``service.site__full_name=corp.phx1``.
+
 An example of specifying many ``depends_on`` relationships for our ``dns``
 example would be::
 
@@ -680,12 +685,13 @@ example would be::
       ... (removed lines)
       ...
       depends_on:
-        - service.name='ldap' service.site=scl3
-        - service.name='dhcp' service.site=scl3
+        - service.name='ldap' service.site__full_name=scl3
+        - service.name='dhcp' service.site__full_name=scl3
       ...
       ... (removed lines)
       ...
       site: scl3
+
 
 
 
