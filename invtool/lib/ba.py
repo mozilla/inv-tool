@@ -61,7 +61,14 @@ def ba_export_systems_raw(search):
     raw_json = '\n'.join(resp_list)
     if 'errors' in raw_json:
         return None, raw_json
-    return json.loads(raw_json), None
+    try:
+        r = json.loads(raw_json)
+    except ValueError:
+        raise ValueError(
+            "Couldn't decode from server. Response from server was: "
+            "{0}".format(raw_json)
+        )
+    return r, None
 
 
 def ba_export_systems_regex(search):
@@ -126,7 +133,12 @@ def ba_import(dict_blob, commit=False):
         raw_json = '\n'.join(resp_list)
         if 'errors' in raw_json:
             return None, raw_json
-        return json.loads(raw_json), None
+        try:
+            resp = json.loads(raw_json)
+        except ValueError:
+            print raw_json
+            return None, "Couldn't decode json from server"
+        return resp, None
 
 
 def removes_pk_attrs(blobs):
