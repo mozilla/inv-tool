@@ -646,10 +646,14 @@ Inventory with a matching hostname.
 
 Creating vs. Updating
 ---------------------
-A service is looked up via its ``pk`` attribute. A service is *not* looked up by
-its name. When you include the ``pk`` attribute in a JSON/YAML blob you are
-indicating to Inventory which service object to update. Excluding a ``pk``
-attribute will signal to Inventory that it should try to create a new service.
+A service is looked up in two ways: first by pk, and then if nothing is found,
+by its and site. When you include the ``pk`` attribute in a JSON/YAML blob you
+are indicating to Inventory which service object to update.  This is useful for
+when you are updating either the site or the name of a service.
+
+Excluding the ``pk`` attribute will signal to Inventory that it should first try
+to find a service with the name/site pair in the JSON blob, and if nothing is
+found, to create a new service with the information contained in the blob.
 
 Specifiying the parent service and dependancies
 -----------------------------------------------
