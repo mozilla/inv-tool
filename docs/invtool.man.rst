@@ -590,6 +590,7 @@ For example, to export a service with the name "dns" you would do::
     ~/ » invtool service_export --yaml service.name=dns
     - alias: "Domain Name Resolution"
       business_owner: Wesley
+      pk: 55
       category: Infrastructure Management
       description: Serves name resolution to IP addresses
       impact: high
@@ -615,6 +616,7 @@ definition::
     ~/ » invtool service_export --yaml service.name=dns
     - alias: "Domain Name Resolution"
       business_owner: Wesley
+      pk: 55
       category: Infrastructure Management
       description: Serves name resolution to IP addresses
       impact: high
@@ -641,6 +643,13 @@ rolled back and the user must resolve the errors and rerun the entire import.
 
 Systems specified under the ``systems`` key must correspond to a system in
 Inventory with a matching hostname.
+
+Creating vs. Updating
+---------------------
+A service is looked up via its ``pk`` attribute. A service is *not* looked up by
+its name. When you include the ``pk`` attribute in a JSON/YAML blob you are
+indicating to Inventory which service object to update. Excluding a ``pk``
+attribute will signal to Inventory that it should try to create a new service.
 
 Specifiying the parent service and dependancies
 -----------------------------------------------
