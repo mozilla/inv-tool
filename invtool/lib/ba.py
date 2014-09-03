@@ -90,7 +90,7 @@ def ba_export_systems_hostname_list(hostnames):
 
     """
     # Process the list STEP at a time
-    def split_by_step(seq, STEP=150):
+    def split_by_step(seq, STEP=100):
         while seq:
             yield seq[:STEP]
             seq = seq[STEP:]
