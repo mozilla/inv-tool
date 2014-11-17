@@ -69,7 +69,7 @@ Quick Install
 -------------
 Here is a quick tip for a non-root install::
 
-    git clone git@github.com:uberj/inv-tool.git invtool
+    git clone https://github.com/uberj/inv-tool.git
     cd invtool
     cp etc/invtool.conf-dist etc/invtool.conf
     # Set host and port
