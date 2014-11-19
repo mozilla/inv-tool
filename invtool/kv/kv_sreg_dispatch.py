@@ -80,5 +80,5 @@ class HWAdapterKV(DispatchKV, TestKVSetupMixin):
 
 
 # Uncomment when dhcp is rolled out
-#registrar.register(StaticRegKV())
-#registrar.register(HWAdapterKV())
+registrar.register(StaticRegKV())
+registrar.register(HWAdapterKV())
